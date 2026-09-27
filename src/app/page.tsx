@@ -14,31 +14,31 @@ export default function HomePage() {
     const pillars = [
         {
             icon: <Zap className="w-5 h-5 text-brand-primary" />,
-            title: "Custo Operacional Zero",
+            title: "Reproducao Otimizada",
             description:
-                "Embeds oficiais de TikTok, Reels e Shorts delegam 100% do streaming e armazenamento para as plataformas originais.",
-            tag: "Zero Storage",
+                "Embeds oficiais de TikTok, Reels e Shorts garantem exibicao fluida sem sobrecarregar a aplicacao.",
+            tag: "Streaming Direto",
         },
         {
             icon: <ShieldCheck className="w-5 h-5 text-brand-primary" />,
-            title: "Segurança em 4 Barreiras",
+            title: "Painel Exclusivo",
             description:
-                "Painel restrito com VPN Guard (IP/CIDR), Supabase Auth, whitelist rígida de e-mail e chave service_role isolada no servidor.",
-            tag: "Defense in Depth",
+                "Area de gestao segura e restrita para administracao de produtos, cupons e organizacao da vitrine.",
+            tag: "Seguranca",
         },
         {
             icon: <Smartphone className="w-5 h-5 text-brand-primary" />,
-            title: "Alta Conversão Mobile-First",
+            title: "Experiencia Mobile-First",
             description:
-                "Feed vertical fluido com scroll-snap, badges de cupom com cópia instantânea e cards de produtos afiliados integrados.",
+                "Feed vertical fluido com rolagem agil, copia rapida de cupons promocionais e direcionamento para lojas parceiras.",
             tag: "Mobile-First",
         },
         {
             icon: <Server className="w-5 h-5 text-brand-primary" />,
-            title: "Portabilidade Total",
+            title: "Alta Disponibilidade",
             description:
-                "Execução serverless gratuita na Vercel + Supabase ou contêineres Docker independentes com PostgreSQL 18.6 e Redis.",
-            tag: "Docker & Cloud",
+                "Estrutura leve e estavel projetada para carregamento rapido e navegacao continua.",
+            tag: "Performance",
         },
     ];
 
@@ -51,24 +51,12 @@ export default function HomePage() {
                         <div className="w-9 h-9 rounded-xl bg-brand-primary flex items-center justify-center text-white font-black text-base shadow-sm ring-1 ring-black/5">
                             P
                         </div>
-                        <div className="flex items-center gap-2">
-                            <span className="font-extrabold text-lg tracking-tight text-zinc-950 dark:text-zinc-50">
-                                PromoCuts
-                            </span>
-                            <span className="hidden sm:inline-flex text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                                Fase 2 Pronta
-                            </span>
-                        </div>
+                        <span className="font-extrabold text-lg tracking-tight text-zinc-950 dark:text-zinc-50">
+                            PromoCuts
+                        </span>
                     </div>
 
                     <div className="flex items-center gap-4">
-                        <div className="hidden md:flex items-center gap-6 text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                            <span className="flex items-center gap-1.5">
-                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                                Motor de Embeds Ativo
-                            </span>
-                        </div>
-
                         <ThemeToggle />
                     </div>
                 </div>
@@ -109,15 +97,15 @@ export default function HomePage() {
                 <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-12 gap-4">
                     <div>
                         <span className="text-xs font-bold uppercase tracking-wider text-brand-primary">
-                            Engenharia e Arquitetura
+                            Recursos da Plataforma
                         </span>
                         <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-950 dark:text-zinc-50 mt-1">
-                            Pilares Fundamentais do PromoCuts
+                            Diferenciais do PromoCuts
                         </h2>
                     </div>
                     <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-md">
-                        Construído sob o princípio de custo operacional zero,
-                        sem bancos pesados nem consumo de banda para vídeos.
+                        Plataforma desenvolvida para alta conversao de videos em
+                        vendas de produtos afiliados.
                     </p>
                 </div>
 
@@ -145,7 +133,7 @@ export default function HomePage() {
                             </div>
 
                             <div className="mt-6 pt-4 border-t border-zinc-100 dark:border-zinc-800/60 flex items-center text-xs font-semibold text-brand-primary">
-                                <span>Verificado</span>
+                                <span>Disponivel</span>
                                 <CheckCircle2 className="w-3.5 h-3.5 ml-1.5" />
                             </div>
                         </div>
@@ -166,15 +154,12 @@ export default function HomePage() {
                         </span>
                     </div>
 
-                    <div className="flex items-center gap-6 font-mono text-[11px]">
-                        <span>Next.js 15</span>
-                        <span>Tailwind v4</span>
-                        <span>Supabase</span>
+                    <div className="flex items-center gap-4">
                         <a
                             href="https://github.com/TheCheepeer/Promocuts"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+                            className="inline-flex items-center gap-1 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
                         >
                             GitHub
                             <ArrowUpRight className="w-3 h-3" />

@@ -42,11 +42,11 @@ export function EmbedTester() {
                     </div>
                     <div>
                         <h3 className="font-bold text-base sm:text-lg text-zinc-900 dark:text-zinc-100">
-                            Motor de Embeds em Tempo Real
+                            Pre-visualizacao de Videos
                         </h3>
                         <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                            Cole qualquer URL de TikTok, Reels ou Shorts para
-                            testar o parser da Fase 2
+                            Cole qualquer link do TikTok, Instagram Reels ou
+                            YouTube Shorts para visualizar a incorporacao
                         </p>
                     </div>
                 </div>
@@ -129,7 +129,7 @@ export function EmbedTester() {
 
                         <div>
                             <span className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">
-                                Embed URL Padronizada (Zero Storage)
+                                Link Padronizado de Incorporacao
                             </span>
                             <div className="p-3 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800 font-mono text-xs text-zinc-700 dark:text-zinc-300 break-all select-all">
                                 {parsed.embedUrl}
@@ -165,7 +165,7 @@ export function EmbedTester() {
                                         Visualizacao de Afiliado
                                     </span>
                                     <span className="text-xs text-zinc-700 dark:text-zinc-300">
-                                        Iframe nativo com sandbox restrito
+                                        Exibicao direta da plataforma original
                                     </span>
                                 </div>
                                 <a

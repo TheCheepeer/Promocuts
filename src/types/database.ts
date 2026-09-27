@@ -8,7 +8,7 @@ export type Json =
 
 export type VideoPlatform = "tiktok" | "reels" | "shorts";
 
-export interface SiteSettings {
+export type SiteSettings = {
     id: number;
     site_name: string;
     site_tagline: string | null;
@@ -29,7 +29,7 @@ export interface SiteSettings {
     footer_text: string | null;
     created_at: string;
     updated_at: string;
-}
+};
 
 export type SiteSettingsInsert = Partial<
     Omit<SiteSettings, "id" | "created_at" | "updated_at">
@@ -46,7 +46,7 @@ export type SiteSettingsUpdate = Partial<
     Omit<SiteSettings, "id" | "created_at" | "updated_at">
 >;
 
-export interface Category {
+export type Category = {
     id: string;
     name: string;
     slug: string;
@@ -54,7 +54,7 @@ export interface Category {
     display_order: number;
     created_at: string;
     updated_at: string;
-}
+};
 
 export type CategoryInsert = Omit<
     Category,
@@ -68,7 +68,7 @@ export type CategoryUpdate = Partial<
     Omit<Category, "id" | "created_at" | "updated_at">
 >;
 
-export interface Video {
+export type Video = {
     id: string;
     category_id: string | null;
     title: string;
@@ -84,7 +84,7 @@ export interface Video {
     views_count: number;
     created_at: string;
     updated_at: string;
-}
+};
 
 export type VideoInsert = Omit<
     Video,
@@ -107,7 +107,7 @@ export type VideoUpdate = Partial<
     Omit<Video, "id" | "created_at" | "updated_at">
 >;
 
-export interface Product {
+export type Product = {
     id: string;
     category_id: string | null;
     name: string;
@@ -121,7 +121,7 @@ export interface Product {
     store_name: string;
     created_at: string;
     updated_at: string;
-}
+};
 
 export type ProductInsert = Omit<
     Product,
@@ -135,13 +135,13 @@ export type ProductUpdate = Partial<
     Omit<Product, "id" | "created_at" | "updated_at">
 >;
 
-export interface VideoProduct {
+export type VideoProduct = {
     id: string;
     video_id: string;
     product_id: string;
     display_order: number;
     created_at: string;
-}
+};
 
 export type VideoProductInsert = Omit<
     VideoProduct,
@@ -155,51 +155,57 @@ export type VideoProductUpdate = Partial<
     Omit<VideoProduct, "id" | "created_at">
 >;
 
-export interface AffiliateClick {
+export type AffiliateClick = {
     id: string;
     product_id: string;
     video_id: string | null;
     created_at: string;
     user_agent: string | null;
     referrer: string | null;
-}
+};
 
 export type AffiliateClickInsert = Omit<AffiliateClick, "id" | "created_at"> & {
     id?: string;
 };
 
-export interface Database {
+export type Database = {
     public: {
         Tables: {
             site_settings: {
                 Row: SiteSettings;
                 Insert: SiteSettingsInsert;
                 Update: SiteSettingsUpdate;
+                Relationships: [];
             };
             categories: {
                 Row: Category;
                 Insert: CategoryInsert;
                 Update: CategoryUpdate;
+                Relationships: [];
             };
             videos: {
                 Row: Video;
                 Insert: VideoInsert;
                 Update: VideoUpdate;
+                Relationships: [];
             };
             products: {
                 Row: Product;
                 Insert: ProductInsert;
                 Update: ProductUpdate;
+                Relationships: [];
             };
             video_products: {
                 Row: VideoProduct;
                 Insert: VideoProductInsert;
                 Update: VideoProductUpdate;
+                Relationships: [];
             };
             affiliate_clicks: {
                 Row: AffiliateClick;
                 Insert: AffiliateClickInsert;
-                Update: never;
+                Update: Partial<AffiliateClickInsert>;
+                Relationships: [];
             };
         };
         Views: {
@@ -215,4 +221,4 @@ export interface Database {
             [_ in never]: never;
         };
     };
-}
+};

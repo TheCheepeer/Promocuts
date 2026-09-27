@@ -29,6 +29,7 @@ Este guia detalha os dois caminhos suportados para colocar o **PromoCuts** em pr
     http://localhost:3000/auth/callback
     https://seu-dominio.vercel.app/auth/callback
     ```
+6. Em **Storage** (Opcional para upload em nuvem), crie um bucket público com o nome `site-assets` para hospedar logotipos e favicons personalizados enviados pelo painel `/admin/settings`. Caso prefira, o sistema também aceita URLs externas diretas de CDNs ou armazenamento local automático.
 
 ### 3. Passo 2: Coletar as Chaves de Conexão
 

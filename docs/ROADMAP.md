@@ -11,7 +11,7 @@ Este documento define o roteiro de implementacao do **PromoCuts**, organizado em
 | **Fase 1** | Fundacao do Projeto e Tooling               | `Concluido` |
 | **Fase 2** | Motor de Embeds e Utilitarios de Dominio    | `Concluido` |
 | **Fase 3** | Autenticacao, Middleware e Seguranca        | `Concluido` |
-| **Fase 4** | Painel Administrativo e White-Label         | `Pendente`  |
+| **Fase 4** | Painel Administrativo e White-Label         | `Concluido` |
 | **Fase 5** | Vitrine Publica Mobile-First e Desktop Grid | `Pendente`  |
 | **Fase 6** | Telemetria de Afiliados e Conversao         | `Pendente`  |
 | **Fase 7** | Dockerizacao, Testes e Verificacao Final    | `Pendente`  |
@@ -69,24 +69,24 @@ Objetivo: Estabelecer as quatro barreiras de seguranca para isolar o painel admi
 
 Objetivo: Entregar a interface de gestao de conteudo e personalizacao visual do sistema.
 
-- [ ] Desenvolver o layout administrativo base em `src/app/admin/layout.tsx` com navegacao densa e segura.
-- [ ] Criar o modulo de gestao de categorias em `src/app/admin/categories/`:
-    - [ ] Tabela com listagem, ordem de exibicao e status.
-    - [ ] Formulario de criacao e edicao com seletor de icones da Lucide React.
-    - [ ] Server Actions de mutacao utilizando a chave service_role com validacao de entrada.
-- [ ] Criar o modulo de catalogo de produtos em `src/app/admin/products/`:
-    - [ ] Listagem de produtos com precos, cupons e lojas parceiras.
-    - [ ] Formulario de cadastro com validacao defensiva de URLs de afiliado.
-- [ ] Criar o modulo de curadoria de videos em `src/app/admin/videos/`:
-    - [ ] Cadastro por colagem de URL publica com deteccao automatica de plataforma.
-    - [ ] Vinculacao de multiplos produtos recomendados com ordenacao manual.
-    - [ ] Controles de publicacao (`is_published`) e destaque (`is_featured`).
-- [ ] Criar o modulo de customizacao visual em `src/app/admin/settings/`:
-    - [ ] Configuracao de identidade (nome, slogan, descricao e rodape).
-    - [ ] Seletor visual de paleta dual-theme (cores primaria e secundaria para modo claro e modo escuro).
-    - [ ] Gestao de ativos visuais (logo principal, icone mobile e favicon) para modos claro e escuro: componente hibrido com suporte a upload direto (Supabase Storage bucket `site-assets` ou volume local) e insercao de URLs externas (estritamente PNG ou SVG com fallbacks automaticos).
-    - [ ] Redes sociais da vitrine.
-    - [ ] Disparo de revalidacao instantanea de cache via `revalidatePath('/', 'layout')`.
+- [x] Desenvolver o layout administrativo base em `src/app/admin/layout.tsx` com navegacao densa e segura.
+- [x] Criar o modulo de gestao de categorias em `src/app/admin/categories/`:
+    - [x] Tabela com listagem, ordem de exibicao e status.
+    - [x] Formulario de criacao e edicao com seletor de icones da Lucide React.
+    - [x] Server Actions de mutacao utilizando a chave service_role com validacao de entrada.
+- [x] Criar o modulo de catalogo de produtos em `src/app/admin/products/`:
+    - [x] Listagem de produtos com precos, cupons e lojas parceiras.
+    - [x] Formulario de cadastro com validacao defensiva de URLs de afiliado.
+- [x] Criar o modulo de curadoria de videos em `src/app/admin/videos/`:
+    - [x] Cadastro por colagem de URL publica com deteccao automatica de plataforma.
+    - [x] Vinculacao de multiplos produtos recomendados com ordenacao manual.
+    - [x] Controles de publicacao (`is_published`) e destaque (`is_featured`).
+- [x] Criar o modulo de customizacao visual em `src/app/admin/settings/`:
+    - [x] Configuracao de identidade (nome, slogan, descricao e rodape).
+    - [x] Seletor visual de paleta dual-theme (cores primaria e secundaria para modo claro e modo escuro).
+    - [x] Gestao de ativos visuais (logo principal, icone mobile e favicon) para modos claro e escuro: componente hibrido com suporte a upload direto (Supabase Storage bucket `site-assets` ou volume local) e insercao de URLs externas (estritamente PNG ou SVG com fallbacks automaticos).
+    - [x] Redes sociais da vitrine.
+    - [x] Disparo de revalidacao instantanea de cache via `revalidatePath('/', 'layout')`.
 
 ---
 

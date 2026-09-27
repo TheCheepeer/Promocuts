@@ -24,27 +24,27 @@ export default async function AdminLoginPage(props: AdminLoginPageProps) {
         { title: string; description: string; type: "error" | "warning" }
     > = {
         unauthorized: {
-            title: "Acesso Negado (403 Forbidden)",
+            title: "Acesso Nao Autorizado",
             description:
-                "O e-mail autenticado nao possui autorizacao para acessar o painel administrativo. Utilize o e-mail do proprietario configurado em ADMIN_EMAIL.",
+                "O e-mail informado nao possui permissao para acessar o painel de administracao.",
             type: "error",
         },
         invalid_link: {
             title: "Link Invalido ou Expirado",
             description:
-                "O link de acesso utilizado expirou ou ja foi consumido. Solicite um novo link de autenticacao abaixo.",
+                "O link de acesso utilizado expirou ou ja foi consumido. Solicite um novo link abaixo.",
             type: "warning",
         },
         missing_code: {
-            title: "Codigo de Autorizacao Ausente",
+            title: "Codigo de Acesso Invalido",
             description:
-                "A requisicao de autenticacao nao incluiu o codigo de sessao obrigatorio. Tente acessar atraves do link enviado ao seu e-mail.",
+                "Nao foi possivel confirmar a autenticacao. Solicite um novo link de acesso.",
             type: "warning",
         },
         auth_failed: {
-            title: "Falha na Confirmacao de Sessao",
+            title: "Falha na Autenticacao",
             description:
-                "Ocorreu um erro ao validar sua sessao com o provedor de identidade. Tente realizar o login novamente.",
+                "Ocorreu um erro ao validar sua sessao. Tente realizar o acesso novamente.",
             type: "error",
         },
     };
@@ -65,7 +65,7 @@ export default async function AdminLoginPage(props: AdminLoginPageProps) {
                     </h1>
 
                     <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-                        Painel restrito ao proprietario da plataforma
+                        Painel de administracao
                     </p>
                 </div>
 
@@ -106,12 +106,6 @@ export default async function AdminLoginPage(props: AdminLoginPageProps) {
 
                 {/* Formulario Interativo de Login */}
                 <LoginForm nextDestination={nextDestination} />
-
-                {/* Rodape de Seguranca */}
-                <p className="text-center text-xs text-zinc-500 dark:text-zinc-500">
-                    Acesso protegido com autenticacao sem senha por Magic Link e
-                    verificacao estrita de identidade.
-                </p>
             </div>
         </main>
     );

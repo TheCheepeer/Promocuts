@@ -4,15 +4,10 @@ import { createClient } from "@/lib/supabase/server";
 import { sanitizeRedirectUrl, isEmailAuthorized } from "@/lib/security/auth";
 import { logger } from "@/lib/logger";
 
-export interface LoginActionState {
+export type LoginActionState = {
     success: boolean;
     message: string;
     error?: string;
-}
-
-export const initialLoginState: LoginActionState = {
-    success: false,
-    message: "",
 };
 
 /**
@@ -69,7 +64,7 @@ export async function sendMagicLink(
         return {
             success: true,
             message:
-                "Se o e-mail informado for o administrador cadastrado, voce recebera um link de acesso em instantes.",
+                "Se o e-mail informado estiver cadastrado, voce recebera um link de acesso em instantes.",
         };
     }
 
@@ -111,7 +106,7 @@ export async function sendMagicLink(
         return {
             success: true,
             message:
-                "Link de acesso enviado com sucesso! Verifique sua caixa de entrada e a pasta de spam.",
+                "Link de acesso enviado com sucesso. Verifique sua caixa de entrada e a pasta de spam.",
         };
     } catch (err) {
         logger.error("Excecao inesperada no envio de Magic Link", {

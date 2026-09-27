@@ -26,10 +26,11 @@ flowchart TD
 
     subgraph HostLayer["Camada de Execução (Vercel ou Docker Standalone)"]
         NextMiddleware["Next.js Middleware (VPN Guard, Auth & Email Whitelist)"]
-        PublicRoute["Rotas Públicas (/, /c/[slug], /v/[slug])"]
-        AdminRoute["Rotas Administrativas (/admin/*, /admin/settings)"]
-        ServerAction["Next.js Server Actions (Mutations)"]
-        RedisModule["Módulo de Cache e Rate Limit (Upstash HTTP ou Redis TCP)"]
+        PublicRoute["Rotas Publicas (/, /c/[slug], /v/[slug])"]
+        AdminRoute["Rotas Administrativas (/admin, /admin/categories, /admin/products, /admin/videos, /admin/settings)"]
+        UploadEndpoint["Upload Seguro de Ativos (/api/admin/upload)"]
+        ServerAction["Next.js Server Actions (Mutations com Service Role)"]
+        RedisModule["Modulo de Cache e Rate Limit (Upstash HTTP ou Redis TCP)"]
     end
 
     subgraph AuthLayer["Autenticação Administrativa"]

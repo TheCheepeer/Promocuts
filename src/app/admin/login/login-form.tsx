@@ -8,11 +8,16 @@ import {
     CheckCircle2,
     RotateCcw,
 } from "lucide-react";
-import { sendMagicLink, initialLoginState } from "./actions";
+import { sendMagicLink, type LoginActionState } from "./actions";
 
 interface LoginFormProps {
     nextDestination?: string;
 }
+
+const initialLoginState: LoginActionState = {
+    success: false,
+    message: "",
+};
 
 export function LoginForm({ nextDestination = "/admin" }: LoginFormProps) {
     const [state, formAction, isPending] = useActionState(
@@ -40,9 +45,8 @@ export function LoginForm({ nextDestination = "/admin" }: LoginFormProps) {
                     </p>
 
                     <div className="mt-4 w-full rounded-lg bg-zinc-50 p-3 text-xs text-zinc-500 dark:bg-zinc-800/60 dark:text-zinc-400">
-                        Clique no link recebido na mensagem para entrar
-                        diretamente no painel de controle. O link possui
-                        validade limitada.
+                        Caso nao localize a mensagem na caixa de entrada,
+                        verifique tambem a pasta de spam ou lixo eletronico.
                     </div>
 
                     <button
@@ -80,7 +84,7 @@ export function LoginForm({ nextDestination = "/admin" }: LoginFormProps) {
                         htmlFor="email"
                         className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300"
                     >
-                        E-mail de Administrador
+                        E-mail
                     </label>
                     <div className="relative mt-2">
                         <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-zinc-400 dark:text-zinc-500">
@@ -93,7 +97,7 @@ export function LoginForm({ nextDestination = "/admin" }: LoginFormProps) {
                             required
                             autoComplete="email"
                             autoFocus
-                            placeholder="admin@exemplo.com"
+                            placeholder="seu-email@dominio.com"
                             disabled={isPending}
                             className="block w-full rounded-lg border border-zinc-300 bg-white py-2.5 pr-3 pl-10 text-sm text-zinc-900 placeholder-zinc-400 transition-colors focus:border-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900/20 disabled:cursor-not-allowed disabled:bg-zinc-50 disabled:text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-zinc-100 dark:focus:ring-zinc-100/20"
                         />
@@ -111,11 +115,11 @@ export function LoginForm({ nextDestination = "/admin" }: LoginFormProps) {
                                 className="h-4 w-4 animate-spin"
                                 aria-hidden="true"
                             />
-                            <span>Enviando link de acesso...</span>
+                            <span>Enviando link...</span>
                         </>
                     ) : (
                         <>
-                            <span>Enviar Link de Acesso</span>
+                            <span>Acessar Painel</span>
                             <ArrowRight
                                 className="h-4 w-4"
                                 aria-hidden="true"
