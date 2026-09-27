@@ -1,24 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logger } from "@/lib/logger";
+import { isValidUuid, sanitizeHeader } from "@/lib/telemetry";
 import type { AffiliateClickInsert } from "@/types/database";
-
-const UUID_REGEX =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-export function isValidUuid(value: unknown): value is string {
-    return typeof value === "string" && UUID_REGEX.test(value);
-}
-
-export function sanitizeHeader(
-    value: string | null | undefined,
-    maxLength: number,
-): string | null {
-    if (!value || typeof value !== "string") {
-        return null;
-    }
-    return value.slice(0, maxLength);
-}
 
 export async function POST(request: NextRequest) {
     let body: Record<string, unknown> | null = null;
@@ -80,7 +64,9 @@ export async function POST(request: NextRequest) {
             user_agent: userAgent,
             referrer: referrer,
         };
-        const { error } = await supabase.from("affiliate_clicks").insert(clickData);
+        const { error } = await supabase
+            .from("affiliate_clicks")
+            .insert(clickData);
 
         if (error) {
             logger.warn("Falha ao registrar clique de afiliado no banco", {

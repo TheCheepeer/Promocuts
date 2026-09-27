@@ -3,6 +3,17 @@
 -- Arquivo: supabase/migrations/001_initial_schema.sql
 -- ==============================================================================
 
+-- 0. Garantir existência dos papéis padrão anon e authenticated (compatibilidade nativa e Supabase)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'anon') THEN
+        CREATE ROLE anon NOLOGIN;
+    END IF;
+    IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'authenticated') THEN
+        CREATE ROLE authenticated NOLOGIN;
+    END IF;
+END$$;
+
 -- 1. Extensões necessárias
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 

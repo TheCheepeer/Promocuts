@@ -27,7 +27,7 @@ Foi concebido como uma solução completa de **renda passiva** e um **projeto es
 - **Cards de Produtos Acoplados:** Cada corte exibe os produtos recomendados com foto, título, preço promocional, lojas parceiras e botões de compra imediatos com tags `rel="noopener noreferrer sponsored"`.
 - **Cópia Instantânea de Cupom:** Botão com um toque para copiar códigos promocionais para a área de transferência, acompanhado de feedback tátil e visual.
 - **Customização Total de Marca (White-Label) & Modo Claro/Escuro:** Suporte nativo a modo claro e escuro (baseado no sistema com botão de alternância manual e persistência em cache), paleta de cores primária e secundária independentes para cada modo de visualização, controle completo de logotipo, favicon, slogan e metadados de SEO pelo painel `/admin/settings`, tudo refletido dinamicamente na vitrine pública sem necessidade de novo deploy.
-- **Portabilidade Total e Self-Hosting (Docker):** Sem aprisionamento de fornecedor. Rode em nuvem gratuita ou em VPS própria com Docker Compose, Nginx Gateway (porta 80 com SSL na nuvem), PostgreSQL 18.6, Redis 8 opcional, autenticação SSO e proteção de acesso administrativo isolada por VPN (Tailscale / WireGuard).
+- **Portabilidade Total e Self-Hosting (Docker):** Sem aprisionamento de fornecedor. Rode em nuvem gratuita ou em VPS própria com Docker Compose, Nginx Gateway (porta 80 com SSL na nuvem), PostgreSQL 17.6, Redis 8 opcional, autenticação SSO e proteção de acesso administrativo isolada por VPN (Tailscale / WireGuard).
 - **Painel Administrativo Seguro (`/admin`):** Interface fechada para cadastro ágil de categorias, links e produtos. Acesso restrito exclusivamente ao endereço em `ADMIN_EMAIL` com suporte a Magic Link ou SSO corporativo e bloqueio opcional por faixas de IP de VPN.
 - **Banco de Dados Plug and Play:** Script SQL de inicialização em [`supabase/migrations/001_initial_schema.sql`](supabase/migrations/001_initial_schema.sql) com tabelas indexadas, dados padrão de branding e regras de Row Level Security (RLS) prontas.
 - **Métricas Anônimas:** Monitoramento leve de cliques em links de afiliados sem coleta de dados pessoais e sem dependência de serviços externos pagos.
@@ -39,7 +39,7 @@ Foi concebido como uma solução completa de **renda passiva** e um **projeto es
 - **Framework Web:** [Next.js](https://nextjs.org/) (App Router, Server Actions, TypeScript)
 - **Estilização Visual:** [Tailwind CSS v4](https://tailwindcss.com/)
 - **Gateway & Proxy Reverso:** [Nginx](https://nginx.org/) (Porta 80 com SSL gerenciado na nuvem)
-- **Banco de Dados Relacional:** [PostgreSQL 18.6](https://www.postgresql.org/) / [Supabase](https://supabase.com/)
+- **Banco de Dados Relacional:** [PostgreSQL 17.6](https://www.postgresql.org/) / [Supabase](https://supabase.com/)
 - **Autenticação:** Supabase Auth (Magic Link) ou Single Sign-On (Google, GitHub, OIDC)
 - **Cache & Rate Limiting:** [Redis 8](https://redis.io/) (Opcional: Upstash Serverless ou Docker Alpine)
 - **Ícones:** [Lucide React](https://lucide.dev/)
@@ -53,7 +53,7 @@ Para entender a arquitetura em detalhes, consulte a documentação dedicada na p
 
 - [**Arquitetura do Sistema**](docs/ARCHITECTURE.md): Estrutura de software, motor de embeds nativos, sistema de customização visual, modelo de segurança e contêineres.
 - [**Modelagem de Dados**](docs/DATABASE.md): Diagrama Entidade-Relacionamento, dicionário de campos e políticas de Row Level Security.
-- [**Guia de Implantação e Deploy**](docs/DEPLOYMENT.md): Passo a passo para subir na Vercel com Supabase ou com Docker Compose e PostgreSQL 18.6.
+- [**Guia de Implantação e Deploy**](docs/DEPLOYMENT.md): Passo a passo para subir na Vercel com Supabase ou com Docker Compose e PostgreSQL 17.6.
 - [**Roadmap de Desenvolvimento**](docs/ROADMAP.md): Acompanhamento das fases de desenvolvimento, tarefas e status de implementação.
 
 ---
@@ -77,14 +77,14 @@ Para entender a arquitetura em detalhes, consulte a documentação dedicada na p
     cd Promocuts
     cp .env.example.docker .env
     ```
-2. Edite o `.env` informando seu `ADMIN_EMAIL`, chave `AUTH_SECRET` e senhas do PostgreSQL 18.6.
+2. Edite o `.env` informando seu `ADMIN_EMAIL`, chave `AUTH_SECRET` e senhas do PostgreSQL 17.6.
 3. Inicie os serviços com um único comando (ou utilize `./scripts/prod.sh` para build e logs):
     ```bash
     docker compose up -d
     # ou via script de automacao
     ./scripts/prod.sh
     ```
-    O contêiner `postgres:18.6-alpine` aplicará as migrações automaticamente no primeiro boot e a aplicação estará acessível através do Nginx Gateway na porta `80`. Todos os serviços internos permanecem isolados na rede privada do Docker.
+    O contêiner `postgres:17.6-alpine` aplicará as migrações automaticamente no primeiro boot e a aplicação estará acessível através do Nginx Gateway na porta `80`. Todos os serviços internos permanecem isolados na rede privada do Docker.
 
 ---
 
@@ -93,7 +93,7 @@ Para entender a arquitetura em detalhes, consulte a documentação dedicada na p
 ### Pré-requisitos
 
 - [Node.js](https://nodejs.org/) versão 20 ou superior
-- Instância do Supabase ou Docker com PostgreSQL 18.6
+- Instância do Supabase ou Docker com PostgreSQL 17.6
 
 ### 1. Clonar o repositório
 

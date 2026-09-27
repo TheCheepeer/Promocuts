@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import {
     isValidUuid,
     sanitizeHeader,
-} from "../src/app/api/track-click/route.js";
-import { trackAffiliateClick } from "../src/lib/telemetry.js";
+    trackAffiliateClick,
+} from "../src/lib/telemetry.js";
 
 describe("Telemetria de Afiliados - Validacao de Identificadores (UUID)", () => {
     it("deve aceitar UUIDs validos em formatos padrao v4 e v1", () => {

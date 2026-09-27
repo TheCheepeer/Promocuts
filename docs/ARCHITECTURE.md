@@ -11,7 +11,7 @@ O PromoCuts foi projetado em torno de três pilares:
 1. **Custo Operacional Zero:** Nenhum custo de armazenamento ou transferência de vídeo. A aplicação roda 100% no plano gratuito da Vercel e do Supabase.
 2. **Alta Conversão Mobile-First:** A experiência de compra é integrada diretamente à visualização de vídeos verticais (9:16), com atrito mínimo para clicar em links de afiliados ou copiar cupons.
 3. **Simplicidade Clonável:** Qualquer desenvolvedor ou criador de conteúdo pode realizar um _fork_, configurar variáveis de ambiente básicas e ter sua própria vitrine em produção em poucos minutos.
-4. **Independência de Infraestrutura (Portabilidade Total):** A aplicação não possui aprisionamento tecnológico (_vendor lock-in_), podendo rodar em nuvem serverless (Vercel + Supabase) ou totalmente auto-hospedada via Docker Compose (PostgreSQL 18.6, Redis e Next.js Standalone).
+4. **Independência de Infraestrutura (Portabilidade Total):** A aplicação não possui aprisionamento tecnológico (_vendor lock-in_), podendo rodar em nuvem serverless (Vercel + Supabase) ou totalmente auto-hospedada via Docker Compose (PostgreSQL 17.6, Redis e Next.js Standalone).
 
 ---
 
@@ -40,7 +40,7 @@ flowchart TD
     end
 
     subgraph DataLayer["Armazenamento Relacional"]
-        PostgresDB[("PostgreSQL 18.6 / Supabase")]
+        PostgresDB[("PostgreSQL 17.6 / Supabase")]
         RLS["Row Level Security (RLS)"]
     end
 
@@ -108,7 +108,7 @@ sequenceDiagram
     participant V as VPN Guard (IP/CIDR)
     participant Auth as Provedor Auth (SSO / Magic Link)
     participant SA as Server Action
-    participant DB as PostgreSQL 18.6 / Supabase
+    participant DB as PostgreSQL 17.6 / Supabase
 
     A->>M: Requisição GET /admin/videos
     M->>V: Validação de IP/VPN (ADMIN_ALLOWED_IPS)
@@ -380,15 +380,16 @@ Para garantir autonomia e independência de fornecedores de nuvem, o PromoCuts d
 - **Healthcheck Nativo:** Monitoramento integrado de integridade via comando local para orquestradores.
 - **Segurança de Execução:** O processo roda sob o usuário sem privilégios de root (`nextjs:nodejs`), acessível apenas internamente pelo Nginx na porta `3000`.
 
-### 8.3 Banco de Dados Dedicado: PostgreSQL 18.6
+### 8.3 Banco de Dados Dedicado: PostgreSQL 17.6 (Paridade com Supabase)
 
-- **Versão:** O serviço de banco de dados utiliza a imagem oficial `postgres:18.6-alpine`.
-- **Inicialização Idempotente:** O volume `./supabase/migrations` é montado em `/docker-entrypoint-initdb.d/`. Na primeira inicialização, todos os scripts SQL (`001_initial_schema.sql`, `002_add_categories.sql` e `003_add_site_settings.sql`) são aplicados automaticamente, preparando tabelas, enums, triggers e o registro inicial de configurações de marca com validação de formato e RLS ativo.
+- **Versão:** O serviço de banco de dados utiliza a imagem oficial `postgres:17.6-alpine`, garantindo paridade estrita com a versão 17.x do Supabase. A tag é parametrizável via variável `${POSTGRES_VERSION:-17.6-alpine}` no arquivo `.env`.
+- **Inicialização Idempotente:** O volume `./supabase/migrations` é montado em `/docker-entrypoint-initdb.d/`. Na primeira inicialização, todos os scripts SQL (`001_initial_schema.sql`, `002_add_categories.sql` e `003_add_site_settings.sql`) são aplicados automaticamente, preparando papéis (`anon`, `authenticated`), tabelas, enums, triggers e o registro inicial de configurações de marca com validação de formato e RLS ativo.
 - **Credenciais Seguras:** Exigência de senhas fortes via variável obrigatória `POSTGRES_PASSWORD`, sem fallbacks para credenciais padrão conhecidas.
 - **Persistência Segura:** Os arquivos de dados residem no volume nomeado `postgres_data`, sem exposição de portas para a máquina externa.
+- **Desacoplamento e Provedores Externos:** Através da diretiva `required: false` no `depends_on` do serviço `app`, a infraestrutura local é semi-obrigatória. O usuário pode apontar a variável `DATABASE_URL` para um banco externo gerenciado (como AWS RDS, Neon ou Supabase Cloud) e desativar o contêiner `db` local sem quebrar o Docker Compose.
 
-### 8.4 Camada Opcional de Redis 8 em Contêiner
+### 8.4 Camada de Redis 8 em Contêiner (Semi-Obrigatória e Desacoplada)
 
-- **100% Opcional:** O sistema PromoCuts opera com autonomia plena sem a presença do Redis tanto em nuvem quanto no Docker.
-- **Instância Local Autenticada:** Quando habilitado, o serviço `redis` executa a imagem oficial `redis:8-alpine` com persistência periódica em disco (`--save 60 1`) e proteção por senha configurada via flag `--requirepass` e variável `REDIS_PASSWORD` na rede interna backend.
-- **Tolerância a Falhas:** Caso o contêiner de Redis seja interrompido, a aplicação continua operando normalmente através de consultas diretas ao banco de dados e cache em memória de processo.
+- **Semi-Obrigatória e Desacoplada:** O serviço vem ativado por padrão no Docker Compose para uso local imediato, mas pode ser desativado ou substituído por provedores gerenciados (como AWS ElastiCache, Upstash ou Redis Cloud). A diretiva `required: false` no `depends_on` do `app` garante que o Docker Compose inicialize sem exigir o contêiner `redis` se o usuário optar por não utilizá-lo.
+- **Instância Local Autenticada:** Quando habilitado, o serviço `redis` executa a imagem oficial `redis:8-alpine` com persistência periódica em disco (`--save 60 1`), proteção por senha configurada via flag `--requirepass` e `healthcheck` resiliente que autentica com a senha configurada.
+- **Tolerância a Falhas:** Caso o contêiner de Redis seja interrompido ou a variável `REDIS_URL` não seja informada, a aplicação continua operando normalmente através de consultas diretas ao banco de dados e cache em memória de processo.

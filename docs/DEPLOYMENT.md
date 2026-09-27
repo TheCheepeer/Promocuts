@@ -3,7 +3,7 @@
 Este guia detalha os dois caminhos suportados para colocar o **PromoCuts** em produção:
 
 1. **Opção A (Nuvem Serverless — 100% Gratuito):** Deploy com 1 clique na Vercel utilizando Supabase Cloud e Upstash Redis opcional.
-2. **Opção B (Self-Hosted / Docker):** Execução independente em servidor ou VPS própria com contêineres Docker, PostgreSQL 18.6, Redis, Single Sign-On (SSO) e isolamento de acesso via VPN.
+2. **Opção B (Self-Hosted / Docker):** Execução independente em servidor ou VPS própria com contêineres Docker, PostgreSQL 17.6, Redis, Single Sign-On (SSO) e isolamento de acesso via VPN.
 
 ---
 
@@ -65,7 +65,7 @@ O repositório possui fluxos de integração e entrega contínua pré-configurad
 
 ---
 
-## Opção B: Self-Hosted com Docker (PostgreSQL 18.6, SSO e VPN)
+## Opção B: Self-Hosted com Docker (PostgreSQL 17.6, SSO e VPN)
 
 Esta modalidade oferece soberania total sobre a infraestrutura, permitindo rodar a aplicação em VPS (Hetzner, DigitalOcean, Linode), servidores dedicados ou homelab doméstico.
 
@@ -107,15 +107,24 @@ AUTH_SECRET=sua-chave-criptografica-aleatoria
 # Modo de desenvolvimento e depuracao de logs (true ou false)
 IS_DEV=false
 
-# Credenciais do PostgreSQL 18.6 (Apenas rede interna backend)
+# Imagem do PostgreSQL (17.6-alpine por padrao, em paridade com o Supabase)
+POSTGRES_VERSION=17.6-alpine
 POSTGRES_DB=promocuts
 POSTGRES_USER=promocuts_user
 POSTGRES_PASSWORD=senha-super-segura-do-banco
+DATABASE_URL=postgresql://promocuts_user:senha-super-segura-do-banco@db:5432/promocuts
 
-# Cache e Rate Limiting via Redis (100% Opcional)
-# O sistema funciona plenamente sem Redis tanto na Vercel quanto no Docker.
-# Se desejar habilitar no Docker com autenticacao segura por senha:
-# REDIS_PASSWORD=senha-super-segura-do-redis
+# Conexao Opcional com Supabase Cloud:
+# NEXT_PUBLIC_SUPABASE_URL=https://seu-projeto.supabase.co
+# NEXT_PUBLIC_SUPABASE_ANON_KEY=sua-anon-key-aqui
+# SUPABASE_SERVICE_ROLE_KEY=sua-service-role-key-aqui
+
+# Cache e Rate Limiting via Redis (Semi-Obrigatorio / Desacoplado)
+# - Container local: preencha REDIS_PASSWORD
+# - Provedor externo (AWS ElastiCache, Upstash, Redis Cloud): informe REDIS_URL externa
+# - Sem Redis: deixe REDIS_URL vazia
+REDIS_PASSWORD=senha-super-segura-do-redis
+REDIS_URL=redis://:senha-super-segura-do-redis@redis:6379
 ```
 
 #### 3. Configurar Single Sign-On (SSO) no Painel `/admin` (Opcional)
@@ -152,7 +161,7 @@ docker compose up -d
 O comando irá:
 
 1. Compilar a imagem da aplicação Next.js Standalone com hardening de permissões e healthcheck.
-2. Iniciar o contêiner `postgres:18.6-alpine` na rede interna privada (`backend-network`, marcada como `internal: true`) aplicando automaticamente os scripts SQL em `supabase/migrations/`.
+2. Iniciar o contêiner `postgres:17.6-alpine` na rede interna privada (`backend-network`, marcada como `internal: true`) aplicando automaticamente os scripts SQL em `supabase/migrations/`.
 3. Iniciar o contêiner `redis:8-alpine` na rede interna privada (serviço 100% opcional, com autenticação por senha se configurado).
 4. Iniciar o contêiner `promocuts-nginx` na rede pública (`frontend-network`), atuando como ponto único de entrada na porta `80` com cabeçalhos de segurança e rate limiting ativo. O Nginx não possui rota de rede para o banco de dados nem para o Redis, garantindo defesa em profundidade.
 
