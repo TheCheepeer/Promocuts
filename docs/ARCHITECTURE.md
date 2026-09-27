@@ -84,7 +84,7 @@ O PromoCuts delega o armazenamento, transcodificação e distribuição de víde
 
 ### Ciclo de Parsing de URLs
 
-No painel `/admin`, o administrador precisa apenas colar a URL original da postagem. O módulo `lib/embeds/parser.ts` executa expressões regulares puras para:
+No painel `/admin`, o administrador precisa apenas colar a URL original da postagem. O módulo `src/lib/embeds/parser.ts` executa expressões regulares puras para:
 
 1. Detectar automaticamente a plataforma de origem (`tiktok`, `reels` ou `shorts`).
 2. Extrair o identificador único do corte (`platform_video_id`).
@@ -191,7 +191,7 @@ As cores primária e secundária da marca possuem definições independentes par
 1. **Modo Claro:** utiliza `primary_color_light` e `secondary_color_light`.
 2. **Modo Escuro:** utiliza `primary_color_dark` e `secondary_color_dark`.
 
-No arquivo global de estilos (`app/globals.css`), o Tailwind CSS v4 mapeia as variáveis universais através da diretiva `@theme`:
+No arquivo global de estilos (`src/app/globals.css`), o Tailwind CSS v4 mapeia as variáveis universais através da diretiva `@theme`:
 
 ```css
 @import "tailwindcss";
@@ -202,7 +202,7 @@ No arquivo global de estilos (`app/globals.css`), o Tailwind CSS v4 mapeia as va
 }
 ```
 
-No layout raiz (`app/layout.tsx`), as variáveis são injetadas dinamicamente com base nas configurações da tabela `site_settings`:
+No layout raiz (`src/app/layout.tsx`), as variáveis são injetadas dinamicamente com base nas configurações da tabela `site_settings`:
 
 ```html
 <style

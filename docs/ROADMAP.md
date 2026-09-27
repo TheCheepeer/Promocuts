@@ -6,15 +6,15 @@ Este documento define o roteiro de implementacao do **PromoCuts**, organizado em
 
 ## 1. Visao Geral de Progresso
 
-| Fase       | Descricao                                   |   Status   |
-| :--------- | :------------------------------------------ | :--------: |
-| **Fase 1** | Fundacao do Projeto e Tooling               | `Pendente` |
-| **Fase 2** | Motor de Embeds e Utilitarios de Dominio    | `Pendente` |
-| **Fase 3** | Autenticacao, Middleware e Seguranca        | `Pendente` |
-| **Fase 4** | Painel Administrativo e White-Label         | `Pendente` |
-| **Fase 5** | Vitrine Publica Mobile-First e Desktop Grid | `Pendente` |
-| **Fase 6** | Telemetria de Afiliados e Conversao         | `Pendente` |
-| **Fase 7** | Dockerizacao, Testes e Verificacao Final    | `Pendente` |
+| Fase       | Descricao                                   |   Status    |
+| :--------- | :------------------------------------------ | :---------: |
+| **Fase 1** | Fundacao do Projeto e Tooling               | `Concluido` |
+| **Fase 2** | Motor de Embeds e Utilitarios de Dominio    | `Pendente`  |
+| **Fase 3** | Autenticacao, Middleware e Seguranca        | `Pendente`  |
+| **Fase 4** | Painel Administrativo e White-Label         | `Pendente`  |
+| **Fase 5** | Vitrine Publica Mobile-First e Desktop Grid | `Pendente`  |
+| **Fase 6** | Telemetria de Afiliados e Conversao         | `Pendente`  |
+| **Fase 7** | Dockerizacao, Testes e Verificacao Final    | `Pendente`  |
 
 ---
 
@@ -24,15 +24,15 @@ Este documento define o roteiro de implementacao do **PromoCuts**, organizado em
 
 Objetivo: Configurar a base tecnica da aplicacao, dependencias de producao, compiladores e conexao tipada com o banco de dados.
 
-- [ ] Criar o arquivo `package.json` com dependencias principais (Next.js 15, React 19, Lucide React, Supabase SDKs, utilitarios de classe).
-- [ ] Configurar o compilador TypeScript em `tsconfig.json`.
-- [ ] Configurar o Next.js em `next.config.ts` com geracao em modo standalone (`output: 'standalone'`) e permissao de dominios de imagens remotas.
-- [ ] Configurar o Tailwind CSS v4 em `app/globals.css` utilizando `@import "tailwindcss";` e declarando as variaveis semanticas na diretiva `@theme`.
-- [ ] Implementar a funcao auxiliar de combinacao de classes `cn()` em `lib/utils.ts`.
-- [ ] Implementar o gerenciador de temas (modo claro, modo escuro e sistema) com script anti-FOUC no cabeçalho e cache em `localStorage`.
-- [ ] Criar os clientes do Supabase para o lado cliente e lado servidor (`lib/supabase/client.ts`, `lib/supabase/server.ts` e `lib/supabase/admin.ts`).
-- [ ] Implementar utilitario de ambiente e logger defensivo em `lib/logger.ts` controlado pela flag `isDev` (`IS_DEV === 'true' || process.env.NODE_ENV === 'development'`).
-- [ ] Definir as tipagens estritas do banco de dados em `types/database.ts` em total conformidade com `docs/DATABASE.md` (incluindo cores primária e secundária para modos claro e escuro).
+- [x] Criar o arquivo `package.json` com dependencias principais (Next.js 15, React 19, Lucide React, Supabase SDKs, utilitarios de classe).
+- [x] Configurar o compilador TypeScript em `tsconfig.json`.
+- [x] Configurar o Next.js em `next.config.ts` com geracao em modo standalone (`output: 'standalone'`) e permissao de dominios de imagens remotas.
+- [x] Configurar o Tailwind CSS v4 em `src/app/globals.css` utilizando `@import "tailwindcss";` e declarando as variaveis semanticas na diretiva `@theme`.
+- [x] Implementar a funcao auxiliar de combinacao de classes `cn()` em `src/lib/utils.ts`.
+- [x] Implementar o gerenciador de temas (modo claro, modo escuro e sistema) com script anti-FOUC no cabeçalho e cache em `localStorage`.
+- [x] Criar os clientes do Supabase para o lado cliente e lado servidor (`src/lib/supabase/client.ts`, `src/lib/supabase/server.ts` e `src/lib/supabase/admin.ts`).
+- [x] Implementar utilitario de ambiente e logger defensivo em `src/lib/logger.ts` controlado pela flag `isDev` (`IS_DEV === 'true' || process.env.NODE_ENV === 'development'`).
+- [x] Definir as tipagens estritas do banco de dados em `src/types/database.ts` em total conformidade com `docs/DATABASE.md` (incluindo cores primária e secundária para modos claro e escuro).
 
 ---
 
@@ -40,12 +40,12 @@ Objetivo: Configurar a base tecnica da aplicacao, dependencias de producao, comp
 
 Objetivo: Implementar o algoritmo central de parsing de URLs e geracao de embeds nativos sem armazenamento proprio de midia.
 
-- [ ] Desenvolver o analisador de URLs em `lib/embeds/parser.ts`:
+- [ ] Desenvolver o analisador de URLs em `src/lib/embeds/parser.ts`:
     - [ ] Reconhecimento e extracao de IDs do TikTok (URLs padrao, URLs mobile e URLs curtas).
     - [ ] Reconhecimento e extracao de IDs do Instagram Reels (URLs diretas de post e reel).
     - [ ] Reconhecimento e extracao de IDs do YouTube Shorts (URLs de shorts, links com watch e URLs encurtadas).
     - [ ] Geracao segura de markup e URLs de embed sem cookies desnecessarios (youtube-nocookie).
-- [ ] Criar utilitarios de formatacao numerica e de moeda em Real brasileiro (`lib/formatters.ts`).
+- [ ] Criar utilitarios de formatacao numerica e de moeda em Real brasileiro (`src/lib/formatters.ts`).
 - [ ] Criar rotina de testes unitarios para garantir que URLs invalidas ou manipuladas sejam rejeitadas com seguranca.
 
 ---
@@ -54,14 +54,14 @@ Objetivo: Implementar o algoritmo central de parsing de URLs e geracao de embeds
 
 Objetivo: Estabelecer as quatro barreiras de seguranca para isolar o painel administrativo.
 
-- [ ] Implementar o middleware defensivo em `middleware.ts`:
+- [ ] Implementar o middleware defensivo em `src/middleware.ts`:
     - [ ] Filtro de rede/IP para rotas `/admin/*` baseado em `ADMIN_ALLOWED_IPS` (suporte a IPs individuais e faixas CIDR).
     - [ ] Validacao de sessao ativa via Supabase Auth.
     - [ ] Checagem estrita da identidade do usuario logado contra a variavel `ADMIN_EMAIL`.
     - [ ] Bloqueio HTTP 403 Forbidden para usuarios nao autorizados.
     - [ ] Redirecionamento amigavel de usuarios anonimos para `/admin/login`.
-- [ ] Criar a tela de login administrativo em `app/admin/login/page.tsx` com envio de Magic Link via Supabase Auth.
-- [ ] Criar a rota de callback em `app/auth/callback/route.ts` para confirmacao da troca de sessao no servidor.
+- [ ] Criar a tela de login administrativo em `src/app/admin/login/page.tsx` com envio de Magic Link via Supabase Auth.
+- [ ] Criar a rota de callback em `src/app/auth/callback/route.ts` para confirmacao da troca de sessao no servidor.
 
 ---
 
@@ -69,19 +69,19 @@ Objetivo: Estabelecer as quatro barreiras de seguranca para isolar o painel admi
 
 Objetivo: Entregar a interface de gestao de conteudo e personalizacao visual do sistema.
 
-- [ ] Desenvolver o layout administrativo base em `app/admin/layout.tsx` com navegacao densa e segura.
-- [ ] Criar o modulo de gestao de categorias em `app/admin/categories/`:
+- [ ] Desenvolver o layout administrativo base em `src/app/admin/layout.tsx` com navegacao densa e segura.
+- [ ] Criar o modulo de gestao de categorias em `src/app/admin/categories/`:
     - [ ] Tabela com listagem, ordem de exibicao e status.
     - [ ] Formulario de criacao e edicao com seletor de icones da Lucide React.
     - [ ] Server Actions de mutacao utilizando a chave service_role com validacao de entrada.
-- [ ] Criar o modulo de catalogo de produtos em `app/admin/products/`:
+- [ ] Criar o modulo de catalogo de produtos em `src/app/admin/products/`:
     - [ ] Listagem de produtos com precos, cupons e lojas parceiras.
     - [ ] Formulario de cadastro com validacao defensiva de URLs de afiliado.
-- [ ] Criar o modulo de curadoria de videos em `app/admin/videos/`:
+- [ ] Criar o modulo de curadoria de videos em `src/app/admin/videos/`:
     - [ ] Cadastro por colagem de URL publica com deteccao automatica de plataforma.
     - [ ] Vinculacao de multiplos produtos recomendados com ordenacao manual.
     - [ ] Controles de publicacao (`is_published`) e destaque (`is_featured`).
-- [ ] Criar o modulo de customizacao visual em `app/admin/settings/`:
+- [ ] Criar o modulo de customizacao visual em `src/app/admin/settings/`:
     - [ ] Configuracao de identidade (nome, slogan, descricao e rodape).
     - [ ] Seletor visual de paleta dual-theme (cores primaria e secundaria para modo claro e modo escuro).
     - [ ] Gestao de ativos visuais (logo principal, icone mobile e favicon) para modos claro e escuro: componente hibrido com suporte a upload direto (Supabase Storage bucket `site-assets` ou volume local) e insercao de URLs externas (estritamente PNG ou SVG com fallbacks automaticos).
@@ -94,7 +94,7 @@ Objetivo: Entregar a interface de gestao de conteudo e personalizacao visual do 
 
 Objetivo: Construir a experiencia de alta conversao para os visitantes em dispositivos moveis e computadores.
 
-- [ ] Implementar o layout raiz em `app/layout.tsx`:
+- [ ] Implementar o layout raiz em `src/app/layout.tsx`:
     - [ ] Injecao dinamica de variaveis CSS de marca (`--brand-primary` e `--brand-secondary`) resolvidas conforme o tema ativo (modo claro ou modo escuro).
     - [ ] Script leve de deteccao de tema para carregar a preferencia sem flash de tela.
     - [ ] Geracao dinamica de metadados de SEO, Open Graph e favicons com media queries (`prefers-color-scheme`) em `generateMetadata`.
@@ -110,7 +110,7 @@ Objetivo: Construir a experiencia de alta conversao para os visitantes em dispos
     - [ ] Botao de cupom com acao de copia imediata e feedback visual.
     - [ ] Botao primario de compra direcionando para a loja parceira em nova aba protegida.
 - [ ] Adaptar a visualizacao para telas desktop em formato de grade (grid 9:16).
-- [ ] Desenvolver a pagina individual de corte em `app/v/[slug]/page.tsx` para compartilhamento direto.
+- [ ] Desenvolver a pagina individual de corte em `src/app/v/[slug]/page.tsx` para compartilhamento direto.
 
 ---
 
