@@ -31,6 +31,7 @@ Objetivo: Configurar a base tecnica da aplicacao, dependencias de producao, comp
 - [ ] Implementar a funcao auxiliar de combinacao de classes `cn()` em `lib/utils.ts`.
 - [ ] Implementar o gerenciador de temas (modo claro, modo escuro e sistema) com script anti-FOUC no cabeçalho e cache em `localStorage`.
 - [ ] Criar os clientes do Supabase para o lado cliente e lado servidor (`lib/supabase/client.ts`, `lib/supabase/server.ts` e `lib/supabase/admin.ts`).
+- [ ] Implementar utilitario de ambiente e logger defensivo em `lib/logger.ts` controlado pela flag `isDev` (`IS_DEV === 'true' || process.env.NODE_ENV === 'development'`).
 - [ ] Definir as tipagens estritas do banco de dados em `types/database.ts` em total conformidade com `docs/DATABASE.md` (incluindo cores primária e secundária para modos claro e escuro).
 
 ---

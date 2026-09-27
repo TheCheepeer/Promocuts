@@ -112,7 +112,7 @@ cp .env.example.vercel .env.local
 cp .env.example.docker .env
 ```
 
-Edite `.env.local` ou `.env` com as configurações do seu banco e `ADMIN_EMAIL`.
+Edite `.env.local` ou `.env` com as configurações do seu banco e `ADMIN_EMAIL`. Para ativar logs detalhados e diagnósticos durante o desenvolvimento local, defina `IS_DEV=true`.
 
 ### 3. Instalar dependências e rodar o servidor
 

@@ -41,6 +41,7 @@ services:
             - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no .env}@db:5432/${POSTGRES_DB:-promocuts}
             - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
             - ADMIN_EMAIL=${ADMIN_EMAIL:?Defina ADMIN_EMAIL no .env}
+            - IS_DEV=${IS_DEV:-false}
             # Seguranca e Isolamento por VPN no /admin
             - ADMIN_ALLOWED_IPS=${ADMIN_ALLOWED_IPS:-}
             # Single Sign-On (SSO) para o Painel /admin

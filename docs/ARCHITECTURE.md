@@ -152,6 +152,11 @@ sequenceDiagram
 4. **Isolamento de Credenciais Sensíveis:**
     - Variáveis sensíveis como `DATABASE_URL`, `AUTH_SECRET` e `SUPABASE_SERVICE_ROLE_KEY` operam estritamente no backend (Server Actions e Route Handlers), sem exposição ao bundle do navegador.
 
+5. **Diagnóstico Seguro e Prevenção de Vazamento de Informações (`IS_DEV` / OWASP A05):**
+    - A emissão de logs detalhados e rastreamento de diagnósticos é controlada pela variável `IS_DEV` (`IS_DEV=true` ou ambiente nativo `NODE_ENV=development`).
+    - Em produção (`IS_DEV=false`), mensagens internas do servidor, stack traces e detalhes de erros são omitidos das respostas ao cliente, prevenindo reconhecimento de infraestrutura por terceiros.
+    - Quando ativada para depuração, a flag permite inspecionar em tempo real o parsing de URLs de vídeo, consultas do Supabase e eventos assíncronos de telemetria sem necessidade de recompilar contêineres.
+
 ---
 
 ## 5. Estratégia de Frontend e Otimização de Conversão

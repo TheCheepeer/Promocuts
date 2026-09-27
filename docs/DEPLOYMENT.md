@@ -86,6 +86,9 @@ NEXT_PUBLIC_APP_URL=https://promocuts.seu-dominio.com
 # Chave secreta de sessao (gerar com: openssl rand -base64 32)
 AUTH_SECRET=sua-chave-criptografica-aleatoria
 
+# Modo de desenvolvimento e depuracao de logs (true ou false)
+IS_DEV=false
+
 # Credenciais do PostgreSQL 18.6 (Apenas rede interna backend)
 POSTGRES_DB=promocuts
 POSTGRES_USER=promocuts_user
