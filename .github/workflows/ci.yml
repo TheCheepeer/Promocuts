@@ -1,0 +1,47 @@
+name: CI - Integridade e Qualidade
+
+on:
+    push:
+        branches:
+            - main
+    pull_request:
+        branches:
+            - main
+
+jobs:
+    check-quality:
+        name: Validacao de Tipos e Linter
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout do Repositorio
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js 20
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 20
+                  cache: "npm"
+
+            - name: Instalar Dependencias
+              run: |
+                  if [ -f "package.json" ]; then
+                    npm ci || npm install
+                  else
+                    echo "package.json ainda nao inicializado. Pulando instalacao."
+                  fi
+
+            - name: Checagem de Tipos (TypeScript)
+              run: |
+                  if [ -f "tsconfig.json" ]; then
+                    npx tsc --noEmit
+                  else
+                    echo "tsconfig.json ainda nao inicializado. Pulando typecheck."
+                  fi
+
+            - name: Linter (ESLint)
+              run: |
+                  if [ -f "package.json" ] && grep -q '"lint"' package.json; then
+                    npm run lint
+                  else
+                    echo "Script de lint ainda nao configurado. Pulando linter."
+                  fi

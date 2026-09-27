@@ -45,6 +45,22 @@ Inicie o deploy clicando no botão abaixo:
 
 Preencha as variáveis de ambiente solicitadas pelo assistente e conclua a criação do projeto.
 
+### 5. Passo 4: Automação CI/CD no GitHub Actions (Opcional)
+
+O repositório possui fluxos de integração e entrega contínua pré-configurados em `.github/workflows/`:
+
+1. **Qualidade de Código (`ci.yml`):**
+    - Executado automaticamente a cada `push` e `pull_request` na branch `main`.
+    - Executa checagem de tipos estrita (`tsc --noEmit`) e linter. Não requer nenhuma variável secreta.
+
+2. **Deploy Automático de Migrações (`migrations.yml`):**
+    - Executado quando arquivos da pasta `supabase/migrations/` forem modificados na branch `main`.
+    - Para habilitar no seu repositório GitHub, adicione os segredos em **Settings > Secrets and variables > Actions**:
+        - `SUPABASE_PROJECT_ID`: ID do projeto no Supabase (ex: `jxblaxfwbiijkdwnneqw`).
+        - `SUPABASE_DB_PASSWORD`: Senha do banco PostgreSQL definida na criação.
+        - `SUPABASE_ACCESS_TOKEN`: Token pessoal gerado em [supabase.com/dashboard/account/tokens](https://supabase.com/dashboard/account/tokens).
+    - **Cláusula Defensiva:** Caso os segredos não estejam configurados (como em forks de terceiros ou deploys rápidos de clientes), o fluxo é ignorado de forma limpa, sem gerar falhas de build.
+
 ---
 
 ## Opção B: Self-Hosted com Docker (PostgreSQL 18.6, SSO e VPN)
