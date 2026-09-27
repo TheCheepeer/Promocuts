@@ -1,0 +1,2 @@
+# Garante terminacao de linha LF para scripts shell em qualquer sistema operacional
+*.sh text eol=lf

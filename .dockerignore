@@ -36,6 +36,7 @@ AGENTS.md
 README.md
 docs
 LICENSE
+scripts
 
 # Migracoes do Banco (Utilizadas apenas pelo container db)
 supabase

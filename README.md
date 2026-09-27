@@ -78,9 +78,11 @@ Para entender a arquitetura em detalhes, consulte a documentação dedicada na p
     cp .env.example.docker .env
     ```
 2. Edite o `.env` informando seu `ADMIN_EMAIL`, chave `AUTH_SECRET` e senhas do PostgreSQL 18.6.
-3. Inicie os serviços com um único comando:
+3. Inicie os serviços com um único comando (ou utilize `./scripts/prod.sh` para build e logs):
     ```bash
     docker compose up -d
+    # ou via script de automacao
+    ./scripts/prod.sh
     ```
     O contêiner `postgres:18.6-alpine` aplicará as migrações automaticamente no primeiro boot e a aplicação estará acessível através do Nginx Gateway na porta `80`. Todos os serviços internos permanecem isolados na rede privada do Docker.
 
