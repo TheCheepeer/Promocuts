@@ -68,10 +68,10 @@ cd Promocuts
 
 #### 2. Configurar o arquivo de variáveis de ambiente
 
-Copie o template para `.env`:
+Copie o template de ambiente Docker para `.env`:
 
 ```bash
-cp .env.example .env
+cp .env.example.docker .env
 ```
 
 Edite o arquivo `.env` ajustando os parâmetros:

@@ -167,6 +167,11 @@ O design segue as diretrizes do guia de princípios de design e a especificaçã
     - Badge de cupom clicável que copia o código para a área de transferência em um toque e exibe feedback tátil/visual imediato.
     - Botão de compra primário de alto contraste (`bg-brand-primary text-white hover:bg-brand-primary/90`) que abre a loja em nova aba com atributos `target="_blank" rel="noopener noreferrer sponsored"`.
 - **Modo Desktop Elegante:** Em telas grandes, a interface migra automaticamente para uma grade de cartões com proporção 9:16, preservando a identidade visual sem esticar vídeos ou desperdiçar espaço horizontal. As pílulas de categorias permanecem fixas no topo da área de catálogo para navegação rápida.
+- **Suporte a Modo Claro e Modo Escuro com Cache e Alternância Rápida:**
+    - A interface adota por padrão a preferência de cor informada pelo sistema operacional e navegador do visitante (`prefers-color-scheme`).
+    - Um botão interativo de troca de tema fica permanentemente disponível no cabeçalho (permitindo alternar entre claro, escuro ou automático do sistema).
+    - A escolha do usuário é gravada no armazenamento local do navegador (`localStorage` e cookie de sessão) para restauração imediata nas próximas visitas.
+    - A execução de um script leve e seguro no cabeçalho (`anti-fouc script`) impede qualquer clarão ou piscamento visual antes do carregamento da página.
 
 ---
 
@@ -174,9 +179,14 @@ O design segue as diretrizes do guia de princípios de design e a especificaçã
 
 O PromoCuts oferece uma arquitetura de customização completa orientada a dados (data-driven branding), permitindo adaptar toda a identidade da plataforma sem necessidade de recompilar código ou alterar variáveis estáticas de build.
 
-### 6.1 Tokens Semânticos e Integração com Tailwind CSS v4
+### 6.1 Tokens Semânticos e Paleta de Cores por Tema (Tailwind CSS v4)
 
-A estilização visual utiliza o motor de variáveis de tema do Tailwind CSS v4 via diretiva `@theme` no arquivo global de estilos:
+As cores primária e secundária da marca possuem definições independentes para o Modo Claro e para o Modo Escuro. Isso garante contraste adequado e legibilidade em qualquer ambiente de iluminação:
+
+1. **Modo Claro:** utiliza `primary_color_light` e `secondary_color_light`.
+2. **Modo Escuro:** utiliza `primary_color_dark` e `secondary_color_dark`.
+
+No arquivo global de estilos (`app/globals.css`), o Tailwind CSS v4 mapeia as variáveis universais através da diretiva `@theme`:
 
 ```css
 @import "tailwindcss";
@@ -187,37 +197,120 @@ A estilização visual utiliza o motor de variáveis de tema do Tailwind CSS v4 
 }
 ```
 
-No layout raiz (`app/layout.tsx`), as variáveis CSS customizadas são injetadas diretamente na tag `<html>` com base nas configurações ativas recuperadas da tabela `site_settings`:
+No layout raiz (`app/layout.tsx`), as variáveis são injetadas dinamicamente com base nas configurações da tabela `site_settings`:
 
-```tsx
-<html
-  lang="pt-BR"
-  style={{
-    '--brand-primary': settings.primary_color,
-    '--brand-secondary': settings.secondary_color,
-  } as React.CSSProperties}
->
+```html
+<style
+    dangerouslySetInnerHTML="{{"
+    __html:
+    `
+    :root
+    {
+    --brand-primary-light:
+    ${settings.primary_color_light};
+    --brand-secondary-light:
+    ${settings.secondary_color_light};
+    --brand-primary-dark:
+    ${settings.primary_color_dark};
+    --brand-secondary-dark:
+    ${settings.secondary_color_dark};
+    --brand-primary:
+    var(--brand-primary-light);
+    --brand-secondary:
+    var(--brand-secondary-light);
+    }
+    .dark
+    {
+    --brand-primary:
+    var(--brand-primary-dark);
+    --brand-secondary:
+    var(--brand-secondary-dark);
+    }
+    @media
+    (prefers-color-scheme:
+    dark)
+    {
+    :root:not(.light)
+    {
+    --brand-primary:
+    var(--brand-primary-dark);
+    --brand-secondary:
+    var(--brand-secondary-dark);
+    }
+    }
+    `}}
+/>
 ```
 
-Dessa forma, todos os componentes e utilitários da interface que utilizam as classes de marca (`bg-brand-primary`, `text-brand-primary`, `border-brand-primary`, `ring-brand-primary`, `bg-brand-secondary`, etc.) reagem instantaneamente às cores configuradas pelo administrador.
+Dessa forma, todos os componentes que utilizam as classes utilitárias de marca (`bg-brand-primary`, `text-brand-primary`, `border-brand-primary`, `ring-brand-primary`, `bg-brand-secondary`, etc.) reagem de forma automática tanto ao tema ativo quanto às cores personalizadas no painel administrativo.
 
-### 6.2 Metadados Dinâmicos, Favicon e Título do Navegador
+### 6.2 Alternância de Tema e Persistência em Cache
+
+O ciclo de gerenciamento de tema funciona da seguinte forma:
+
+1. **Detecção Inicial:** Ao carregar a página pela primeira vez, o navegador consulta a preferência do sistema operacional via media query `(prefers-color-scheme: dark)`.
+2. **Prevalência da Escolha do Usuário:** Se o visitante tiver selecionado manualmente um tema através do botão no cabeçalho, a preferência salva no `localStorage` sob a chave `promocuts-theme` sobrepõe a preferência do sistema.
+3. **Prevenção de FOUC (Flash of Unstyled Theme):** Um script síncrono mínimo adiciona a classe `dark` à tag `<html>` antes da primeira pintura dos elementos visuais.
+4. **Disponibilidade Global:** A alteração do tema propaga-se instantaneamente para todos os componentes abertos sem necessidade de recarregar a janela.
+
+### 6.3 Metadados Dinâmicos, Favicons por Tema e Título do Navegador
 
 A camada de borda do Next.js App Router gera os metadados de cabeçalho dinamicamente por meio da função assíncrona `generateMetadata`:
 
 - **Título do Navegador:** Montado a partir do nome da aplicação e do slogan configurados (`settings.site_name` e `settings.site_tagline`), com suporte ao modelo de template para páginas de vídeos (`/v/[slug]`) e categorias (`/c/[slug]`).
-- **Favicon e Ícones de Dispositivos:** Se uma URL customizada for informada no campo `favicon_url`, ela é vinculada dinamicamente nas tags `<link rel="icon">` e `<link rel="apple-touch-icon">`, substituindo o favicon padrão da aplicação.
-- **SEO e Compartilhamento Social (Open Graph e Twitter Cards):** As meta tags de descrição (`description`), título de rede social e imagem de visualização utilizam os dados de `site_description` e `logo_url`, garantindo indexação precisa nos buscadores.
+- **Favicons Dinâmicos Adaptados ao Tema do Navegador:**
+    - Os arquivos de favicon devem ser estritamente nos formatos **PNG** (`image/png`) ou **SVG** (`image/svg+xml`). O formato SVG oferece nitidez vetorial perfeita em qualquer densidade de pixels, enquanto o PNG assegura compatibilidade e transparência.
+    - Se ambos os campos (`favicon_url_light` e `favicon_url_dark`) estiverem configurados, o cabeçalho emite tags `<link rel="icon">` nativas com a media query de esquema de cores do sistema:
+        ```html
+        <link
+            rel="icon"
+            href="${settings.favicon_url_light}"
+            type="${mimeTypeLight}"
+            media="(prefers-color-scheme: light)"
+        />
+        <link
+            rel="icon"
+            href="${settings.favicon_url_dark}"
+            type="${mimeTypeDark}"
+            media="(prefers-color-scheme: dark)"
+        />
+        ```
+    - Essa abordagem dispensa JavaScript para a troca do ícone da aba, respondendo imediatamente às mudanças de tema do sistema operacional do visitante.
+    - Se apenas a versão clara estiver cadastrada, ela atua como ícone universal para todos os esquemas.
+- **SEO e Compartilhamento Social (Open Graph e Twitter Cards):** As meta tags de descrição (`description`), título de rede social e imagem de visualização utilizam os dados de `site_description` e `logo_url_light`, garantindo indexação precisa nos buscadores.
 
-### 6.3 Gestão Centralizada no Painel Administrativo (`/admin/settings`)
+### 6.4 Gestão Centralizada no Painel Administrativo (`/admin/settings`)
 
 A interface fechada de administração disponibiliza o painel `/admin/settings` para controle visual total:
 
 1. **Identidade do Projeto:** Edição do nome da vitrine, slogan secundário, descrição institucional de SEO e texto de direitos autorais do rodapé.
-2. **Paleta de Cores:** Seletor visual interativo (color picker nativo e código hexadecimal) para alteração em tempo real das cores primária e secundária.
-3. **Logotipos e Ícones:** Definição das URLs da logo principal (header desktop), logo compacta (header mobile) e favicon.
+2. **Paleta de Cores Dual-Theme:**
+    - Cor Primária e Secundária para o **Modo Claro** (seletores interativos com código hexadecimal).
+    - Cor Primária e Secundária para o **Modo Escuro** (seletores interativos com código hexadecimal).
+3. **Logotipos e Ícones Adaptáveis (Exclusivamente PNG ou SVG):**
+    - **Logo Principal:** `logo_url_light` e `logo_url_dark` (exibida no cabeçalho desktop). Se a versão escura não for enviada, a versão clara é reutilizada como fallback universal.
+    - **Ícone Compacto Mobile:** `logo_icon_url_light` e `logo_icon_url_dark` (exibido na barra de navegação mobile). Se omitido, herda a logo principal correspondente.
+    - **Favicon do Navegador:** `favicon_url_light` e `favicon_url_dark` (injetados com media queries nativas para a aba do navegador).
 4. **Presença Social:** Links opcionais para os perfis da marca no Instagram, TikTok e canal no YouTube.
 5. **Revalidação de Cache:** A gravação é realizada por Server Action autenticada via Service Role, disparando `revalidatePath('/', 'layout')` para que as mudanças reflitam instantaneamente para todos os visitantes sem necessidade de novo deploy.
+
+### 6.5 Modelo Híbrido de Armazenamento de Ativos (Upload Direto e URLs Externas)
+
+Para unir praticidade operacional com custo zero e alto desempenho, o PromoCuts adota uma arquitetura híbrida de manipulação de imagens:
+
+1. **Armazenamento Otimizado no Banco de Dados:**
+    - O PostgreSQL armazena estritamente referências em texto (`TEXT`), sem salvar binários pesados (BLOBs) nas tabelas. Isso preserva o limite gratuito de 500 MB do banco de dados e mantém as consultas SQL instantâneas.
+    - A coluna aceita três tipos de valores: URLs remotas de CDNs (`https://...`), caminhos relativos locais (`/uploads/...`) ou Data URIs para vetores compactos (`data:image/svg+xml;...`).
+
+2. **Flexibilidade Operacional no Painel (`/admin/settings`):**
+    - Cada campo de ativo oferece dois modos de entrada:
+        - **Modo Colar URL:** Permite apontar para arquivos já hospedados em CDNs externos, Imgur, Cloudinary ou repositórios públicos.
+        - **Modo Upload Direto:** Permite selecionar o arquivo PNG ou SVG localmente através de arrastar e soltar (drag and drop).
+
+3. **Destino do Upload por Tipo de Ambiente:**
+    - **Nuvem Serverless (Supabase + Vercel):** O upload é enviado para o bucket público e gratuito `site-assets` do Supabase Storage. O Supabase fornece 1 GB de armazenamento de arquivos sem custos com distribuição global via CDN. O sistema grava a URL pública resultante no banco de dados.
+    - **Self-Hosted / Docker Compose:** O upload é salvo no diretório `/app/public/uploads` mantido pelo volume persistente `uploads_data`. O Next.js serve os arquivos com cache estático através da rota relativa correspondente.
+    - **Vetores Leves:** Arquivos SVG de tamanho inferior a 64 KB podem opcionalmente ser codificados como Data URI direto, dispensando qualquer dependência de bucket.
 
 ---
 
@@ -240,14 +333,14 @@ Para garantir autonomia e independência de fornecedores de nuvem, o PromoCuts d
 - **Ponto Único de Entrada:** O contêiner `promocuts-nginx` é o único serviço que expõe porta para a máquina hospedeira (`80:80`).
 - **Terminação SSL Delegada à Nuvem:** A porta `443` (HTTPS) e os certificados SSL são gerenciados na camada de borda pela infraestrutura de nuvem (como Cloudflare, AWS ALB ou Load Balancers). O Nginx mapeia com segurança o cabeçalho `$proxy_x_forwarded_proto` prevenindo falsificação de HTTPS.
 - **Segregação Rigorosa de Redes:** A infraestrutura é segmentada em duas redes isoladas:
-  - `frontend-network`: conecta exclusivamente o `promocuts-nginx` e o `promocuts-app`.
-  - `backend-network` (marcada como `internal: true`): conecta exclusivamente o `promocuts-app`, `promocuts-db` e `promocuts-redis`. O Nginx não possui rota física nem resolução DNS para alcançar o PostgreSQL ou Redis, impedindo pivoteamento em caso de comprometimento da borda.
+    - `frontend-network`: conecta exclusivamente o `promocuts-nginx` e o `promocuts-app`.
+    - `backend-network` (marcada como `internal: true`): conecta exclusivamente o `promocuts-app`, `promocuts-db` e `promocuts-redis`. O Nginx não possui rota física nem resolução DNS para alcançar o PostgreSQL ou Redis, impedindo pivoteamento em caso de comprometimento da borda.
 - **Cabeçalhos de Segurança Defensivos e Rate Limiting:** O Nginx aplica políticas de `Content-Security-Policy` (permitindo estritamente players de TikTok, Reels e Shorts), `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy` e `Permissions-Policy`, além de zonas de rate limiting (`limit_req_zone`) para requisições gerais e rotas administrativas (`/admin`).
 
 ### 8.2 Next.js Standalone Runner
 
 - **Build Multi-Stage Endurecido:** O arquivo `Dockerfile` compila o frontend e o servidor Next.js utilizando o recurso nativo `output: 'standalone'`.
-- **Gerenciador de Processos Tini:** Utiliza `tini` como entrypoint (PID 1) para tratamento adequado de sinais UNIX (`SIGTERM`/`SIGINT`), viabilizando encerramento gracioso (*graceful shutdown*) sem corromper transações de banco.
+- **Gerenciador de Processos Tini:** Utiliza `tini` como entrypoint (PID 1) para tratamento adequado de sinais UNIX (`SIGTERM`/`SIGINT`), viabilizando encerramento gracioso (_graceful shutdown_) sem corromper transações de banco.
 - **Healthcheck Nativo:** Monitoramento integrado de integridade via comando local para orquestradores.
 - **Segurança de Execução:** O processo roda sob o usuário sem privilégios de root (`nextjs:nodejs`), acessível apenas internamente pelo Nginx na porta `3000`.
 

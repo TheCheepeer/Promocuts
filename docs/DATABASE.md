@@ -20,11 +20,16 @@ erDiagram
         varchar site_name
         varchar site_tagline
         text site_description
-        varchar primary_color
-        varchar secondary_color
-        text logo_url
-        text logo_icon_url
-        text favicon_url
+        varchar primary_color_light
+        varchar secondary_color_light
+        varchar primary_color_dark
+        varchar secondary_color_dark
+        text logo_url_light
+        text logo_url_dark
+        text logo_icon_url_light
+        text logo_icon_url_dark
+        text favicon_url_light
+        text favicon_url_dark
         varchar social_instagram
         varchar social_tiktok
         varchar social_youtube
@@ -181,14 +186,14 @@ _Restrição:_ Chave única composta `UNIQUE(video_id, product_id)` para impedir
 
 Registros anônimos de engajamento para cálculo de métricas de conversão com mitigação ativa contra DoS.
 
-| Coluna       | Tipo            | Nulo | Padrão               | Descrição                                                              |
-| :----------- | :-------------- | :--: | :------------------- | :--------------------------------------------------------------------- |
-| `id`         | `UUID`          | Não  | `uuid_generate_v4()` | Identificador do evento                                                |
-| `product_id` | `UUID`          | Não  | —                    | Referência ao produto clicado (ON DELETE CASCADE)                      |
-| `video_id`   | `UUID`          | Sim  | `NULL`               | Referência ao vídeo de onde partiu o clique                            |
-| `created_at` | `TIMESTAMPTZ`   | Não  | `NOW()`              | Data e hora do clique                                                  |
-| `user_agent` | `VARCHAR(512)`  | Sim  | `NULL`               | Informação do navegador/dispositivo (limitado a 512 caracteres)       |
-| `referrer`   | `VARCHAR(1024)` | Sim  | `NULL`               | Origem da requisição (limitado a 1024 caracteres)                      |
+| Coluna       | Tipo            | Nulo | Padrão               | Descrição                                                       |
+| :----------- | :-------------- | :--: | :------------------- | :-------------------------------------------------------------- |
+| `id`         | `UUID`          | Não  | `uuid_generate_v4()` | Identificador do evento                                         |
+| `product_id` | `UUID`          | Não  | —                    | Referência ao produto clicado (ON DELETE CASCADE)               |
+| `video_id`   | `UUID`          | Sim  | `NULL`               | Referência ao vídeo de onde partiu o clique                     |
+| `created_at` | `TIMESTAMPTZ`   | Não  | `NOW()`              | Data e hora do clique                                           |
+| `user_agent` | `VARCHAR(512)`  | Sim  | `NULL`               | Informação do navegador/dispositivo (limitado a 512 caracteres) |
+| `referrer`   | `VARCHAR(1024)` | Sim  | `NULL`               | Origem da requisição (limitado a 1024 caracteres)               |
 
 ---
 
@@ -196,23 +201,28 @@ Registros anônimos de engajamento para cálculo de métricas de conversão com 
 
 Armazena os parâmetros globais de customização de marca, cores, logotipos e metadados no padrão singleton (apenas 1 registro).
 
-| Coluna             | Tipo           | Nulo | Padrão                                                              | Descrição                                                                           |
-| :----------------- | :------------- | :--: | :------------------------------------------------------------------ | :---------------------------------------------------------------------------------- |
-| `id`               | `INT`          | Não  | `1`                                                                 | Identificador único singleton com restrição `CHECK (id = 1)`                        |
-| `site_name`        | `VARCHAR(100)` | Não  | `'PromoCuts'`                                                       | Nome exibido no navegador, cabeçalho e compartilhamento                             |
-| `site_tagline`     | `VARCHAR(255)` | Sim  | `'Cortes virais e recomendações de produtos afiliados'`             | Slogan ou frase de efeito complementar                                              |
-| `site_description` | `TEXT`         | Sim  | `'Encontre os melhores achadinhos e promoções em vídeos curtos...'` | Meta description para SEO e buscadores                                              |
-| `primary_color`    | `VARCHAR(20)`  | Não  | `'#10B981'`                                                         | Cor primária em hexadecimal estrito `CHECK (~* '^#[0-9A-Fa-f]{6}$')`                |
-| `secondary_color`  | `VARCHAR(20)`  | Não  | `'#6366F1'`                                                         | Cor secundária em hexadecimal estrito `CHECK (~* '^#[0-9A-Fa-f]{6}$')`              |
-| `logo_url`         | `TEXT`         | Sim  | `NULL`                                                              | URL segura (`CHECK (~* '^https?://')`) da imagem da logo no cabeçalho               |
-| `logo_icon_url`    | `TEXT`         | Sim  | `NULL`                                                              | URL segura (`CHECK (~* '^https?://')`) do ícone da marca para versão mobile         |
-| `favicon_url`      | `TEXT`         | Sim  | `NULL`                                                              | URL segura (`CHECK (~* '^https?://')`) do favicon na aba do navegador               |
-| `social_instagram` | `VARCHAR(255)` | Sim  | `NULL`                                                              | Link opcional para o perfil da marca no Instagram                                   |
-| `social_tiktok`    | `VARCHAR(255)` | Sim  | `NULL`                                                              | Link opcional para o perfil da marca no TikTok                                      |
-| `social_youtube`   | `VARCHAR(255)` | Sim  | `NULL`                                                              | Link opcional para o canal no YouTube                                               |
-| `footer_text`      | `TEXT`         | Sim  | `'PromoCuts — Todos os direitos reservados.'`                       | Mensagem de rodapé e direitos autorais                                              |
-| `created_at`       | `TIMESTAMPTZ`  | Não  | `NOW()`                                                             | Data e hora de criação                                                              |
-| `updated_at`       | `TIMESTAMPTZ`  | Não  | `NOW()`                                                             | Data e hora da última atualização (via trigger com search_path seguro)              |
+| Coluna                  | Tipo           | Nulo | Padrão                                                              | Descrição                                                                                      |
+| :---------------------- | :------------- | :--: | :------------------------------------------------------------------ | :--------------------------------------------------------------------------------------------- |
+| `id`                    | `INT`          | Não  | `1`                                                                 | Identificador único singleton com restrição `CHECK (id = 1)`                                   |
+| `site_name`             | `VARCHAR(100)` | Não  | `'PromoCuts'`                                                       | Nome exibido no navegador, cabeçalho e compartilhamento                                        |
+| `site_tagline`          | `VARCHAR(255)` | Sim  | `'Cortes virais e recomendações de produtos afiliados'`             | Slogan ou frase de efeito complementar                                                         |
+| `site_description`      | `TEXT`         | Sim  | `'Encontre os melhores achadinhos e promoções em vídeos curtos...'` | Meta description para SEO e buscadores                                                         |
+| `primary_color_light`   | `VARCHAR(20)`  | Não  | `'#10B981'`                                                         | Cor primária no modo claro em hexadecimal estrito `CHECK (~* '^#[0-9A-Fa-f]{6}$')`             |
+| `secondary_color_light` | `VARCHAR(20)`  | Não  | `'#6366F1'`                                                         | Cor secundária no modo claro em hexadecimal estrito `CHECK (~* '^#[0-9A-Fa-f]{6}$')`           |
+| `primary_color_dark`    | `VARCHAR(20)`  | Não  | `'#10B981'`                                                         | Cor primária no modo escuro em hexadecimal estrito `CHECK (~* '^#[0-9A-Fa-f]{6}$')`            |
+| `secondary_color_dark`  | `VARCHAR(20)`  | Não  | `'#6366F1'`                                                         | Cor secundária no modo escuro em hexadecimal estrito `CHECK (~* '^#[0-9A-Fa-f]{6}$')`          |
+| `logo_url_light`        | `TEXT`         | Sim  | `NULL`                                                              | Referência a PNG ou SVG para logo clara (URL HTTPS, caminho local `/uploads/...` ou Data URI)  |
+| `logo_url_dark`         | `TEXT`         | Sim  | `NULL`                                                              | Referência a PNG ou SVG para logo escura (fallback automático para `logo_url_light`)           |
+| `logo_icon_url_light`   | `TEXT`         | Sim  | `NULL`                                                              | Referência a PNG ou SVG para ícone mobile no modo claro                                        |
+| `logo_icon_url_dark`    | `TEXT`         | Sim  | `NULL`                                                              | Referência a PNG ou SVG para ícone mobile no modo escuro (fallback para `logo_icon_url_light`) |
+| `favicon_url_light`     | `TEXT`         | Sim  | `NULL`                                                              | Referência a PNG ou SVG para favicon tema claro (`media="(prefers-color-scheme: light)"`)      |
+| `favicon_url_dark`      | `TEXT`         | Sim  | `NULL`                                                              | Referência a PNG ou SVG para favicon tema escuro (`media="(prefers-color-scheme: dark)"`)      |
+| `social_instagram`      | `VARCHAR(255)` | Sim  | `NULL`                                                              | Link opcional para o perfil da marca no Instagram                                              |
+| `social_tiktok`         | `VARCHAR(255)` | Sim  | `NULL`                                                              | Link opcional para o perfil da marca no TikTok                                                 |
+| `social_youtube`        | `VARCHAR(255)` | Sim  | `NULL`                                                              | Link opcional para o canal no YouTube                                                          |
+| `footer_text`           | `TEXT`         | Sim  | `'PromoCuts — Todos os direitos reservados.'`                       | Mensagem de rodapé e direitos autorais                                                         |
+| `created_at`            | `TIMESTAMPTZ`  | Não  | `NOW()`                                                             | Data e hora de criação                                                                         |
+| `updated_at`            | `TIMESTAMPTZ`  | Não  | `NOW()`                                                             | Data e hora da última atualização (via trigger com search_path seguro)                         |
 
 ---
 

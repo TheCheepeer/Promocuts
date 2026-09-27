@@ -56,6 +56,8 @@ services:
                 condition: service_healthy
             redis:
                 condition: service_healthy
+        volumes:
+            - uploads_data:/app/public/uploads
         networks:
             - frontend-network
             - backend-network
@@ -130,6 +132,8 @@ volumes:
     postgres_data:
         driver: local
     redis_data:
+        driver: local
+    uploads_data:
         driver: local
 
 networks:

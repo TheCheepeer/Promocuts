@@ -26,7 +26,7 @@ Foi concebido como uma solução completa de **renda passiva** e um **projeto es
 - **Embeds Nativos (Zero Custo de Tráfego e Armazenamento):** Nenhum arquivo `.mp4` é armazenado no servidor. Os reprodutores utilizam iframes oficiais do TikTok, Instagram e YouTube, eliminando custos de CDN e armazenamento de vídeo.
 - **Cards de Produtos Acoplados:** Cada corte exibe os produtos recomendados com foto, título, preço promocional, lojas parceiras e botões de compra imediatos com tags `rel="noopener noreferrer sponsored"`.
 - **Cópia Instantânea de Cupom:** Botão com um toque para copiar códigos promocionais para a área de transferência, acompanhado de feedback tátil e visual.
-- **Customização Total de Marca (White-Label):** Controle completo da identidade visual pelo painel `/admin/settings` — troca de cores primárias e secundárias do tema, substituição de logotipo e favicon, definição do nome do site, slogan e metadados de SEO, tudo refletido dinamicamente na vitrine pública sem necessidade de novo deploy.
+- **Customização Total de Marca (White-Label) & Modo Claro/Escuro:** Suporte nativo a modo claro e escuro (baseado no sistema com botão de alternância manual e persistência em cache), paleta de cores primária e secundária independentes para cada modo de visualização, controle completo de logotipo, favicon, slogan e metadados de SEO pelo painel `/admin/settings`, tudo refletido dinamicamente na vitrine pública sem necessidade de novo deploy.
 - **Portabilidade Total e Self-Hosting (Docker):** Sem aprisionamento de fornecedor. Rode em nuvem gratuita ou em VPS própria com Docker Compose, Nginx Gateway (porta 80 com SSL na nuvem), PostgreSQL 18.6, Redis 8 opcional, autenticação SSO e proteção de acesso administrativo isolada por VPN (Tailscale / WireGuard).
 - **Painel Administrativo Seguro (`/admin`):** Interface fechada para cadastro ágil de categorias, links e produtos. Acesso restrito exclusivamente ao endereço em `ADMIN_EMAIL` com suporte a Magic Link ou SSO corporativo e bloqueio opcional por faixas de IP de VPN.
 - **Banco de Dados Plug and Play:** Script SQL de inicialização em [`supabase/migrations/001_initial_schema.sql`](supabase/migrations/001_initial_schema.sql) com tabelas indexadas, dados padrão de branding e regras de Row Level Security (RLS) prontas.
@@ -54,6 +54,7 @@ Para entender a arquitetura em detalhes, consulte a documentação dedicada na p
 - [**Arquitetura do Sistema**](docs/ARCHITECTURE.md): Estrutura de software, motor de embeds nativos, sistema de customização visual, modelo de segurança e contêineres.
 - [**Modelagem de Dados**](docs/DATABASE.md): Diagrama Entidade-Relacionamento, dicionário de campos e políticas de Row Level Security.
 - [**Guia de Implantação e Deploy**](docs/DEPLOYMENT.md): Passo a passo para subir na Vercel com Supabase ou com Docker Compose e PostgreSQL 18.6.
+- [**Roadmap de Desenvolvimento**](docs/ROADMAP.md): Acompanhamento das fases de desenvolvimento, tarefas e status de implementação.
 
 ---
 
@@ -74,7 +75,7 @@ Para entender a arquitetura em detalhes, consulte a documentação dedicada na p
     ```bash
     git clone https://github.com/TheCheepeer/Promocuts.git
     cd Promocuts
-    cp .env.example .env
+    cp .env.example.docker .env
     ```
 2. Edite o `.env` informando seu `ADMIN_EMAIL`, chave `AUTH_SECRET` e senhas do PostgreSQL 18.6.
 3. Inicie os serviços com um único comando:
@@ -101,13 +102,17 @@ cd Promocuts
 
 ### 2. Configurar as variáveis de ambiente
 
-Copie o modelo de variáveis:
+Copie o modelo de variáveis de acordo com seu ambiente:
 
 ```bash
-cp .env.example .env.local
+# Para desenvolvimento com Supabase (Nuvem):
+cp .env.example.vercel .env.local
+
+# Ou para desenvolvimento com Docker (Local):
+cp .env.example.docker .env
 ```
 
-Edite `.env.local` com as configurações do seu banco e `ADMIN_EMAIL`.
+Edite `.env.local` ou `.env` com as configurações do seu banco e `ADMIN_EMAIL`.
 
 ### 3. Instalar dependências e rodar o servidor
 
