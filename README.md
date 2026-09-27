@@ -26,8 +26,10 @@ Foi concebido como uma solução completa de **renda passiva** e um **projeto es
 - **Embeds Nativos (Zero Custo de Tráfego e Armazenamento):** Nenhum arquivo `.mp4` é armazenado no servidor. Os reprodutores utilizam iframes oficiais do TikTok, Instagram e YouTube, eliminando custos de CDN e armazenamento de vídeo.
 - **Cards de Produtos Acoplados:** Cada corte exibe os produtos recomendados com foto, título, preço promocional, lojas parceiras e botões de compra imediatos com tags `rel="noopener noreferrer sponsored"`.
 - **Cópia Instantânea de Cupom:** Botão com um toque para copiar códigos promocionais para a área de transferência, acompanhado de feedback tátil e visual.
-- **Painel Administrativo Embutido (`/admin`):** Interface fechada para cadastro ágil de categorias, links e produtos. A autorização é restrita exclusivamente ao endereço configurado em `ADMIN_EMAIL` via Supabase Auth.
-- **Banco de Dados Plug and Play:** Script SQL de inicialização em [`supabase/migrations/001_initial_schema.sql`](supabase/migrations/001_initial_schema.sql) com tabelas indexadas e regras de Row Level Security (RLS) prontas.
+- **Customização Total de Marca (White-Label):** Controle completo da identidade visual pelo painel `/admin/settings` — troca de cores primárias e secundárias do tema, substituição de logotipo e favicon, definição do nome do site, slogan e metadados de SEO, tudo refletido dinamicamente na vitrine pública sem necessidade de novo deploy.
+- **Portabilidade Total e Self-Hosting (Docker):** Sem aprisionamento de fornecedor. Rode em nuvem gratuita ou em VPS própria com Docker Compose, Nginx Gateway (porta 80 com SSL na nuvem), PostgreSQL 18.6, Redis 8 opcional, autenticação SSO e proteção de acesso administrativo isolada por VPN (Tailscale / WireGuard).
+- **Painel Administrativo Seguro (`/admin`):** Interface fechada para cadastro ágil de categorias, links e produtos. Acesso restrito exclusivamente ao endereço em `ADMIN_EMAIL` com suporte a Magic Link ou SSO corporativo e bloqueio opcional por faixas de IP de VPN.
+- **Banco de Dados Plug and Play:** Script SQL de inicialização em [`supabase/migrations/001_initial_schema.sql`](supabase/migrations/001_initial_schema.sql) com tabelas indexadas, dados padrão de branding e regras de Row Level Security (RLS) prontas.
 - **Métricas Anônimas:** Monitoramento leve de cliques em links de afiliados sem coleta de dados pessoais e sem dependência de serviços externos pagos.
 
 ---
@@ -36,9 +38,12 @@ Foi concebido como uma solução completa de **renda passiva** e um **projeto es
 
 - **Framework Web:** [Next.js](https://nextjs.org/) (App Router, Server Actions, TypeScript)
 - **Estilização Visual:** [Tailwind CSS v4](https://tailwindcss.com/)
-- **Banco de Dados & Autenticação:** [Supabase](https://supabase.com/) (PostgreSQL + Supabase Auth)
+- **Gateway & Proxy Reverso:** [Nginx](https://nginx.org/) (Porta 80 com SSL gerenciado na nuvem)
+- **Banco de Dados Relacional:** [PostgreSQL 18.6](https://www.postgresql.org/) / [Supabase](https://supabase.com/)
+- **Autenticação:** Supabase Auth (Magic Link) ou Single Sign-On (Google, GitHub, OIDC)
+- **Cache & Rate Limiting:** [Redis 8](https://redis.io/) (Upstash Serverless ou Docker Alpine)
 - **Ícones:** [Lucide React](https://lucide.dev/)
-- **Hospedagem & Deploy:** [Vercel](https://vercel.com/) (100% no Free Tier)
+- **Hospedagem & Deploy:** [Vercel](https://vercel.com/) (100% Free Tier) ou Contêineres Docker (VPS / Homelab)
 
 ---
 
@@ -46,9 +51,37 @@ Foi concebido como uma solução completa de **renda passiva** e um **projeto es
 
 Para entender a arquitetura em detalhes, consulte a documentação dedicada na pasta [`docs/`](docs/):
 
-- [**Arquitetura do Sistema**](docs/ARCHITECTURE.md): Estrutura de software, motor de embeds nativos e modelo de segurança.
+- [**Arquitetura do Sistema**](docs/ARCHITECTURE.md): Estrutura de software, motor de embeds nativos, sistema de customização visual, modelo de segurança e contêineres.
 - [**Modelagem de Dados**](docs/DATABASE.md): Diagrama Entidade-Relacionamento, dicionário de campos e políticas de Row Level Security.
-- [**Guia de Deploy Zero Custo**](docs/DEPLOYMENT.md): Passo a passo para subir o projeto no Supabase e na Vercel sem gastar nada.
+- [**Guia de Implantação e Deploy**](docs/DEPLOYMENT.md): Passo a passo para subir na Vercel com Supabase ou com Docker Compose e PostgreSQL 18.6.
+
+---
+
+## Opções de Implantação
+
+### Opção 1: Deploy na Vercel (1 Clique — Custo Zero)
+
+1. Clique no botão abaixo:
+
+    [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FTheCheepeer%2FPromocuts&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,SUPABASE_SERVICE_ROLE_KEY,ADMIN_EMAIL,NEXT_PUBLIC_APP_URL&envDescription=Variaveis%20de%20conexao%20do%20Supabase%20e%20e-mail%20do%20administrador&project-name=promocuts&repo-name=promocuts)
+
+2. Conecte sua conta do GitHub e preencha as variáveis de ambiente solicitadas.
+3. Clique em **Deploy**. Sua aplicação estará em produção em cerca de 2 minutos.
+
+### Opção 2: Deploy com Docker Compose (Self-Hosted / VPS)
+
+1. Clone o repositório e crie o arquivo de ambiente:
+    ```bash
+    git clone https://github.com/TheCheepeer/Promocuts.git
+    cd Promocuts
+    cp .env.example .env
+    ```
+2. Edite o `.env` informando seu `ADMIN_EMAIL`, chave `AUTH_SECRET` e senhas do PostgreSQL 18.6.
+3. Inicie os serviços com um único comando:
+    ```bash
+    docker compose up -d
+    ```
+    O contêiner `postgres:18.6-alpine` aplicará as migrações automaticamente no primeiro boot e a aplicação estará acessível através do Nginx Gateway na porta `80`. Todos os serviços internos permanecem isolados na rede privada do Docker.
 
 ---
 
@@ -57,7 +90,7 @@ Para entender a arquitetura em detalhes, consulte a documentação dedicada na p
 ### Pré-requisitos
 
 - [Node.js](https://nodejs.org/) versão 20 ou superior
-- Uma conta gratuita no [Supabase](https://supabase.com/)
+- Instância do Supabase ou Docker com PostgreSQL 18.6
 
 ### 1. Clonar o repositório
 
@@ -66,13 +99,7 @@ git clone https://github.com/TheCheepeer/Promocuts.git
 cd Promocuts
 ```
 
-### 2. Configurar o banco de dados
-
-1. Crie um projeto gratuito no [Supabase](https://supabase.com).
-2. Acesse o **SQL Editor** do Supabase.
-3. Execute o script [`supabase/migrations/001_initial_schema.sql`](supabase/migrations/001_initial_schema.sql).
-
-### 3. Configurar as variáveis de ambiente
+### 2. Configurar as variáveis de ambiente
 
 Copie o modelo de variáveis:
 
@@ -80,35 +107,16 @@ Copie o modelo de variáveis:
 cp .env.example .env.local
 ```
 
-Edite `.env.local` preenchendo as chaves do seu projeto Supabase e seu e-mail de administrador:
+Edite `.env.local` com as configurações do seu banco e `ADMIN_EMAIL`.
 
-```env
-NEXT_PUBLIC_SUPABASE_URL=https://seu-projeto.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=sua-anon-key-aqui
-SUPABASE_SERVICE_ROLE_KEY=sua-service-role-key-aqui
-ADMIN_EMAIL=seu-email@dominio.com
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-```
-
-### 4. Instalar dependências e rodar o servidor
+### 3. Instalar dependências e rodar o servidor
 
 ```bash
 npm install
 npm run dev
 ```
 
-Abra [http://localhost:3000](http://localhost:3000) no navegador para ver a vitrine pública ou acesse [http://localhost:3000/admin](http://localhost:3000/admin) para entrar no painel.
-
----
-
-## Deploy na Vercel (1 Clique)
-
-1. Clique no botão abaixo:
-
-    [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FTheCheepeer%2FPromocuts&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,SUPABASE_SERVICE_ROLE_KEY,ADMIN_EMAIL,NEXT_PUBLIC_APP_URL&envDescription=Variaveis%20de%20conexao%20do%20Supabase%20e%20e-mail%20do%20administrador&project-name=promocuts&repo-name=promocuts)
-
-2. Conecte sua conta do GitHub e preencha as variáveis de ambiente solicitadas.
-3. Clique em **Deploy**. Sua aplicação estará em produção em cerca de 2 minutos.
+Abra [http://localhost:3000](http://localhost:3000) no navegador para ver a vitrine pública ou acesse [http://localhost:3000/admin](http://localhost:3000/admin) para entrar no painel administrativo.
 
 ---
 

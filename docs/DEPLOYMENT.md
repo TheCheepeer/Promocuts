@@ -1,91 +1,157 @@
-# Guia de Deploy Zero Custo — PromoCuts
+# Guia de Implantação e Deploy — PromoCuts
 
-Este guia orienta o processo completo para colocar o **PromoCuts** em produção sem custos financeiros, utilizando exclusivamente os planos gratuitos da **Vercel** e do **Supabase**.
+Este guia detalha os dois caminhos suportados para colocar o **PromoCuts** em produção:
+
+1. **Opção A (Nuvem Serverless — 100% Gratuito):** Deploy com 1 clique na Vercel utilizando Supabase Cloud e Upstash Redis opcional.
+2. **Opção B (Self-Hosted / Docker):** Execução independente em servidor ou VPS própria com contêineres Docker, PostgreSQL 18.6, Redis, Single Sign-On (SSO) e isolamento de acesso via VPN.
 
 ---
 
-## 1. Visão Geral da Infraestrutura Gratuita
+## Opção A: Nuvem Serverless (Vercel + Supabase)
+
+### 1. Visão Geral da Infraestrutura Gratuita
 
 | Serviço      | Função                                      | Limites do Plano Gratuito                           |    Custo    |
 | :----------- | :------------------------------------------ | :-------------------------------------------------- | :---------: |
 | **Vercel**   | Hospedagem Next.js, Edge Functions e CDN    | 100 GB de largura de banda/mês, builds ilimitados   | **R$ 0,00** |
 | **Supabase** | Banco PostgreSQL e Autenticação de Usuários | 500 MB de armazenamento, 50.000 usuários ativos/mês | **R$ 0,00** |
+| **Upstash**  | Redis Serverless (Rate Limit e Cache)       | 10.000 comandos diários (opcional)                  | **R$ 0,00** |
 | **Embeds**   | Hospedagem e tráfego de vídeo dos cortes    | Tráfego absorvido por TikTok, Instagram e YouTube   | **R$ 0,00** |
 
----
+### 2. Passo 1: Configurar o Supabase
 
-## 2. Passo 1: Configurar o Supabase
-
-1. Acesse [supabase.com](https://supabase.com) e entre com sua conta (ou crie uma gratuitamente via GitHub).
-2. Clique em **New Project** (Novo Projeto).
-3. Preencha o nome do projeto (exemplo: `promocuts-prod`) e defina uma senha forte para o banco de dados.
-4. Escolha a região mais próxima do seu público (para o Brasil, selecione `sa-east-1 (São Paulo)`).
-5. Clique em **Create new project** e aguarde cerca de dois minutos enquanto o banco é provisionado.
-
-### Aplicar as Tabelas e Segurança
-
-1. No menu lateral do Supabase, clique em **SQL Editor**.
-2. Clique em **New Query** (Nova Consulta).
-3. Copie o conteúdo completo do arquivo [`supabase/migrations/001_initial_schema.sql`](../supabase/migrations/001_initial_schema.sql).
-4. Cole no editor e clique no botão **Run**. O resultado exibirá `Success. No rows returned`.
-
-### Configurar Redirecionamento de Autenticação
-
-1. No menu lateral, acesse **Authentication** > **URL Configuration**.
-2. No campo **Site URL**, informe o domínio da sua aplicação (exemplo: `https://meu-promocuts.vercel.app` ou `http://localhost:3000` em testes locais).
-3. Na seção **Redirect URLs**, adicione a URL de callback:
+1. Acesse [supabase.com](https://supabase.com) e crie uma conta gratuita.
+2. Clique em **New Project**, defina o nome e uma senha forte. Escolha a região mais próxima do seu público (`sa-east-1` para São Paulo).
+3. No menu lateral, acesse **SQL Editor**.
+4. Abra o arquivo local [`supabase/migrations/001_initial_schema.sql`](../supabase/migrations/001_initial_schema.sql), cole o conteúdo e execute clicando em **Run**.
+5. Em **Authentication** > **URL Configuration**, cadastre seu domínio de produção no campo **Site URL** e adicione a URL de callback em **Redirect URLs**:
+    ```text
+    https://seu-dominio.vercel.app/api/auth/callback
     ```
-    https://meu-promocuts.vercel.app/api/auth/callback
-    ```
-4. Salve as alterações.
 
----
+### 3. Passo 2: Coletar as Chaves de Conexão
 
-## 3. Passo 2: Coletar as Chaves de Conexão
+No painel do Supabase, acesse **Project Settings** > **API** e anote:
 
-No painel do Supabase, acesse **Project Settings** (ícone de engrenagem) > **API**:
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
 
-Copie os três valores indicados abaixo:
+### 4. Passo 3: Deploy na Vercel
 
-- **Project URL:** Salve como `NEXT_PUBLIC_SUPABASE_URL`
-- **Project API Keys (`anon` / `public`):** Salve como `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- **Project API Keys (`service_role` / `secret`):** Salve como `SUPABASE_SERVICE_ROLE_KEY` _(nunca compartilhe publicamente)_
-
----
-
-## 4. Passo 3: Deploy com 1 Clique na Vercel
-
-Você pode iniciar o deploy imediatamente clicando no botão abaixo:
+Inicie o deploy clicando no botão abaixo:
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FTheCheepeer%2FPromocuts&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,SUPABASE_SERVICE_ROLE_KEY,ADMIN_EMAIL,NEXT_PUBLIC_APP_URL&envDescription=Variaveis%20de%20conexao%20do%20Supabase%20e%20e-mail%20do%20administrador&project-name=promocuts&repo-name=promocuts)
 
-### Preenchimento das Variáveis no Assistente da Vercel:
-
-Ao ser redirecionado para a Vercel, o assistente solicitará cinco variáveis de ambiente:
-
-| Variável                        | Exemplo de Valor                 | Descrição                             |
-| :------------------------------ | :------------------------------- | :------------------------------------ |
-| `NEXT_PUBLIC_SUPABASE_URL`      | `https://xyzcompany.supabase.co` | URL do seu projeto no Supabase        |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `eyJhbGciOi...`                  | Chave pública anônima do Supabase     |
-| `SUPABASE_SERVICE_ROLE_KEY`     | `eyJhbGciOi...`                  | Chave secreta de serviço do Supabase  |
-| `ADMIN_EMAIL`                   | `seu-email@gmail.com`            | E-mail exclusivo do dono da instância |
-| `NEXT_PUBLIC_APP_URL`           | `https://promocuts.vercel.app`   | URL de produção gerada pela Vercel    |
-
-Clique em **Deploy** e aguarde cerca de um a dois minutos até a conclusão da compilação.
+Preencha as variáveis de ambiente solicitadas pelo assistente e conclua a criação do projeto.
 
 ---
 
-## 5. Passo 4: Primeiro Acesso ao Painel Administrativo
+## Opção B: Self-Hosted com Docker (PostgreSQL 18.6, SSO e VPN)
 
-1. Acesse `https://seu-dominio.vercel.app/admin`.
-2. O sistema solicitará o seu e-mail.
-3. Digite exatamente o mesmo endereço configurado na variável `ADMIN_EMAIL`.
-4. Você receberá um _Magic Link_ seguro em sua caixa de entrada.
-5. Ao clicar no link, sua sessão será autenticada e você entrará no painel `/admin` para cadastrar seus primeiros vídeos e produtos parceiros.
+Esta modalidade oferece soberania total sobre a infraestrutura, permitindo rodar a aplicação em VPS (Hetzner, DigitalOcean, Linode), servidores dedicados ou homelab doméstico.
+
+### 1. Pré-requisitos do Servidor
+
+- Sistema operacional Linux (Ubuntu 22.04 LTS ou superior recomendado).
+- [Docker](https://docs.docker.com/engine/install/) e [Docker Compose](https://docs.docker.com/compose/install/) instalados.
+- Porta 80/443 liberada (ou uso de túnel privado).
+
+### 2. Passo a Passo de Instalação
+
+#### 1. Clonar o repositório no servidor
+
+```bash
+git clone https://github.com/TheCheepeer/Promocuts.git
+cd Promocuts
+```
+
+#### 2. Configurar o arquivo de variáveis de ambiente
+
+Copie o template para `.env`:
+
+```bash
+cp .env.example .env
+```
+
+Edite o arquivo `.env` ajustando os parâmetros:
+
+```env
+# E-mail com permissao administrativa
+ADMIN_EMAIL=seu-email@dominio.com
+
+# URL publica ou interna do sistema
+NEXT_PUBLIC_APP_URL=https://promocuts.seu-dominio.com
+
+# Chave secreta de sessao (gerar com: openssl rand -base64 32)
+AUTH_SECRET=sua-chave-criptografica-aleatoria
+
+# Credenciais do PostgreSQL 18.6
+POSTGRES_DB=promocuts
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=senha-super-segura-do-banco
+```
+
+#### 3. Configurar Single Sign-On (SSO) no Painel `/admin` (Opcional)
+
+Para habilitar autenticação com Google Workspace, GitHub ou OIDC corporativo:
+
+```env
+SSO_PROVIDER=google
+SSO_CLIENT_ID=seu-client-id.apps.googleusercontent.com
+SSO_CLIENT_SECRET=seu-client-secret
+```
+
+_Regra de segurança:_ Mesmo com o SSO ativado, apenas a conta com o e-mail exato definido em `ADMIN_EMAIL` terá o acesso liberado ao painel `/admin`. Qualquer outro usuário do provedor receberá 403 Forbidden.
+
+#### 4. Configurar Acesso Exclusivo por VPN (Opcional)
+
+Para blindar o painel administrativo contra a internet aberta, defina as faixas de IP da sua VPN no arquivo `.env`:
+
+```env
+# Exemplo para Tailscale (100.64.0.0/10) e WireGuard / Rede Interna (10.0.0.0/8):
+ADMIN_ALLOWED_IPS=100.64.0.0/10,10.0.0.0/8,127.0.0.1
+```
+
+Quando configurado, qualquer requisição para a rota `/admin/*` originada fora dessas faixas de rede é descartada instantaneamente com código HTTP 403 Forbidden.
+
+#### 5. Iniciar os Contêineres
+
+Suba todos os serviços em segundo plano:
+
+```bash
+docker compose up -d
+```
+
+O comando irá:
+
+1. Compilar a imagem da aplicação Next.js Standalone.
+2. Iniciar o contêiner `postgres:18.6-alpine` e aplicar automaticamente todos os scripts SQL em `supabase/migrations/` em rede isolada.
+3. Iniciar o contêiner `redis:8-alpine` em rede isolada para controle de tráfego e cache.
+4. Iniciar o contêiner `promocuts-nginx`, que atua como ponto único de entrada na porta `80` (com terminação HTTPS na porta 443 delegada à infraestrutura de nuvem/CDN).
+
+Para verificar a saúde dos serviços:
+
+```bash
+docker compose ps
+docker compose logs -f app
+```
 
 ---
 
-## 6. Passo 5: Atualizações e Manutenção
+## Atualizações e Manutenção
 
-- Quando novas funcionalidades forem adicionadas ao repositório no GitHub, a Vercel executará um novo deploy automaticamente.
-- Caso haja novas migrations no diretório `supabase/migrations/`, basta executar as novas instruções no SQL Editor do Supabase.
+### No Modelo Nuvem (Vercel)
+
+- Atualizações de código são aplicadas automaticamente a cada _push_ no branch principal do GitHub.
+- Novas migrações SQL devem ser executadas no SQL Editor do Supabase.
+
+### No Modelo Docker
+
+Para atualizar a aplicação e migrações no servidor:
+
+```bash
+git pull origin main
+docker compose build --no-cache app
+docker compose up -d
+```

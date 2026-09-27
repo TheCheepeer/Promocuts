@@ -81,7 +81,26 @@ CREATE TABLE IF NOT EXISTS public.affiliate_clicks (
     referrer TEXT
 );
 
--- 8. Função e Triggers para Atualização Automática de updated_at
+-- 8. Tabela de Configurações do Sistema e Customização de Marca (Singleton)
+CREATE TABLE IF NOT EXISTS public.site_settings (
+    id INT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+    site_name VARCHAR(100) NOT NULL DEFAULT 'PromoCuts',
+    site_tagline VARCHAR(255) DEFAULT 'Cortes virais e recomendações de produtos afiliados',
+    site_description TEXT DEFAULT 'Encontre os melhores achadinhos e promoções em vídeos curtos das principais lojas parceiras.',
+    primary_color VARCHAR(20) NOT NULL DEFAULT '#10B981',
+    secondary_color VARCHAR(20) NOT NULL DEFAULT '#6366F1',
+    logo_url TEXT,
+    logo_icon_url TEXT,
+    favicon_url TEXT,
+    social_instagram VARCHAR(255),
+    social_tiktok VARCHAR(255),
+    social_youtube VARCHAR(255),
+    footer_text TEXT DEFAULT 'PromoCuts — Todos os direitos reservados.',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 9. Função e Triggers para Atualização Automática de updated_at
 CREATE OR REPLACE FUNCTION public.handle_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -108,7 +127,13 @@ CREATE TRIGGER set_products_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION public.handle_updated_at();
 
--- 9. Índices de Alta Performance
+DROP TRIGGER IF EXISTS set_site_settings_updated_at ON public.site_settings;
+CREATE TRIGGER set_site_settings_updated_at
+    BEFORE UPDATE ON public.site_settings
+    FOR EACH ROW
+    EXECUTE FUNCTION public.handle_updated_at();
+
+-- 10. Índices de Alta Performance
 CREATE INDEX IF NOT EXISTS idx_categories_slug ON public.categories(slug);
 CREATE INDEX IF NOT EXISTS idx_categories_display_order ON public.categories(display_order ASC);
 CREATE INDEX IF NOT EXISTS idx_videos_is_published ON public.videos(is_published, order_weight DESC, created_at DESC);
@@ -121,14 +146,22 @@ CREATE INDEX IF NOT EXISTS idx_video_products_product_id ON public.video_product
 CREATE INDEX IF NOT EXISTS idx_affiliate_clicks_product_id ON public.affiliate_clicks(product_id);
 CREATE INDEX IF NOT EXISTS idx_affiliate_clicks_created_at ON public.affiliate_clicks(created_at DESC);
 
--- 10. Ativação de Row Level Security (RLS)
+-- 11. Ativação de Row Level Security (RLS)
 ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.videos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.video_products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.affiliate_clicks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.site_settings ENABLE ROW LEVEL SECURITY;
 
--- 11. Políticas de Acesso Público (Leitura anônima para itens publicados)
+-- 12. Políticas de Acesso Público (Leitura anônima para itens públicos)
+
+-- Configurações Gerais: Acesso público para aplicar cores, logos, favicon e títulos
+DROP POLICY IF EXISTS "Public read access for site_settings" ON public.site_settings;
+CREATE POLICY "Public read access for site_settings"
+    ON public.site_settings FOR SELECT
+    TO anon, authenticated
+    USING (true);
 
 -- Categorias: Todas as categorias são públicas para popular abas e filtros
 DROP POLICY IF EXISTS "Public read access for categories" ON public.categories;
@@ -176,7 +209,13 @@ CREATE POLICY "Public insert access for click tracking"
     TO anon, authenticated
     WITH CHECK (true);
 
--- 12. Instruções para Operações Administrativas
--- As operações de escrita (INSERT, UPDATE, DELETE) em categories, videos, products e video_products
+-- 13. Carga Inicial de Configurações do Sistema
+INSERT INTO public.site_settings (id)
+VALUES (1)
+ON CONFLICT (id) DO NOTHING;
+
+-- 14. Instruções para Operações Administrativas
+-- As operações de escrita (INSERT, UPDATE, DELETE) em categories, videos, products, video_products e site_settings
 -- são executadas via Next.js Server Actions utilizando a Service Role Key do Supabase,
 -- após a verificação estrita de que a sessão pertence ao ADMIN_EMAIL.
+
