@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Copy, Check, ExternalLink, Tag } from "lucide-react";
 import { formatCurrency, formatDiscountBadge } from "@/lib/formatters";
+import { trackAffiliateClick } from "@/lib/telemetry";
 import type { Product } from "@/types/database";
 
 interface ProductCardProps {
@@ -14,6 +15,7 @@ interface ProductCardProps {
 
 export function ProductCard({
     product,
+    videoId,
     compact = false,
     className = "",
 }: ProductCardProps) {
@@ -40,6 +42,7 @@ export function ProductCard({
         e.stopPropagation();
         if (!product.coupon_code) return;
 
+        trackAffiliateClick(product.id, videoId);
         navigator.clipboard.writeText(product.coupon_code);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
@@ -90,6 +93,7 @@ export function ProductCard({
                     href={product.affiliate_url}
                     target="_blank"
                     rel="noopener noreferrer sponsored"
+                    onClick={() => trackAffiliateClick(product.id, videoId)}
                     className="inline-flex shrink-0 items-center justify-center rounded-xl bg-brand-primary px-3 py-2 text-xs font-bold text-white shadow-xs transition-opacity hover:opacity-95"
                     title={`Ver ${product.name} na ${product.store_name}`}
                 >
@@ -186,6 +190,7 @@ export function ProductCard({
                 href={product.affiliate_url}
                 target="_blank"
                 rel="noopener noreferrer sponsored"
+                onClick={() => trackAffiliateClick(product.id, videoId)}
                 className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl bg-brand-primary py-2.5 text-xs font-bold text-white shadow-xs transition-opacity hover:opacity-95 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-primary"
             >
                 <span>Comprar com Desconto</span>

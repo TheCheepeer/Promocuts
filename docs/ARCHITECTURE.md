@@ -29,6 +29,7 @@ flowchart TD
         PublicRoute["Rotas Publicas (/, /c/[slug], /v/[slug])"]
         AdminRoute["Rotas Administrativas (/admin, /admin/categories, /admin/products, /admin/videos, /admin/settings)"]
         UploadEndpoint["Upload Seguro de Ativos (/api/admin/upload)"]
+        TrackClickEndpoint["Telemetria de Afiliados (/api/track-click)"]
         ServerAction["Next.js Server Actions (Mutations com Service Role)"]
         RedisModule["Modulo de Cache e Rate Limit (Upstash HTTP ou Redis TCP)"]
     end
@@ -56,6 +57,8 @@ flowchart TD
     PublicRoute -->|Carrega iframe sob demanda| ReelsEmbed
     PublicRoute -->|Carrega iframe sob demanda| ShortsEmbed
     Visitor -->|Clica em produto de afiliado| AffiliateDestination
+    Visitor -.->|Disparo assíncrono de beacon / fetch| TrackClickEndpoint
+    TrackClickEndpoint -->|Gravação na tabela affiliate_clicks| PostgresDB
 
     AdminUser -->|Acessa /admin via VPN ou IP autorizado| NextMiddleware
     NextMiddleware -->|Verifica sessão e provedor de identidade| AuthLayer
@@ -338,13 +341,22 @@ Para unir praticidade operacional com custo zero e alto desempenho, o PromoCuts 
 
 ---
 
-## 7. Métricas Anônimas de Afiliados
+## 7. Métricas Anônimas de Afiliados e Telemetria
 
 Para avaliar quais cortes e produtos geram maior retorno sem comprometer a privacidade do visitante:
 
-- Cada clique em "Comprar" ou "Copiar Cupom" dispara uma requisição leve em background para `/api/track-click`.
-- A rota registra apenas: `product_id`, `video_id`, `timestamp`, `referrer` e `user_agent`.
-- Nenhum dado pessoal identificável (como IP completo ou cookies de rastreamento) é armazenado.
+1. **Disparo Client-Side Não Bloqueante (`src/lib/telemetry.ts`):**
+    - Cada clique em "Comprar" ou "Copiar Cupom" no componente `ProductCard` dispara a função auxiliar `trackAffiliateClick(productId, videoId)`.
+    - O envio utiliza a API nativa `navigator.sendBeacon` com payload em Blob JSON, permitindo que a requisição ocorra de forma assíncrona mesmo quando o usuário é redirecionado para a loja parceira em outra aba.
+    - Se a API de beacon não estiver disponível ou falhar, o utilitário executa um fallback para `fetch` com a flag `keepalive: true`.
+    - Toda a execução no cliente é envolvida em tratamento defensivo de exceções para que bloqueadores de anúncios (ad blockers) ou instabilidades de rede jamais impeçam a navegação ou a cópia do cupom.
+
+2. **Route Handler Endurecido (`src/app/api/track-click`):**
+    - A rota recebe os identificadores via requisição HTTP `POST`.
+    - **Validação Estrita de Identificadores:** Valida o formato dos parâmetros `product_id` (obrigatório) e `video_id` (opcional) contra uma expressão regular estrita de UUID, rejeitando requisições malformadas ou tentativas de injeção com código HTTP `400 Bad Request`.
+    - **Mitigação contra Esgotamento de Disco (Storage DoS):** Os cabeçalhos `user-agent` e `referrer` são higienizados e truncados no servidor (máximo de 512 caracteres para `user-agent` e 1024 caracteres para `referrer`), em estrita conformidade com os limites do banco de dados.
+    - **Persistência Assíncrona:** O registro é gravado na tabela `public.affiliate_clicks` utilizando o cliente administrativo do Supabase no lado do servidor.
+    - **Privacidade por Padrão:** Nenhum dado pessoal identificável (como endereço IP completo, cookies de sessão ou parâmetros de rastreamento invasivos) é persistido.
 
 ---
 

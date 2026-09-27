@@ -164,8 +164,13 @@ export type AffiliateClick = {
     referrer: string | null;
 };
 
-export type AffiliateClickInsert = Omit<AffiliateClick, "id" | "created_at"> & {
+export type AffiliateClickInsert = {
     id?: string;
+    product_id: string;
+    video_id?: string | null;
+    created_at?: string;
+    user_agent?: string | null;
+    referrer?: string | null;
 };
 
 export type Database = {

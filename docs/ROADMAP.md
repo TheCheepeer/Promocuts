@@ -13,7 +13,7 @@ Este documento define o roteiro de implementacao do **PromoCuts**, organizado em
 | **Fase 3** | Autenticacao, Middleware e Seguranca        | `Concluido` |
 | **Fase 4** | Painel Administrativo e White-Label         | `Concluido` |
 | **Fase 5** | Vitrine Publica Mobile-First e Desktop Grid | `Concluido` |
-| **Fase 6** | Telemetria de Afiliados e Conversao         | `Pendente`  |
+| **Fase 6** | Telemetria de Afiliados e Conversao         | `Concluido` |
 | **Fase 7** | Dockerizacao, Testes e Verificacao Final    | `Pendente`  |
 
 ---
@@ -118,11 +118,11 @@ Objetivo: Construir a experiencia de alta conversao para os visitantes em dispos
 
 Objetivo: Monitorar engajamento e cliques de saida de forma leve e sem violacao de privacidade.
 
-- [ ] Implementar a Route Handler `/api/track-click`:
-    - [ ] Recebimento dos identificadores `product_id` e `video_id`.
-    - [ ] Validacao estrita e truncamento de cabecalhos (user agent ate 512 caracteres e referrer ate 1024 caracteres).
-    - [ ] Gravacao assincrona no banco de dados.
-- [ ] Vincular o disparo assincrono de telemetria aos cliques nos botoes de compra e cupom na vitrine publica.
+- [x] Implementar a Route Handler `/api/track-click`:
+    - [x] Recebimento dos identificadores `product_id` e `video_id`.
+    - [x] Validacao estrita e truncamento de cabecalhos (user agent ate 512 caracteres e referrer ate 1024 caracteres).
+    - [x] Gravacao assincrona no banco de dados.
+- [x] Vincular o disparo assincrono de telemetria aos cliques nos botoes de compra e cupom na vitrine publica.
 
 ---
 
