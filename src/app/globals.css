@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
     --color-brand-primary: var(--brand-primary, #10b981);
     --color-brand-secondary: var(--brand-secondary, #6366f1);
@@ -12,7 +14,7 @@
     --brand-secondary-dark: #6366f1;
     --brand-primary: var(--brand-primary-light);
     --brand-secondary: var(--brand-secondary-light);
-    --background: #ffffff;
+    --background: #fafafa;
     --foreground: #09090b;
 }
 

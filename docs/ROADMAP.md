@@ -9,7 +9,7 @@ Este documento define o roteiro de implementacao do **PromoCuts**, organizado em
 | Fase       | Descricao                                   |   Status    |
 | :--------- | :------------------------------------------ | :---------: |
 | **Fase 1** | Fundacao do Projeto e Tooling               | `Concluido` |
-| **Fase 2** | Motor de Embeds e Utilitarios de Dominio    | `Pendente`  |
+| **Fase 2** | Motor de Embeds e Utilitarios de Dominio    | `Concluido` |
 | **Fase 3** | Autenticacao, Middleware e Seguranca        | `Pendente`  |
 | **Fase 4** | Painel Administrativo e White-Label         | `Pendente`  |
 | **Fase 5** | Vitrine Publica Mobile-First e Desktop Grid | `Pendente`  |
@@ -40,13 +40,13 @@ Objetivo: Configurar a base tecnica da aplicacao, dependencias de producao, comp
 
 Objetivo: Implementar o algoritmo central de parsing de URLs e geracao de embeds nativos sem armazenamento proprio de midia.
 
-- [ ] Desenvolver o analisador de URLs em `src/lib/embeds/parser.ts`:
-    - [ ] Reconhecimento e extracao de IDs do TikTok (URLs padrao, URLs mobile e URLs curtas).
-    - [ ] Reconhecimento e extracao de IDs do Instagram Reels (URLs diretas de post e reel).
-    - [ ] Reconhecimento e extracao de IDs do YouTube Shorts (URLs de shorts, links com watch e URLs encurtadas).
-    - [ ] Geracao segura de markup e URLs de embed sem cookies desnecessarios (youtube-nocookie).
-- [ ] Criar utilitarios de formatacao numerica e de moeda em Real brasileiro (`src/lib/formatters.ts`).
-- [ ] Criar rotina de testes unitarios para garantir que URLs invalidas ou manipuladas sejam rejeitadas com seguranca.
+- [x] Desenvolver o analisador de URLs em `src/lib/embeds/parser.ts`:
+    - [x] Reconhecimento e extracao de IDs do TikTok (URLs padrao, URLs mobile e URLs curtas).
+    - [x] Reconhecimento e extracao de IDs do Instagram Reels (URLs diretas de post e reel).
+    - [x] Reconhecimento e extracao de IDs do YouTube Shorts (URLs de shorts, links com watch e URLs encurtadas).
+    - [x] Geracao segura de markup e URLs de embed sem cookies desnecessarios (youtube-nocookie).
+- [x] Criar utilitarios de formatacao numerica e de moeda em Real brasileiro (`src/lib/formatters.ts`).
+- [x] Criar rotina de testes unitarios para garantir que URLs invalidas ou manipuladas sejam rejeitadas com seguranca.
 
 ---
 

@@ -174,7 +174,7 @@ O design segue as diretrizes do guia de princípios de design e a especificaçã
 - **Modo Desktop Elegante:** Em telas grandes, a interface migra automaticamente para uma grade de cartões com proporção 9:16, preservando a identidade visual sem esticar vídeos ou desperdiçar espaço horizontal. As pílulas de categorias permanecem fixas no topo da área de catálogo para navegação rápida.
 - **Suporte a Modo Claro e Modo Escuro com Cache e Alternância Rápida:**
     - A interface adota por padrão a preferência de cor informada pelo sistema operacional e navegador do visitante (`prefers-color-scheme`).
-    - Um botão interativo de troca de tema fica permanentemente disponível no cabeçalho (permitindo alternar entre claro, escuro ou automático do sistema).
+    - Um botão único de troca de tema fica permanentemente disponível no cabeçalho (permitindo alternar diretamente entre modo claro e escuro em um toque com ícone dinâmico).
     - A escolha do usuário é gravada no armazenamento local do navegador (`localStorage` e cookie de sessão) para restauração imediata nas próximas visitas.
     - A execução de um script leve e seguro no cabeçalho (`anti-fouc script`) impede qualquer clarão ou piscamento visual antes do carregamento da página.
 
@@ -191,10 +191,12 @@ As cores primária e secundária da marca possuem definições independentes par
 1. **Modo Claro:** utiliza `primary_color_light` e `secondary_color_light`.
 2. **Modo Escuro:** utiliza `primary_color_dark` e `secondary_color_dark`.
 
-No arquivo global de estilos (`src/app/globals.css`), o Tailwind CSS v4 mapeia as variáveis universais através da diretiva `@theme`:
+No arquivo global de estilos (`src/app/globals.css`), o Tailwind CSS v4 mapeia as variáveis universais através da diretiva `@theme` e habilita a variante baseada em classe via `@custom-variant dark`:
 
 ```css
 @import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
     --color-brand-primary: var(--brand-primary, #10b981);

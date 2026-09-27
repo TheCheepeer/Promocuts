@@ -15,6 +15,7 @@ interface ThemeContextType {
     theme: Theme;
     resolvedTheme: ResolvedTheme;
     setTheme: (theme: Theme) => void;
+    toggleTheme: () => void;
 }
 
 const STORAGE_KEY = "promocuts-theme";
@@ -50,9 +51,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
         if (isDark) {
             root.classList.add("dark");
+            root.classList.remove("light");
             root.style.colorScheme = "dark";
         } else {
             root.classList.remove("dark");
+            root.classList.add("light");
             root.style.colorScheme = "light";
         }
     }, []);
@@ -104,12 +107,17 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         };
     }, [applyTheme]);
 
+    const toggleTheme = useCallback(() => {
+        setTheme(resolvedTheme === "dark" ? "light" : "dark");
+    }, [resolvedTheme, setTheme]);
+
     return (
         <ThemeContext.Provider
             value={{
                 theme: mounted ? theme : "system",
                 resolvedTheme: mounted ? resolvedTheme : "light",
                 setTheme,
+                toggleTheme,
             }}
         >
             {children}

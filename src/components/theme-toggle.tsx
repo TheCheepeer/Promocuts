@@ -1,60 +1,41 @@
 "use client";
 
-import React from "react";
-import { Sun, Moon, Monitor } from "lucide-react";
-import { useTheme, type Theme } from "./theme-provider";
+import React, { useState, useEffect } from "react";
+import { Sun, Moon } from "lucide-react";
+import { useTheme } from "./theme-provider";
 import { cn } from "@/lib/utils";
 
 export function ThemeToggle({ className }: { className?: string }) {
-    const { theme, setTheme } = useTheme();
+    const { resolvedTheme, toggleTheme } = useTheme();
+    const [mounted, setMounted] = useState(false);
 
-    const options: { label: string; value: Theme; icon: React.ReactNode }[] = [
-        {
-            label: "Modo Claro",
-            value: "light",
-            icon: <Sun className="w-4 h-4" />,
-        },
-        {
-            label: "Modo Escuro",
-            value: "dark",
-            icon: <Moon className="w-4 h-4" />,
-        },
-        {
-            label: "Sistema",
-            value: "system",
-            icon: <Monitor className="w-4 h-4" />,
-        },
-    ];
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    const isDark = mounted ? resolvedTheme === "dark" : false;
 
     return (
-        <div
-            role="group"
-            aria-label="Alternar tema"
+        <button
+            type="button"
+            onClick={toggleTheme}
+            aria-label={isDark ? "Ativar modo claro" : "Ativar modo escuro"}
+            title={isDark ? "Ativar modo claro" : "Ativar modo escuro"}
             className={cn(
-                "inline-flex items-center rounded-lg p-1 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700",
+                "relative inline-flex items-center justify-center w-9 h-9 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-100/80 dark:bg-zinc-900/80 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-200/80 dark:hover:bg-zinc-800 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary cursor-pointer active:scale-95 shadow-sm",
                 className,
             )}
         >
-            {options.map((option) => {
-                const isActive = theme === option.value;
-                return (
-                    <button
-                        key={option.value}
-                        type="button"
-                        onClick={() => setTheme(option.value)}
-                        aria-label={option.label}
-                        aria-pressed={isActive}
-                        className={cn(
-                            "flex items-center justify-center p-1.5 rounded-md text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary",
-                            isActive
-                                ? "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-sm"
-                                : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100",
-                        )}
-                    >
-                        {option.icon}
-                    </button>
-                );
-            })}
-        </div>
+            {mounted ? (
+                isDark ? (
+                    <Sun className="w-4 h-4 text-amber-400 transition-transform duration-200" />
+                ) : (
+                    <Moon className="w-4 h-4 text-zinc-700 transition-transform duration-200" />
+                )
+            ) : (
+                <span className="w-4 h-4 block" />
+            )}
+            <span className="sr-only">Alternar tema</span>
+        </button>
     );
 }
