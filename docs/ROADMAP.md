@@ -10,7 +10,7 @@ Este documento define o roteiro de implementacao do **PromoCuts**, organizado em
 | :--------- | :------------------------------------------ | :---------: |
 | **Fase 1** | Fundacao do Projeto e Tooling               | `Concluido` |
 | **Fase 2** | Motor de Embeds e Utilitarios de Dominio    | `Concluido` |
-| **Fase 3** | Autenticacao, Middleware e Seguranca        | `Pendente`  |
+| **Fase 3** | Autenticacao, Middleware e Seguranca        | `Concluido` |
 | **Fase 4** | Painel Administrativo e White-Label         | `Pendente`  |
 | **Fase 5** | Vitrine Publica Mobile-First e Desktop Grid | `Pendente`  |
 | **Fase 6** | Telemetria de Afiliados e Conversao         | `Pendente`  |
@@ -54,14 +54,14 @@ Objetivo: Implementar o algoritmo central de parsing de URLs e geracao de embeds
 
 Objetivo: Estabelecer as quatro barreiras de seguranca para isolar o painel administrativo.
 
-- [ ] Implementar o middleware defensivo em `src/middleware.ts`:
-    - [ ] Filtro de rede/IP para rotas `/admin/*` baseado em `ADMIN_ALLOWED_IPS` (suporte a IPs individuais e faixas CIDR).
-    - [ ] Validacao de sessao ativa via Supabase Auth.
-    - [ ] Checagem estrita da identidade do usuario logado contra a variavel `ADMIN_EMAIL`.
-    - [ ] Bloqueio HTTP 403 Forbidden para usuarios nao autorizados.
-    - [ ] Redirecionamento amigavel de usuarios anonimos para `/admin/login`.
-- [ ] Criar a tela de login administrativo em `src/app/admin/login/page.tsx` com envio de Magic Link via Supabase Auth.
-- [ ] Criar a rota de callback em `src/app/auth/callback/route.ts` para confirmacao da troca de sessao no servidor.
+- [x] Implementar o middleware defensivo em `src/middleware.ts`:
+    - [x] Filtro de rede/IP para rotas `/admin/*` baseado em `ADMIN_ALLOWED_IPS` (suporte a IPs individuais e faixas CIDR).
+    - [x] Validacao de sessao ativa via Supabase Auth.
+    - [x] Checagem estrita da identidade do usuario logado contra a variavel `ADMIN_EMAIL`.
+    - [x] Bloqueio HTTP 403 Forbidden para usuarios nao autorizados.
+    - [x] Redirecionamento amigavel de usuarios anonimos para `/admin/login`.
+- [x] Criar a tela de login administrativo em `src/app/admin/login/page.tsx` com envio de Magic Link via Supabase Auth.
+- [x] Criar a rota de callback em `src/app/auth/callback/route.ts` para confirmacao da troca de sessao no servidor.
 
 ---
 

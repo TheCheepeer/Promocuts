@@ -24,9 +24,10 @@ Este guia detalha os dois caminhos suportados para colocar o **PromoCuts** em pr
 2. Clique em **New Project**, defina o nome e uma senha forte. Escolha a região mais próxima do seu público (`sa-east-1` para São Paulo).
 3. No menu lateral, acesse **SQL Editor**.
 4. Abra o arquivo local [`supabase/migrations/001_initial_schema.sql`](../supabase/migrations/001_initial_schema.sql), cole o conteúdo e execute clicando em **Run**.
-5. Em **Authentication** > **URL Configuration**, cadastre seu domínio de produção no campo **Site URL** e adicione a URL de callback em **Redirect URLs**:
+5. Em **Authentication** > **URL Configuration**, cadastre seu domínio de produção no campo **Site URL** e adicione as URLs de callback em **Redirect URLs**:
     ```text
-    https://seu-dominio.vercel.app/api/auth/callback
+    http://localhost:3000/auth/callback
+    https://seu-dominio.vercel.app/auth/callback
     ```
 
 ### 3. Passo 2: Coletar as Chaves de Conexão
