@@ -22,10 +22,11 @@ Foi concebido como uma solução completa de **renda passiva** e um **projeto es
 ## Principais Recursos
 
 - **Vitrine Pública Mobile-First:** Feed de alta conversão otimizado para navegação rápida por toque, com rolagem fluida (_scroll-snap_) em smartphones e modo de catálogo responsivo no desktop.
+- **Feed Geral e Categorização Temática:** Descoberta rápida de reviews por meio de barra de navegação com pílulas ("Todos", "Tecnologia", "Casa & Cozinha", etc.), com alternância imediata de nichos e rotas amigáveis.
 - **Embeds Nativos (Zero Custo de Tráfego e Armazenamento):** Nenhum arquivo `.mp4` é armazenado no servidor. Os reprodutores utilizam iframes oficiais do TikTok, Instagram e YouTube, eliminando custos de CDN e armazenamento de vídeo.
 - **Cards de Produtos Acoplados:** Cada corte exibe os produtos recomendados com foto, título, preço promocional, lojas parceiras e botões de compra imediatos com tags `rel="noopener noreferrer sponsored"`.
 - **Cópia Instantânea de Cupom:** Botão com um toque para copiar códigos promocionais para a área de transferência, acompanhado de feedback tátil e visual.
-- **Painel Administrativo Embutido (`/admin`):** Interface fechada para cadastro ágil de links e produtos. A autorização é restrita exclusivamente ao endereço configurado em `ADMIN_EMAIL` via Supabase Auth.
+- **Painel Administrativo Embutido (`/admin`):** Interface fechada para cadastro ágil de categorias, links e produtos. A autorização é restrita exclusivamente ao endereço configurado em `ADMIN_EMAIL` via Supabase Auth.
 - **Banco de Dados Plug and Play:** Script SQL de inicialização em [`supabase/migrations/001_initial_schema.sql`](supabase/migrations/001_initial_schema.sql) com tabelas indexadas e regras de Row Level Security (RLS) prontas.
 - **Métricas Anônimas:** Monitoramento leve de cliques em links de afiliados sem coleta de dados pessoais e sem dependência de serviços externos pagos.
 

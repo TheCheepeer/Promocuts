@@ -25,7 +25,7 @@ flowchart TD
 
     subgraph EdgeLayer["Borda e Roteamento (Vercel)"]
         NextMiddleware["Next.js Middleware (Auth & Email Guard)"]
-        PublicRoute["Rotas Públicas (/, /v/[slug])"]
+        PublicRoute["Rotas Públicas (/, /c/[slug], /v/[slug])"]
         AdminRoute["Rotas Administrativas (/admin/*)"]
         ServerAction["Next.js Server Actions (Mutations)"]
     end
@@ -43,8 +43,8 @@ flowchart TD
         AffiliateDestination["Lojas Parceiras (Amazon, Shopee, etc.)"]
     end
 
-    Visitor -->|Navega no feed público| PublicRoute
-    PublicRoute -->|Consulta conteúdo publicado| PostgresDB
+    Visitor -->|Navega no feed geral ou por categoria| PublicRoute
+    PublicRoute -->|Consulta conteúdo publicado e categorias| PostgresDB
     PublicRoute -->|Carrega iframe sob demanda| TikTokEmbed
     PublicRoute -->|Carrega iframe sob demanda| ReelsEmbed
     PublicRoute -->|Carrega iframe sob demanda| ShortsEmbed
@@ -53,7 +53,7 @@ flowchart TD
     AdminUser -->|Acessa /admin| NextMiddleware
     NextMiddleware -->|Verifica token de sessão| SupaAuth
     NextMiddleware -->|Valida e-mail contra ADMIN_EMAIL| AdminRoute
-    AdminRoute -->|Criação/Edição de cortes e produtos| ServerAction
+    AdminRoute -->|Criação/Edição de categorias, cortes e produtos| ServerAction
     ServerAction -->|Gravação via Service Role| PostgresDB
 ```
 
@@ -132,13 +132,14 @@ sequenceDiagram
 O design segue as diretrizes do guia de princípios de design e a especificação do **Tailwind CSS v4**:
 
 - **Layout Mobile-First com Scroll-Snap:** A vitrine simula a fluidez de redes sociais em smartphones, permitindo deslizar entre cortes verticais sem atraso.
+- **Feed Geral e Navegação por Pílulas de Categorias:** No topo da vitrine, uma barra com rolagem horizontal suave apresenta as opções de filtro com o chip "Todos" ativo por padrão. A seleção de uma categoria filtra reativamente a listagem de vídeos sem recarregamento da página. O estado é sincronizado com parâmetros de URL (`/?categoria=slug`) ou rotas diretas (`/c/[slug]`), facilitando o compartilhamento e a descoberta de nichos específicos.
 - **Painel Inferior de Produtos (Bottom Drawer):** Embaixo ou sobreposto ao vídeo ativo, é apresentado um card com os produtos recomendados naquele corte, exibindo:
     - Miniatura do produto otimizada via `next/image`.
     - Nome do produto e loja parceira (ex: Amazon, Shopee).
     - Preço original riscado e preço promocional em destaque (`tabular-nums font-mono text-emerald-400`).
     - Badge de cupom clicável que copia o código para a área de transferência em um toque e exibe feedback tátil/visual imediato.
     - Botão de compra primário de alto contraste que abre a loja em nova aba com atributos `target="_blank" rel="noopener noreferrer sponsored"`.
-- **Modo Desktop Elegante:** Em telas grandes, a interface migra automaticamente para uma grade de cartões com proporção 9:16, preservando a identidade visual sem esticar vídeos ou desperdiçar espaço horizontal.
+- **Modo Desktop Elegante:** Em telas grandes, a interface migra automaticamente para uma grade de cartões com proporção 9:16, preservando a identidade visual sem esticar vídeos ou desperdiçar espaço horizontal. As pílulas de categorias permanecem fixas no topo da área de catálogo para navegação rápida.
 
 ---
 

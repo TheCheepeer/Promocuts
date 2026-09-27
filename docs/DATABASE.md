@@ -8,13 +8,26 @@ Este documento documenta o esquema de banco de dados do **PromoCuts**, construí
 
 ```mermaid
 erDiagram
+    CATEGORIES ||--o{ VIDEOS : "classifica"
+    CATEGORIES ||--o{ PRODUCTS : "classifica"
     VIDEOS ||--o{ VIDEO_PRODUCTS : "possui"
     PRODUCTS ||--o{ VIDEO_PRODUCTS : "pertence a"
     PRODUCTS ||--o{ AFFILIATE_CLICKS : "recebe cliques"
     VIDEOS ||--o{ AFFILIATE_CLICKS : "origina cliques"
 
+    CATEGORIES {
+        uuid id PK
+        varchar name
+        varchar slug UK
+        varchar icon
+        int display_order
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
     VIDEOS {
         uuid id PK
+        uuid category_id FK
         varchar title
         varchar slug UK
         text description
@@ -32,6 +45,7 @@ erDiagram
 
     PRODUCTS {
         uuid id PK
+        uuid category_id FK
         varchar name
         text description
         text image_url
@@ -67,13 +81,30 @@ erDiagram
 
 ## 2. Dicionário de Dados
 
-### 2.1 Tabela `public.videos`
+### 2.1 Tabela `public.categories`
+
+Armazena as categorias para classificação temática dos cortes de review e dos produtos recomendados.
+
+| Coluna          | Tipo           | Nulo | Padrão               | Descrição                                               |
+| :-------------- | :------------- | :--: | :------------------- | :------------------------------------------------------ |
+| `id`            | `UUID`         | Não  | `uuid_generate_v4()` | Identificador único da categoria                        |
+| `name`          | `VARCHAR(100)` | Não  | —                    | Nome legível da categoria (ex: "Tecnologia", "Casa")    |
+| `slug`          | `VARCHAR(100)` | Não  | —                    | Identificador amigável na URL (`/c/tecnologia`)         |
+| `icon`          | `VARCHAR(50)`  | Sim  | `NULL`               | Nome do ícone da biblioteca Lucide React (ex: `laptop`) |
+| `display_order` | `INT`          | Não  | `0`                  | Ordem de aparição na barra de pílulas do feed           |
+| `created_at`    | `TIMESTAMPTZ`  | Não  | `NOW()`              | Data e hora de criação                                  |
+| `updated_at`    | `TIMESTAMPTZ`  | Não  | `NOW()`              | Data e hora da última atualização                       |
+
+---
+
+### 2.2 Tabela `public.videos`
 
 Armazena as informações dos cortes de vídeo e os dados de incorporação.
 
 | Coluna              | Tipo             | Nulo | Padrão               | Descrição                                                 |
 | :------------------ | :--------------- | :--: | :------------------- | :-------------------------------------------------------- |
 | `id`                | `UUID`           | Não  | `uuid_generate_v4()` | Identificador único do vídeo                              |
+| `category_id`       | `UUID`           | Sim  | `NULL`               | Categoria temática do corte (ON DELETE SET NULL)          |
 | `title`             | `VARCHAR(255)`   | Não  | —                    | Título amigável do corte para SEO e acessibilidade        |
 | `slug`              | `VARCHAR(255)`   | Não  | —                    | Identificador amigável na URL (`/v/corte-slug`)           |
 | `description`       | `TEXT`           | Sim  | `NULL`               | Descrição opcional ou resumo do conteúdo                  |
@@ -90,13 +121,14 @@ Armazena as informações dos cortes de vídeo e os dados de incorporação.
 
 ---
 
-### 2.2 Tabela `public.products`
+### 2.3 Tabela `public.products`
 
 Armazena o catálogo de itens recomendados com links de afiliados.
 
 | Coluna           | Tipo            | Nulo | Padrão               | Descrição                                           |
 | :--------------- | :-------------- | :--: | :------------------- | :-------------------------------------------------- |
 | `id`             | `UUID`          | Não  | `uuid_generate_v4()` | Identificador único do produto                      |
+| `category_id`    | `UUID`          | Sim  | `NULL`               | Categoria do produto (ON DELETE SET NULL)           |
 | `name`           | `VARCHAR(255)`  | Não  | —                    | Nome comercial do produto                           |
 | `description`    | `TEXT`          | Sim  | `NULL`               | Detalhes curtos ou diferencial do produto           |
 | `image_url`      | `TEXT`          | Não  | —                    | URL da imagem do produto (hospedada na loja ou CDN) |
@@ -111,7 +143,7 @@ Armazena o catálogo de itens recomendados com links de afiliados.
 
 ---
 
-### 2.3 Tabela `public.video_products`
+### 2.4 Tabela `public.video_products`
 
 Tabela de associação de muitos-para-muitos entre vídeos e produtos.
 
@@ -127,7 +159,7 @@ _Restrição:_ Chave única composta `UNIQUE(video_id, product_id)` para impedir
 
 ---
 
-### 2.4 Tabela `public.affiliate_clicks`
+### 2.5 Tabela `public.affiliate_clicks`
 
 Registros anônimos de engajamento para cálculo de métricas de conversão.
 
@@ -146,14 +178,16 @@ Registros anônimos de engajamento para cálculo de métricas de conversão.
 
 Todas as tabelas possuem a opção `ROW LEVEL SECURITY` estritamente ativada:
 
-1. **Leitura Pública de Vídeos:**
+1. **Leitura Pública de Categorias:**
+    - Todas as categorias podem ser consultadas publicamente (`USING (true)`) para popular o feed geral e as barras de navegação.
+2. **Leitura Pública de Vídeos:**
     - Apenas registros com `is_published = true` podem ser lidos por conexões anônimas.
-2. **Leitura Pública de Produtos:**
+3. **Leitura Pública de Produtos:**
     - Produtos só são listados para o público se estiverem atrelados a pelo menos um vídeo com `is_published = true`.
-3. **Escrita Restrita:**
-    - Operações de `INSERT`, `UPDATE` e `DELETE` nas tabelas principais são bloqueadas para o papel anônimo (`anon`).
+4. **Escrita Restrita:**
+    - Operações de `INSERT`, `UPDATE` e `DELETE` nas tabelas principais (`categories`, `videos`, `products`, `video_products`) são bloqueadas para o papel anônimo (`anon`).
     - Elas são realizadas pelas Server Actions autenticadas do Next.js via chave de serviço (`service_role`), após validação estrita da sessão de e-mail do administrador.
-4. **Registro de Métricas Anônimas:**
+5. **Registro de Métricas Anônimas:**
     - A tabela `affiliate_clicks` permite apenas a operação de `INSERT` pelo público (`anon` e `authenticated`), garantindo que visitantes possam registrar seus cliques sem autorização de leitura da base de dados analítica.
 
 ---
@@ -163,6 +197,7 @@ Todas as tabelas possuem a opção `ROW LEVEL SECURITY` estritamente ativada:
 1. Acesse o [Painel do Supabase](https://supabase.com/dashboard).
 2. Selecione o projeto desejado ou crie um novo gratuitamente.
 3. No menu lateral esquerdo, clique no ícone **SQL Editor** (ícone de terminal/código).
-4. Abra o arquivo local [`supabase/migrations/001_initial_schema.sql`](../supabase/migrations/001_initial_schema.sql) do projeto.
-5. Copie todo o conteúdo, cole na janela do SQL Editor e clique no botão **Run** (Executar).
-6. O retorno exibirá `Success. No rows returned`, confirmando que todas as tabelas, tipos, funções, triggers e políticas de segurança foram criados.
+4. Para instalações novas, abra o arquivo local [`supabase/migrations/001_initial_schema.sql`](../supabase/migrations/001_initial_schema.sql) do projeto.
+5. Para bancos de dados existentes criados antes da categorização, execute o arquivo complementar [`supabase/migrations/002_add_categories.sql`](../supabase/migrations/002_add_categories.sql).
+6. Copie todo o conteúdo, cole na janela do SQL Editor e clique no botão **Run** (Executar).
+7. O retorno exibirá `Success. No rows returned`, confirmando que todas as tabelas, tipos, funções, triggers e políticas de segurança foram criados.
