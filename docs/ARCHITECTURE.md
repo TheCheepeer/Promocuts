@@ -179,6 +179,22 @@ O design segue as diretrizes do guia de princípios de design e a especificaçã
     - A escolha do usuário é gravada no armazenamento local do navegador (`localStorage` e cookie de sessão) para restauração imediata nas próximas visitas.
     - A execução de um script leve e seguro no cabeçalho (`anti-fouc script`) impede qualquer clarão ou piscamento visual antes do carregamento da página.
 
+### 5.1 Arquitetura Modular de Componentes Públicos
+
+A vitrine pública é organizada nos seguintes componentes em `src/components/public/` e `src/components/ui/`:
+
+| Componente            | Arquivo                                    | Responsabilidade                                                                                                      |
+| :-------------------- | :----------------------------------------- | :-------------------------------------------------------------------------------------------------------------------- |
+| `PublicHeader`        | `src/components/public/header.tsx`         | Cabeçalho responsivo com logos adaptáveis ao tema (com fallback escuro -> claro), alternador de tema e links sociais. |
+| `CategoryPills`       | `src/components/public/category-pills.tsx` | Barra de rolagem horizontal suave com chips de categorias e sincronização de rotas (`/` e `/c/[slug]`).               |
+| `DynamicCategoryIcon` | `src/components/ui/category-icon.tsx`      | Renderizador dinâmico de ícones da biblioteca Lucide React com fallback seguro.                                       |
+| `VideoPlayer`         | `src/components/public/video-player.tsx`   | Reprodutor de proporção 9:16 com lazy iframe sob demanda e pôster antecipado contra telas em branco.                  |
+| `ProductCard`         | `src/components/public/product-card.tsx`   | Card com preços tabulares, crachá de desconto, cópia tátil de cupons e link protegido para parceiros.                 |
+| `ProductDrawer`       | `src/components/public/product-drawer.tsx` | Gaveta retrátil mobile sobreposta ao corte, operando em modo compacto ou expandido com suporte a múltiplos produtos.  |
+| `FeedMobile`          | `src/components/public/feed-mobile.tsx`    | Feed vertical com rolagem magnética (`scroll-snap` em `h-dvh`), `IntersectionObserver` e botões flutuantes.           |
+| `FeedDesktop`         | `src/components/public/feed-desktop.tsx`   | Grade responsiva de cartões 9:16 com prévia de produtos e modal de reprodução imersiva.                               |
+| `Feed`                | `src/components/public/feed.tsx`           | Orquestrador responsivo chaveando entre a visão mobile e a visão desktop conforme o viewport.                         |
+
 ---
 
 ## 6. Motor de Customização Visual e White-Label (Theming Dinâmico e Branding)

@@ -1,0 +1,177 @@
+import React from "react";
+import Link from "next/link";
+import { ThemeToggle } from "@/components/theme-toggle";
+import type { SiteSettings } from "@/types/database";
+
+interface PublicHeaderProps {
+    settings: SiteSettings;
+}
+
+export function PublicHeader({ settings }: PublicHeaderProps) {
+    const hasFullLogoLight = Boolean(settings.logo_url_light);
+    const hasMobileIconLight = Boolean(
+        settings.logo_icon_url_light || settings.logo_url_light,
+    );
+
+    const firstLetter = (settings.site_name || "P").charAt(0).toUpperCase();
+
+    return (
+        <header className="sticky top-0 z-40 w-full border-b border-zinc-200/80 bg-white/80 backdrop-blur-md transition-colors dark:border-zinc-800/80 dark:bg-zinc-950/80">
+            <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:h-16 sm:px-6 lg:px-8">
+                {/* Logotipo e Identidade da Vitrine */}
+                <Link
+                    href="/"
+                    className="flex items-center gap-2.5 transition-opacity hover:opacity-90"
+                    title={settings.site_name}
+                >
+                    {/* Logotipo Desktop (Full) */}
+                    <div className="hidden sm:flex items-center gap-2.5">
+                        {hasFullLogoLight ? (
+                            <>
+                                <img
+                                    src={settings.logo_url_light!}
+                                    alt={settings.site_name}
+                                    className="h-8 w-auto object-contain dark:hidden"
+                                />
+                                <img
+                                    src={
+                                        settings.logo_url_dark ||
+                                        settings.logo_url_light!
+                                    }
+                                    alt={settings.site_name}
+                                    className="hidden h-8 w-auto object-contain dark:block"
+                                />
+                            </>
+                        ) : (
+                            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-primary text-sm font-black text-white shadow-xs">
+                                {firstLetter}
+                            </div>
+                        )}
+                        <span className="text-base font-extrabold tracking-tight text-zinc-950 dark:text-zinc-50">
+                            {settings.site_name}
+                        </span>
+                    </div>
+
+                    {/* Logotipo Mobile (Compacto) */}
+                    <div className="flex sm:hidden items-center gap-2">
+                        {hasMobileIconLight ? (
+                            <>
+                                <img
+                                    src={
+                                        settings.logo_icon_url_light ||
+                                        settings.logo_url_light!
+                                    }
+                                    alt={settings.site_name}
+                                    className="h-7 w-auto object-contain dark:hidden"
+                                />
+                                <img
+                                    src={
+                                        settings.logo_icon_url_dark ||
+                                        settings.logo_url_dark ||
+                                        settings.logo_icon_url_light ||
+                                        settings.logo_url_light!
+                                    }
+                                    alt={settings.site_name}
+                                    className="hidden h-7 w-auto object-contain dark:block"
+                                />
+                            </>
+                        ) : (
+                            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-primary text-xs font-black text-white shadow-xs">
+                                {firstLetter}
+                            </div>
+                        )}
+                        <span className="text-sm font-bold tracking-tight text-zinc-950 dark:text-zinc-50">
+                            {settings.site_name}
+                        </span>
+                    </div>
+                </Link>
+
+                {/* Acoes: Redes sociais opcionais e alternador de tema */}
+                <div className="flex items-center gap-2 sm:gap-3">
+                    {/* Link para Instagram */}
+                    {settings.social_instagram && (
+                        <a
+                            href={
+                                settings.social_instagram.startsWith("http")
+                                    ? settings.social_instagram
+                                    : `https://instagram.com/${settings.social_instagram.replace("@", "")}`
+                            }
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hidden h-9 w-9 items-center justify-center rounded-xl border border-zinc-200/80 bg-zinc-50 text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-800/80 dark:bg-zinc-900/60 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 sm:flex"
+                            title="Instagram"
+                            aria-label="Instagram"
+                        >
+                            <svg
+                                className="h-4 w-4 fill-none stroke-current stroke-2"
+                                viewBox="0 0 24 24"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
+                                <rect
+                                    width="20"
+                                    height="20"
+                                    x="2"
+                                    y="2"
+                                    rx="5"
+                                    ry="5"
+                                />
+                                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                                <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+                            </svg>
+                        </a>
+                    )}
+
+                    {/* Link para TikTok */}
+                    {settings.social_tiktok && (
+                        <a
+                            href={
+                                settings.social_tiktok.startsWith("http")
+                                    ? settings.social_tiktok
+                                    : `https://tiktok.com/@${settings.social_tiktok.replace("@", "")}`
+                            }
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hidden h-9 w-9 items-center justify-center rounded-xl border border-zinc-200/80 bg-zinc-50 text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-800/80 dark:bg-zinc-900/60 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 sm:flex"
+                            title="TikTok"
+                            aria-label="TikTok"
+                        >
+                            <svg
+                                className="h-4 w-4 fill-current"
+                                viewBox="0 0 24 24"
+                            >
+                                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.29 0 .58.04.86.11V9.41a6.33 6.33 0 0 0-.86-.06 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V9.05a8.27 8.27 0 0 0 4.77 1.47V7.07a4.82 4.82 0 0 1-1-.38z" />
+                            </svg>
+                        </a>
+                    )}
+
+                    {/* Link para YouTube */}
+                    {settings.social_youtube && (
+                        <a
+                            href={
+                                settings.social_youtube.startsWith("http")
+                                    ? settings.social_youtube
+                                    : `https://youtube.com/${settings.social_youtube.replace("@", "")}`
+                            }
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hidden h-9 w-9 items-center justify-center rounded-xl border border-zinc-200/80 bg-zinc-50 text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-800/80 dark:bg-zinc-900/60 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 sm:flex"
+                            title="YouTube"
+                            aria-label="YouTube"
+                        >
+                            <svg
+                                className="h-4 w-4 fill-current"
+                                viewBox="0 0 24 24"
+                            >
+                                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                            </svg>
+                        </a>
+                    )}
+
+                    {/* Alternador de Tema Claro / Escuro */}
+                    <ThemeToggle />
+                </div>
+            </div>
+        </header>
+    );
+}

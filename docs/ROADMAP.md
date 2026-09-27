@@ -12,7 +12,7 @@ Este documento define o roteiro de implementacao do **PromoCuts**, organizado em
 | **Fase 2** | Motor de Embeds e Utilitarios de Dominio    | `Concluido` |
 | **Fase 3** | Autenticacao, Middleware e Seguranca        | `Concluido` |
 | **Fase 4** | Painel Administrativo e White-Label         | `Concluido` |
-| **Fase 5** | Vitrine Publica Mobile-First e Desktop Grid | `Pendente`  |
+| **Fase 5** | Vitrine Publica Mobile-First e Desktop Grid | `Concluido` |
 | **Fase 6** | Telemetria de Afiliados e Conversao         | `Pendente`  |
 | **Fase 7** | Dockerizacao, Testes e Verificacao Final    | `Pendente`  |
 
@@ -94,23 +94,23 @@ Objetivo: Entregar a interface de gestao de conteudo e personalizacao visual do 
 
 Objetivo: Construir a experiencia de alta conversao para os visitantes em dispositivos moveis e computadores.
 
-- [ ] Implementar o layout raiz em `src/app/layout.tsx`:
-    - [ ] Injecao dinamica de variaveis CSS de marca (`--brand-primary` e `--brand-secondary`) resolvidas conforme o tema ativo (modo claro ou modo escuro).
-    - [ ] Script leve de deteccao de tema para carregar a preferencia sem flash de tela.
-    - [ ] Geracao dinamica de metadados de SEO, Open Graph e favicons com media queries (`prefers-color-scheme`) em `generateMetadata`.
-- [ ] Criar o cabecalho publico com exibicao de logo adaptavel ao tema ativo (com fallback automatico da escura para a clara), botao de alternancia de tema (claro/escuro/sistema) e navegacao basica.
-- [ ] Criar a barra de selecao de categorias com rolagem horizontal suave e sincronizacao de URL (`/` e `/c/[slug]`).
-- [ ] Desenvolver o feed mobile vertical com rolagem magnetica (`scroll-snap`):
-    - [ ] Estrutura vertical adaptada para viewport completa (`h-dvh`).
-    - [ ] Componente reprodutor com renderizacao lazy do iframe correspondente a plataforma.
-    - [ ] Miniatura antecipada para evitar telas em branco durante carregamento de redes externas.
-- [ ] Construir o painel inferior de produtos (Bottom Drawer):
-    - [ ] Exibicao do produto vinculado ao corte com imagem otimizada.
-    - [ ] Precos alinhados com tipografia tabular (`tabular-nums font-mono text-brand-primary`).
-    - [ ] Botao de cupom com acao de copia imediata e feedback visual.
-    - [ ] Botao primario de compra direcionando para a loja parceira em nova aba protegida.
-- [ ] Adaptar a visualizacao para telas desktop em formato de grade (grid 9:16).
-- [ ] Desenvolver a pagina individual de corte em `src/app/v/[slug]/page.tsx` para compartilhamento direto.
+- [x] Implementar o layout raiz em `src/app/layout.tsx`:
+    - [x] Injecao dinamica de variaveis CSS de marca (`--brand-primary` e `--brand-secondary`) resolvidas conforme o tema ativo (modo claro ou modo escuro).
+    - [x] Script leve de deteccao de tema para carregar a preferencia sem flash de tela.
+    - [x] Geracao dinamica de metadados de SEO, Open Graph e favicons com media queries (`prefers-color-scheme`) em `generateMetadata`.
+- [x] Criar o cabecalho publico com exibicao de logo adaptavel ao tema ativo (com fallback automatico da escura para a clara), botao de alternancia de tema (claro/escuro/sistema) e navegacao basica.
+- [x] Criar a barra de selecao de categorias com rolagem horizontal suave e sincronizacao de URL (`/` e `/c/[slug]`).
+- [x] Desenvolver o feed mobile vertical com rolagem magnetica (`scroll-snap`):
+    - [x] Estrutura vertical adaptada para viewport completa (`h-dvh`).
+    - [x] Componente reprodutor com renderizacao lazy do iframe correspondente a plataforma.
+    - [x] Miniatura antecipada para evitar telas em branco durante carregamento de redes externas.
+- [x] Construir o painel inferior de produtos (Bottom Drawer):
+    - [x] Exibicao do produto vinculado ao corte com imagem otimizada.
+    - [x] Precos alinhados com tipografia tabular (`tabular-nums font-mono text-brand-primary`).
+    - [x] Botao de cupom com acao de copia imediata e feedback visual.
+    - [x] Botao primario de compra direcionando para a loja parceira em nova aba protegida.
+- [x] Adaptar a visualizacao para telas desktop em formato de grade (grid 9:16).
+- [x] Desenvolver a pagina individual de corte em `src/app/v/[slug]/page.tsx` para compartilhamento direto.
 
 ---
 
