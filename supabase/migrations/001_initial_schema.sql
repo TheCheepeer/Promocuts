@@ -1,5 +1,5 @@
 -- ==============================================================================
--- PromoCuts: Migração Inicial do Banco de Dados (Supabase / PostgreSQL)
+-- PromoCuts: Migração Inicial do Banco de Dados Endurecida (Supabase / PostgreSQL)
 -- Arquivo: supabase/migrations/001_initial_schema.sql
 -- ==============================================================================
 
@@ -33,9 +33,9 @@ CREATE TABLE IF NOT EXISTS public.videos (
     slug VARCHAR(255) UNIQUE NOT NULL,
     description TEXT,
     platform video_platform NOT NULL,
-    original_url TEXT NOT NULL,
+    original_url TEXT NOT NULL CHECK (original_url ~* '^https?://'),
     platform_video_id VARCHAR(100) NOT NULL,
-    thumbnail_url TEXT,
+    thumbnail_url TEXT CHECK (thumbnail_url IS NULL OR thumbnail_url ~* '^https?://'),
     is_published BOOLEAN NOT NULL DEFAULT true,
     is_featured BOOLEAN NOT NULL DEFAULT false,
     order_weight INT NOT NULL DEFAULT 0,
@@ -44,16 +44,16 @@ CREATE TABLE IF NOT EXISTS public.videos (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- 5. Tabela de Produtos Afiliados
+-- 5. Tabela de Produtos Afiliados com Validação Estrita de URLs
 CREATE TABLE IF NOT EXISTS public.products (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     category_id UUID REFERENCES public.categories(id) ON DELETE SET NULL,
     name VARCHAR(255) NOT NULL,
     description TEXT,
-    image_url TEXT NOT NULL,
-    affiliate_url TEXT NOT NULL,
-    regular_price NUMERIC(10, 2),
-    discount_price NUMERIC(10, 2),
+    image_url TEXT NOT NULL CHECK (image_url ~* '^https?://'),
+    affiliate_url TEXT NOT NULL CHECK (affiliate_url ~* '^https?://'),
+    regular_price NUMERIC(10, 2) CHECK (regular_price IS NULL OR regular_price >= 0),
+    discount_price NUMERIC(10, 2) CHECK (discount_price IS NULL OR discount_price >= 0),
     currency VARCHAR(10) NOT NULL DEFAULT 'BRL',
     coupon_code VARCHAR(100),
     store_name VARCHAR(100) NOT NULL,
@@ -71,14 +71,14 @@ CREATE TABLE IF NOT EXISTS public.video_products (
     CONSTRAINT unique_video_product UNIQUE(video_id, product_id)
 );
 
--- 7. Tabela de Métricas Anônimas de Cliques de Afiliados
+-- 7. Tabela de Métricas Anônimas de Cliques de Afiliados com Proteção contra DoS
 CREATE TABLE IF NOT EXISTS public.affiliate_clicks (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     product_id UUID NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
     video_id UUID REFERENCES public.videos(id) ON DELETE SET NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    user_agent TEXT,
-    referrer TEXT
+    user_agent VARCHAR(512) CHECK (user_agent IS NULL OR length(user_agent) <= 512),
+    referrer VARCHAR(1024) CHECK (referrer IS NULL OR length(referrer) <= 1024)
 );
 
 -- 8. Tabela de Configurações do Sistema e Customização de Marca (Singleton)
@@ -87,11 +87,11 @@ CREATE TABLE IF NOT EXISTS public.site_settings (
     site_name VARCHAR(100) NOT NULL DEFAULT 'PromoCuts',
     site_tagline VARCHAR(255) DEFAULT 'Cortes virais e recomendações de produtos afiliados',
     site_description TEXT DEFAULT 'Encontre os melhores achadinhos e promoções em vídeos curtos das principais lojas parceiras.',
-    primary_color VARCHAR(20) NOT NULL DEFAULT '#10B981',
-    secondary_color VARCHAR(20) NOT NULL DEFAULT '#6366F1',
-    logo_url TEXT,
-    logo_icon_url TEXT,
-    favicon_url TEXT,
+    primary_color VARCHAR(20) NOT NULL DEFAULT '#10B981' CHECK (primary_color ~* '^#[0-9A-Fa-f]{6}$'),
+    secondary_color VARCHAR(20) NOT NULL DEFAULT '#6366F1' CHECK (secondary_color ~* '^#[0-9A-Fa-f]{6}$'),
+    logo_url TEXT CHECK (logo_url IS NULL OR logo_url ~* '^https?://'),
+    logo_icon_url TEXT CHECK (logo_icon_url IS NULL OR logo_icon_url ~* '^https?://'),
+    favicon_url TEXT CHECK (favicon_url IS NULL OR favicon_url ~* '^https?://'),
     social_instagram VARCHAR(255),
     social_tiktok VARCHAR(255),
     social_youtube VARCHAR(255),
@@ -100,14 +100,18 @@ CREATE TABLE IF NOT EXISTS public.site_settings (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- 9. Função e Triggers para Atualização Automática de updated_at
+-- 9. Função e Triggers com search_path Seguro para Atualização de updated_at
 CREATE OR REPLACE FUNCTION public.handle_updated_at()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER 
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
     NEW.updated_at = NOW();
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 DROP TRIGGER IF EXISTS set_categories_updated_at ON public.categories;
 CREATE TRIGGER set_categories_updated_at
@@ -202,20 +206,21 @@ CREATE POLICY "Public read access for published video_products"
         )
     );
 
--- Métricas: Qualquer visitante pode registrar um clique anônimo de afiliado
+-- Métricas: Inserção protegida validando integridade do produto e limite de campos
 DROP POLICY IF EXISTS "Public insert access for click tracking" ON public.affiliate_clicks;
 CREATE POLICY "Public insert access for click tracking"
     ON public.affiliate_clicks FOR INSERT
     TO anon, authenticated
-    WITH CHECK (true);
+    WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM public.products p
+            WHERE p.id = public.affiliate_clicks.product_id
+        )
+        AND (user_agent IS NULL OR length(user_agent) <= 512)
+        AND (referrer IS NULL OR length(referrer) <= 1024)
+    );
 
 -- 13. Carga Inicial de Configurações do Sistema
 INSERT INTO public.site_settings (id)
 VALUES (1)
 ON CONFLICT (id) DO NOTHING;
-
--- 14. Instruções para Operações Administrativas
--- As operações de escrita (INSERT, UPDATE, DELETE) em categories, videos, products, video_products e site_settings
--- são executadas via Next.js Server Actions utilizando a Service Role Key do Supabase,
--- após a verificação estrita de que a sessão pertence ao ADMIN_EMAIL.
-

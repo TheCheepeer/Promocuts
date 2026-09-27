@@ -41,7 +41,7 @@ Foi concebido como uma solução completa de **renda passiva** e um **projeto es
 - **Gateway & Proxy Reverso:** [Nginx](https://nginx.org/) (Porta 80 com SSL gerenciado na nuvem)
 - **Banco de Dados Relacional:** [PostgreSQL 18.6](https://www.postgresql.org/) / [Supabase](https://supabase.com/)
 - **Autenticação:** Supabase Auth (Magic Link) ou Single Sign-On (Google, GitHub, OIDC)
-- **Cache & Rate Limiting:** [Redis 8](https://redis.io/) (Upstash Serverless ou Docker Alpine)
+- **Cache & Rate Limiting:** [Redis 8](https://redis.io/) (Opcional: Upstash Serverless ou Docker Alpine)
 - **Ícones:** [Lucide React](https://lucide.dev/)
 - **Hospedagem & Deploy:** [Vercel](https://vercel.com/) (100% Free Tier) ou Contêineres Docker (VPS / Homelab)
 

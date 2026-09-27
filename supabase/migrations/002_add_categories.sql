@@ -1,15 +1,15 @@
 -- ==============================================================================
--- PromoCuts: Migração 002 - Adição de Categorias e Feed Geral
+-- PromoCuts: Migração 002 - Adição de Categorias e Feed Geral Endurecida
 -- Arquivo: supabase/migrations/002_add_categories.sql
 -- ==============================================================================
 
--- 1. Criação da Tabela de Categorias
+-- 1. Criação da Tabela de Categorias com Validação Estrita de Integridade
 CREATE TABLE IF NOT EXISTS public.categories (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name VARCHAR(100) NOT NULL,
-    slug VARCHAR(100) UNIQUE NOT NULL,
-    icon VARCHAR(50),
-    display_order INT NOT NULL DEFAULT 0,
+    name VARCHAR(100) NOT NULL CHECK (length(trim(name)) > 0),
+    slug VARCHAR(100) UNIQUE NOT NULL CHECK (slug ~ '^[a-z0-9]+(?:-[a-z0-9]+)*$'),
+    icon VARCHAR(50) CHECK (icon IS NULL OR icon ~ '^[a-z0-9-]+$'),
+    display_order INT NOT NULL DEFAULT 0 CHECK (display_order >= 0),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -22,7 +22,19 @@ ALTER TABLE public.videos
 ALTER TABLE public.products 
     ADD COLUMN IF NOT EXISTS category_id UUID REFERENCES public.categories(id) ON DELETE SET NULL;
 
--- 4. Trigger de Atualização Automática de updated_at para Categorias
+-- 4. Função e Trigger com search_path Seguro para Atualização de updated_at
+CREATE OR REPLACE FUNCTION public.handle_updated_at()
+RETURNS TRIGGER 
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$;
+
 DROP TRIGGER IF EXISTS set_categories_updated_at ON public.categories;
 CREATE TRIGGER set_categories_updated_at
     BEFORE UPDATE ON public.categories

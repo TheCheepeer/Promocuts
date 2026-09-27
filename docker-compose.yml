@@ -1,15 +1,16 @@
 # ==============================================================================
-# PromoCuts - Orquestracao Docker Compose (Self-Hosted / VPS)
-# Todos os servicos operam isolados atras do Nginx Gateway (apenas porta 80 exposta)
+# PromoCuts - Orquestracao Docker Compose Endurecida (Self-Hosted / VPS)
+# Segregacao de redes, isolamento de borda e autenticacao estrita
 # ==============================================================================
 
 services:
     # Gateway e Reverse Proxy de Borda: Nginx (Porta 80 Exposta)
-    # A terminacao SSL / Porta 443 e gerenciada pela infraestrutura de nuvem
     nginx:
         image: nginx:alpine
         container_name: promocuts-nginx
         restart: unless-stopped
+        security_opt:
+            - "no-new-privileges:true"
         ports:
             - "${HTTP_PORT:-80}:80"
         volumes:
@@ -17,22 +18,29 @@ services:
         depends_on:
             - app
         networks:
-            - promocuts-network
+            - frontend-network
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "10m"
+                max-file: "3"
 
-    # Aplicacao PromoCuts (Next.js Standalone - Apenas Rede Interna)
+    # Aplicacao PromoCuts (Next.js Standalone - Ponte entre Frontend e Backend)
     app:
         build:
             context: .
             dockerfile: Dockerfile
         container_name: promocuts-app
         restart: unless-stopped
+        security_opt:
+            - "no-new-privileges:true"
         environment:
             - NODE_ENV=production
             - PORT=3000
             - HOSTNAME=0.0.0.0
-            - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-promocuts}
+            - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no .env}@db:5432/${POSTGRES_DB:-promocuts}
             - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
-            - ADMIN_EMAIL=${ADMIN_EMAIL}
+            - ADMIN_EMAIL=${ADMIN_EMAIL:?Defina ADMIN_EMAIL no .env}
             # Seguranca e Isolamento por VPN no /admin
             - ADMIN_ALLOWED_IPS=${ADMIN_ALLOWED_IPS:-}
             # Single Sign-On (SSO) para o Painel /admin
@@ -40,26 +48,34 @@ services:
             - SSO_CLIENT_ID=${SSO_CLIENT_ID:-}
             - SSO_CLIENT_SECRET=${SSO_CLIENT_SECRET:-}
             - SSO_ISSUER_URL=${SSO_ISSUER_URL:-}
-            - AUTH_SECRET=${AUTH_SECRET:-}
-            # Cache e Rate Limiting via Redis (Opcional)
-            - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+            - AUTH_SECRET=${AUTH_SECRET:?Defina AUTH_SECRET no .env}
+            # Cache e Rate Limiting via Redis
+            - REDIS_URL=${REDIS_URL:-redis://:${REDIS_PASSWORD:-}@redis:6379}
         depends_on:
             db:
                 condition: service_healthy
             redis:
-                condition: service_started
+                condition: service_healthy
         networks:
-            - promocuts-network
+            - frontend-network
+            - backend-network
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "10m"
+                max-file: "3"
 
-    # Banco de Dados Relacional: PostgreSQL 18.6 (Apenas Rede Interna)
+    # Banco de Dados Relacional: PostgreSQL 18.6 (Apenas Rede Backend Interna)
     db:
         image: postgres:18.6-alpine
         container_name: promocuts-db
         restart: unless-stopped
+        security_opt:
+            - "no-new-privileges:true"
         environment:
             POSTGRES_DB: ${POSTGRES_DB:-promocuts}
             POSTGRES_USER: ${POSTGRES_USER:-postgres}
-            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no .env}
         volumes:
             - postgres_data:/var/lib/postgresql/data
             - ./supabase/migrations:/docker-entrypoint-initdb.d:ro
@@ -73,18 +89,42 @@ services:
             timeout: 5s
             retries: 5
         networks:
-            - promocuts-network
+            - backend-network
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "10m"
+                max-file: "3"
 
-    # Cache em Memoria e Rate Limiting: Redis 8 (Apenas Rede Interna)
+    # Cache em Memoria e Rate Limiting: Redis 8 (Apenas Rede Backend Interna)
     redis:
         image: redis:8-alpine
         container_name: promocuts-redis
         restart: unless-stopped
-        command: redis-server --save 60 1 --loglevel warning
+        security_opt:
+            - "no-new-privileges:true"
+        command: >
+            sh -c 'if [ -n "$$REDIS_PASSWORD" ]; then
+                redis-server --save 60 1 --loglevel warning --requirepass "$$REDIS_PASSWORD";
+            else
+                redis-server --save 60 1 --loglevel warning;
+            fi'
+        environment:
+            - REDIS_PASSWORD=${REDIS_PASSWORD:-}
         volumes:
             - redis_data:/data
+        healthcheck:
+            test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
         networks:
-            - promocuts-network
+            - backend-network
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "10m"
+                max-file: "3"
 
 volumes:
     postgres_data:
@@ -93,5 +133,8 @@ volumes:
         driver: local
 
 networks:
-    promocuts-network:
+    frontend-network:
         driver: bridge
+    backend-network:
+        driver: bridge
+        internal: true

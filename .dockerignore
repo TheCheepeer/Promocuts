@@ -1,13 +1,47 @@
-Dockerfile
+# Docker
+Dockerfile*
 .dockerignore
-node_modules
-npm-debug.log
-.next
+docker-compose*.yml
+
+# Git
 .git
 .gitignore
-.env*.local
-.env
+
+# Dependencias e Logs
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Build e Cache
+.next
+out
+dist
+build
+.cache
+
+# Variaveis de Ambiente e Segredos (OWASP A05 / CWE-200)
+.env*
+!.env.example
+*.pem
+*.key
+*.cert
+*.crt
+*.pfx
+
+# Documentacao e Agentes
 .agents
 AGENTS.md
 README.md
 docs
+LICENSE
+
+# Migracoes do Banco (Utilizadas apenas pelo container db)
+supabase
+
+# Sistema e IDEs
+.DS_Store
+Thumbs.db
+.vscode
+.idea

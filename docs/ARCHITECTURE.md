@@ -233,29 +233,33 @@ Para avaliar quais cortes e produtos geram maior retorno sem comprometer a priva
 
 ## 8. Arquitetura de Contêineres e Self-Hosting (Docker)
 
-Para garantir autonomia e independência de fornecedores de nuvem, o PromoCuts disponibiliza orquestração completa em contêineres:
+Para garantir autonomia e independência de fornecedores de nuvem, o PromoCuts disponibiliza orquestração completa em contêineres estruturada no princípio de Defesa em Profundidade:
 
 ### 8.1 Gateway e Reverse Proxy: Nginx (Porta 80)
 
 - **Ponto Único de Entrada:** O contêiner `promocuts-nginx` é o único serviço que expõe porta para a máquina hospedeira (`80:80`).
-- **Terminação SSL Delegada à Nuvem:** A porta `443` (HTTPS) e os certificados SSL são gerenciados na camada de borda pela infraestrutura de nuvem (como Cloudflare, AWS ALB ou Load Balancers). O Nginx recebe o tráfego na porta 80 e respeita o cabeçalho `X-Forwarded-Proto: https`.
-- **Blindagem da Rede Interna:** Todos os outros contêineres (`app`, `db` e `redis`) operam estritamente isolados na rede privada `promocuts-network`, sem mapeamento de portas na máquina física.
-- **Otimização de Entrega:** O Nginx realiza compressão Gzip ativa, buffering de conexões e proteção contra esgotamento de sockets.
+- **Terminação SSL Delegada à Nuvem:** A porta `443` (HTTPS) e os certificados SSL são gerenciados na camada de borda pela infraestrutura de nuvem (como Cloudflare, AWS ALB ou Load Balancers). O Nginx mapeia com segurança o cabeçalho `$proxy_x_forwarded_proto` prevenindo falsificação de HTTPS.
+- **Segregação Rigorosa de Redes:** A infraestrutura é segmentada em duas redes isoladas:
+  - `frontend-network`: conecta exclusivamente o `promocuts-nginx` e o `promocuts-app`.
+  - `backend-network` (marcada como `internal: true`): conecta exclusivamente o `promocuts-app`, `promocuts-db` e `promocuts-redis`. O Nginx não possui rota física nem resolução DNS para alcançar o PostgreSQL ou Redis, impedindo pivoteamento em caso de comprometimento da borda.
+- **Cabeçalhos de Segurança Defensivos e Rate Limiting:** O Nginx aplica políticas de `Content-Security-Policy` (permitindo estritamente players de TikTok, Reels e Shorts), `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy` e `Permissions-Policy`, além de zonas de rate limiting (`limit_req_zone`) para requisições gerais e rotas administrativas (`/admin`).
 
 ### 8.2 Next.js Standalone Runner
 
-- **Build Multi-Stage:** O arquivo `Dockerfile` compila o frontend e o servidor Next.js utilizando o recurso nativo `output: 'standalone'`.
-- **Imagem Otimizada:** A imagem de produção baseia-se em Alpine Linux e empacota apenas as dependências mínimas necessárias de execução, resultando em um consumo de memória reduzido e imagem final compacta.
+- **Build Multi-Stage Endurecido:** O arquivo `Dockerfile` compila o frontend e o servidor Next.js utilizando o recurso nativo `output: 'standalone'`.
+- **Gerenciador de Processos Tini:** Utiliza `tini` como entrypoint (PID 1) para tratamento adequado de sinais UNIX (`SIGTERM`/`SIGINT`), viabilizando encerramento gracioso (*graceful shutdown*) sem corromper transações de banco.
+- **Healthcheck Nativo:** Monitoramento integrado de integridade via comando local para orquestradores.
 - **Segurança de Execução:** O processo roda sob o usuário sem privilégios de root (`nextjs:nodejs`), acessível apenas internamente pelo Nginx na porta `3000`.
 
 ### 8.3 Banco de Dados Dedicado: PostgreSQL 18.6
 
 - **Versão:** O serviço de banco de dados utiliza a imagem oficial `postgres:18.6-alpine`.
-- **Inicialização Idempotente:** O volume `./supabase/migrations` é montado em `/docker-entrypoint-initdb.d/`. Na primeira inicialização, todos os scripts SQL (`001_initial_schema.sql`, `002_add_categories.sql` e `003_add_site_settings.sql`) são aplicados automaticamente, preparando tabelas, enums, triggers e o registro inicial de configurações de marca.
+- **Inicialização Idempotente:** O volume `./supabase/migrations` é montado em `/docker-entrypoint-initdb.d/`. Na primeira inicialização, todos os scripts SQL (`001_initial_schema.sql`, `002_add_categories.sql` e `003_add_site_settings.sql`) são aplicados automaticamente, preparando tabelas, enums, triggers e o registro inicial de configurações de marca com validação de formato e RLS ativo.
+- **Credenciais Seguras:** Exigência de senhas fortes via variável obrigatória `POSTGRES_PASSWORD`, sem fallbacks para credenciais padrão conhecidas.
 - **Persistência Segura:** Os arquivos de dados residem no volume nomeado `postgres_data`, sem exposição de portas para a máquina externa.
 
 ### 8.4 Camada Opcional de Redis 8 em Contêiner
 
-- **Instância Local:** O serviço `redis` executa a imagem oficial `redis:8-alpine` com persistência periódica em disco (`--save 60 1`).
-- **Conexão:** O Next.js detecta a presença da variável `REDIS_URL` e estabelece conexão TCP para rate limiting e cache em memória.
+- **100% Opcional:** O sistema PromoCuts opera com autonomia plena sem a presença do Redis tanto em nuvem quanto no Docker.
+- **Instância Local Autenticada:** Quando habilitado, o serviço `redis` executa a imagem oficial `redis:8-alpine` com persistência periódica em disco (`--save 60 1`) e proteção por senha configurada via flag `--requirepass` e variável `REDIS_PASSWORD` na rede interna backend.
 - **Tolerância a Falhas:** Caso o contêiner de Redis seja interrompido, a aplicação continua operando normalmente através de consultas diretas ao banco de dados e cache em memória de processo.

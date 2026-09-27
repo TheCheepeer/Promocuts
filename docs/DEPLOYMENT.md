@@ -86,10 +86,15 @@ NEXT_PUBLIC_APP_URL=https://promocuts.seu-dominio.com
 # Chave secreta de sessao (gerar com: openssl rand -base64 32)
 AUTH_SECRET=sua-chave-criptografica-aleatoria
 
-# Credenciais do PostgreSQL 18.6
+# Credenciais do PostgreSQL 18.6 (Apenas rede interna backend)
 POSTGRES_DB=promocuts
-POSTGRES_USER=postgres
+POSTGRES_USER=promocuts_user
 POSTGRES_PASSWORD=senha-super-segura-do-banco
+
+# Cache e Rate Limiting via Redis (100% Opcional)
+# O sistema funciona plenamente sem Redis tanto na Vercel quanto no Docker.
+# Se desejar habilitar no Docker com autenticacao segura por senha:
+# REDIS_PASSWORD=senha-super-segura-do-redis
 ```
 
 #### 3. Configurar Single Sign-On (SSO) no Painel `/admin` (Opcional)
@@ -125,10 +130,10 @@ docker compose up -d
 
 O comando irá:
 
-1. Compilar a imagem da aplicação Next.js Standalone.
-2. Iniciar o contêiner `postgres:18.6-alpine` e aplicar automaticamente todos os scripts SQL em `supabase/migrations/` em rede isolada.
-3. Iniciar o contêiner `redis:8-alpine` em rede isolada para controle de tráfego e cache.
-4. Iniciar o contêiner `promocuts-nginx`, que atua como ponto único de entrada na porta `80` (com terminação HTTPS na porta 443 delegada à infraestrutura de nuvem/CDN).
+1. Compilar a imagem da aplicação Next.js Standalone com hardening de permissões e healthcheck.
+2. Iniciar o contêiner `postgres:18.6-alpine` na rede interna privada (`backend-network`, marcada como `internal: true`) aplicando automaticamente os scripts SQL em `supabase/migrations/`.
+3. Iniciar o contêiner `redis:8-alpine` na rede interna privada (serviço 100% opcional, com autenticação por senha se configurado).
+4. Iniciar o contêiner `promocuts-nginx` na rede pública (`frontend-network`), atuando como ponto único de entrada na porta `80` com cabeçalhos de segurança e rate limiting ativo. O Nginx não possui rota de rede para o banco de dados nem para o Redis, garantindo defesa em profundidade.
 
 Para verificar a saúde dos serviços:
 

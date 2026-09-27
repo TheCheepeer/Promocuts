@@ -1,28 +1,40 @@
 -- ==============================================================================
--- PromoCuts: Migração 003 - Configurações Gerais do Sistema e Customização de Marca
+-- PromoCuts: Migração 003 - Configurações Gerais do Sistema Endurecida
 -- Arquivo: supabase/migrations/003_add_site_settings.sql
 -- ==============================================================================
 
--- 1. Criação da Tabela de Configurações do Site (Padrão Singleton)
+-- 1. Criação da Tabela de Configurações do Site (Padrão Singleton com Validação Estrita)
 CREATE TABLE IF NOT EXISTS public.site_settings (
     id INT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
-    site_name VARCHAR(100) NOT NULL DEFAULT 'PromoCuts',
+    site_name VARCHAR(100) NOT NULL DEFAULT 'PromoCuts' CHECK (length(trim(site_name)) > 0),
     site_tagline VARCHAR(255) DEFAULT 'Cortes virais e recomendações de produtos afiliados',
     site_description TEXT DEFAULT 'Encontre os melhores achadinhos e promoções em vídeos curtos das principais lojas parceiras.',
-    primary_color VARCHAR(20) NOT NULL DEFAULT '#10B981',
-    secondary_color VARCHAR(20) NOT NULL DEFAULT '#6366F1',
-    logo_url TEXT,
-    logo_icon_url TEXT,
-    favicon_url TEXT,
-    social_instagram VARCHAR(255),
-    social_tiktok VARCHAR(255),
-    social_youtube VARCHAR(255),
+    primary_color VARCHAR(20) NOT NULL DEFAULT '#10B981' CHECK (primary_color ~* '^#[0-9A-Fa-f]{6}$'),
+    secondary_color VARCHAR(20) NOT NULL DEFAULT '#6366F1' CHECK (secondary_color ~* '^#[0-9A-Fa-f]{6}$'),
+    logo_url TEXT CHECK (logo_url IS NULL OR logo_url ~* '^https?://'),
+    logo_icon_url TEXT CHECK (logo_icon_url IS NULL OR logo_icon_url ~* '^https?://'),
+    favicon_url TEXT CHECK (favicon_url IS NULL OR favicon_url ~* '^https?://'),
+    social_instagram VARCHAR(255) CHECK (social_instagram IS NULL OR social_instagram ~* '^https?://|^@[a-zA-Z0-9_.]+$'),
+    social_tiktok VARCHAR(255) CHECK (social_tiktok IS NULL OR social_tiktok ~* '^https?://|^@[a-zA-Z0-9_.]+$'),
+    social_youtube VARCHAR(255) CHECK (social_youtube IS NULL OR social_youtube ~* '^https?://|^@[a-zA-Z0-9_.]+$'),
     footer_text TEXT DEFAULT 'PromoCuts — Todos os direitos reservados.',
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- 2. Trigger de Atualização Automática de updated_at para site_settings
+-- 2. Função e Trigger com search_path Seguro para Atualização de updated_at
+CREATE OR REPLACE FUNCTION public.handle_updated_at()
+RETURNS TRIGGER 
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$;
+
 DROP TRIGGER IF EXISTS set_site_settings_updated_at ON public.site_settings;
 CREATE TRIGGER set_site_settings_updated_at
     BEFORE UPDATE ON public.site_settings

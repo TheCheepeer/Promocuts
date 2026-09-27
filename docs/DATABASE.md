@@ -179,16 +179,16 @@ _Restrição:_ Chave única composta `UNIQUE(video_id, product_id)` para impedir
 
 ### 2.5 Tabela `public.affiliate_clicks`
 
-Registros anônimos de engajamento para cálculo de métricas de conversão.
+Registros anônimos de engajamento para cálculo de métricas de conversão com mitigação ativa contra DoS.
 
-| Coluna       | Tipo          | Nulo | Padrão               | Descrição                                        |
-| :----------- | :------------ | :--: | :------------------- | :----------------------------------------------- |
-| `id`         | `UUID`        | Não  | `uuid_generate_v4()` | Identificador do evento                          |
-| `product_id` | `UUID`        | Não  | —                    | Referência ao produto clicado                    |
-| `video_id`   | `UUID`        | Sim  | `NULL`               | Referência ao vídeo de onde partiu o clique      |
-| `created_at` | `TIMESTAMPTZ` | Não  | `NOW()`              | Data e hora do clique                            |
-| `user_agent` | `TEXT`        | Sim  | `NULL`               | Informação simplificada do navegador/dispositivo |
-| `referrer`   | `TEXT`        | Sim  | `NULL`               | Origem da requisição                             |
+| Coluna       | Tipo            | Nulo | Padrão               | Descrição                                                              |
+| :----------- | :-------------- | :--: | :------------------- | :--------------------------------------------------------------------- |
+| `id`         | `UUID`          | Não  | `uuid_generate_v4()` | Identificador do evento                                                |
+| `product_id` | `UUID`          | Não  | —                    | Referência ao produto clicado (ON DELETE CASCADE)                      |
+| `video_id`   | `UUID`          | Sim  | `NULL`               | Referência ao vídeo de onde partiu o clique                            |
+| `created_at` | `TIMESTAMPTZ`   | Não  | `NOW()`              | Data e hora do clique                                                  |
+| `user_agent` | `VARCHAR(512)`  | Sim  | `NULL`               | Informação do navegador/dispositivo (limitado a 512 caracteres)       |
+| `referrer`   | `VARCHAR(1024)` | Sim  | `NULL`               | Origem da requisição (limitado a 1024 caracteres)                      |
 
 ---
 
@@ -196,23 +196,23 @@ Registros anônimos de engajamento para cálculo de métricas de conversão.
 
 Armazena os parâmetros globais de customização de marca, cores, logotipos e metadados no padrão singleton (apenas 1 registro).
 
-| Coluna             | Tipo           | Nulo | Padrão                                                              | Descrição                                                          |
-| :----------------- | :------------- | :--: | :------------------------------------------------------------------ | :----------------------------------------------------------------- |
-| `id`               | `INT`          | Não  | `1`                                                                 | Identificador único singleton com restrição `CHECK (id = 1)`       |
-| `site_name`        | `VARCHAR(100)` | Não  | `'PromoCuts'`                                                       | Nome exibido no navegador, cabeçalho e compartilhamento            |
-| `site_tagline`     | `VARCHAR(255)` | Sim  | `'Cortes virais e recomendações de produtos afiliados'`             | Slogan ou frase de efeito complementar                             |
-| `site_description` | `TEXT`         | Sim  | `'Encontre os melhores achadinhos e promoções em vídeos curtos...'` | Meta description para SEO e buscadores                             |
-| `primary_color`    | `VARCHAR(20)`  | Não  | `'#10B981'`                                                         | Cor primária (hex) para botões de conversão, badges e pílula ativa |
-| `secondary_color`  | `VARCHAR(20)`  | Não  | `'#6366F1'`                                                         | Cor secundária (hex) para acentos e elementos complementares       |
-| `logo_url`         | `TEXT`         | Sim  | `NULL`                                                              | URL da imagem da logo principal no cabeçalho                       |
-| `logo_icon_url`    | `TEXT`         | Sim  | `NULL`                                                              | URL do ícone da marca para versão mobile compacta                  |
-| `favicon_url`      | `TEXT`         | Sim  | `NULL`                                                              | URL do arquivo de favicon na aba do navegador                      |
-| `social_instagram` | `VARCHAR(255)` | Sim  | `NULL`                                                              | Link opcional para o perfil da marca no Instagram                  |
-| `social_tiktok`    | `VARCHAR(255)` | Sim  | `NULL`                                                              | Link opcional para o perfil da marca no TikTok                     |
-| `social_youtube`   | `VARCHAR(255)` | Sim  | `NULL`                                                              | Link opcional para o canal no YouTube                              |
-| `footer_text`      | `TEXT`         | Sim  | `'PromoCuts — Todos os direitos reservados.'`                       | Mensagem de rodapé e direitos autorais                             |
-| `created_at`       | `TIMESTAMPTZ`  | Não  | `NOW()`                                                             | Data e hora de criação                                             |
-| `updated_at`       | `TIMESTAMPTZ`  | Não  | `NOW()`                                                             | Data e hora da última atualização (via trigger)                    |
+| Coluna             | Tipo           | Nulo | Padrão                                                              | Descrição                                                                           |
+| :----------------- | :------------- | :--: | :------------------------------------------------------------------ | :---------------------------------------------------------------------------------- |
+| `id`               | `INT`          | Não  | `1`                                                                 | Identificador único singleton com restrição `CHECK (id = 1)`                        |
+| `site_name`        | `VARCHAR(100)` | Não  | `'PromoCuts'`                                                       | Nome exibido no navegador, cabeçalho e compartilhamento                             |
+| `site_tagline`     | `VARCHAR(255)` | Sim  | `'Cortes virais e recomendações de produtos afiliados'`             | Slogan ou frase de efeito complementar                                              |
+| `site_description` | `TEXT`         | Sim  | `'Encontre os melhores achadinhos e promoções em vídeos curtos...'` | Meta description para SEO e buscadores                                              |
+| `primary_color`    | `VARCHAR(20)`  | Não  | `'#10B981'`                                                         | Cor primária em hexadecimal estrito `CHECK (~* '^#[0-9A-Fa-f]{6}$')`                |
+| `secondary_color`  | `VARCHAR(20)`  | Não  | `'#6366F1'`                                                         | Cor secundária em hexadecimal estrito `CHECK (~* '^#[0-9A-Fa-f]{6}$')`              |
+| `logo_url`         | `TEXT`         | Sim  | `NULL`                                                              | URL segura (`CHECK (~* '^https?://')`) da imagem da logo no cabeçalho               |
+| `logo_icon_url`    | `TEXT`         | Sim  | `NULL`                                                              | URL segura (`CHECK (~* '^https?://')`) do ícone da marca para versão mobile         |
+| `favicon_url`      | `TEXT`         | Sim  | `NULL`                                                              | URL segura (`CHECK (~* '^https?://')`) do favicon na aba do navegador               |
+| `social_instagram` | `VARCHAR(255)` | Sim  | `NULL`                                                              | Link opcional para o perfil da marca no Instagram                                   |
+| `social_tiktok`    | `VARCHAR(255)` | Sim  | `NULL`                                                              | Link opcional para o perfil da marca no TikTok                                      |
+| `social_youtube`   | `VARCHAR(255)` | Sim  | `NULL`                                                              | Link opcional para o canal no YouTube                                               |
+| `footer_text`      | `TEXT`         | Sim  | `'PromoCuts — Todos os direitos reservados.'`                       | Mensagem de rodapé e direitos autorais                                              |
+| `created_at`       | `TIMESTAMPTZ`  | Não  | `NOW()`                                                             | Data e hora de criação                                                              |
+| `updated_at`       | `TIMESTAMPTZ`  | Não  | `NOW()`                                                             | Data e hora da última atualização (via trigger com search_path seguro)              |
 
 ---
 
@@ -231,8 +231,10 @@ Todas as tabelas possuem a opção `ROW LEVEL SECURITY` estritamente ativada:
 5. **Escrita Restrita:**
     - Operações de `INSERT`, `UPDATE` e `DELETE` nas tabelas principais (`site_settings`, `categories`, `videos`, `products`, `video_products`) são bloqueadas para o papel anônimo (`anon`).
     - Elas são realizadas pelas Server Actions autenticadas do Next.js via chave de serviço (`service_role`), após validação estrita da sessão de e-mail do administrador.
-6. **Registro de Métricas Anônimas:**
-    - A tabela `affiliate_clicks` permite apenas a operação de `INSERT` pelo público (`anon` e `authenticated`), garantindo que visitantes possam registrar seus cliques sem autorização de leitura da base de dados analítica.
+6. **Registro de Métricas Anônimas Endurecido contra DoS:**
+    - A tabela `affiliate_clicks` permite a operação de `INSERT` pelo público (`anon` e `authenticated`) com validação defensiva estrita no `WITH CHECK`: o produto deve existir ativamente na base e os comprimentos de `user_agent` (<= 512) e `referrer` (<= 1024) são rigorosamente limitados, eliminando riscos de esgotamento de disco (Storage DoS).
+7. **Mitigação de Search Path Hijacking:**
+    - A função trigger `handle_updated_at` opera sob o modelo `SECURITY DEFINER` com `SET search_path = public`, impedindo interceptação de esquemas por usuários não confiáveis.
 
 ---
 
