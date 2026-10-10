@@ -17,6 +17,7 @@ Este documento define o roteiro de implementacao do **PromoCuts**, organizado em
 | **Fase 7** | Cache Serverless, Cabecalhos Defensivos e Verificacao Final | `Concluido` |
 | **Fase 8** | Automacao de Ofertas, Suporte Multi-Loja e Monitoramento     | `Concluido` |
 | **Fase 9** | Hub Central do Criador (Bio Links, Streamers e Métricas)    | `Pendente`  |
+| **Fase 10**| Segurança Avançada e Redes Privadas (Tailscale e Backups)   | `Pendente`  |
 
 ---
 
@@ -186,4 +187,22 @@ Objetivo: Transformar o PromoCuts no hub central soberano e descentralizado do c
         - [ ] Ranking de cliques por rede social de origem (Instagram, TikTok, YouTube, tráfego direto).
         - [ ] Ranking de cliques por Bio Link (Twitch, Discord, Telegram, etc.).
     - [ ] Filtro temporal flexível (Hoje, Últimos 7 dias, Últimos 30 dias e Período completo).
+
+---
+
+### Fase 10: Segurança Avançada e Redes Privadas (Tailscale Guard e Backups)
+
+Objetivo: Elevar a postura defensiva do PromoCuts a padrões corporativos de infraestrutura, permitindo restringir o acesso ao painel administrativo exclusivamente através de VPNs privadas (Tailscale Exit Nodes, WireGuard, OPNsense/pfSense) com gestão visual e backups autônomos.
+
+- [ ] Gestão Visual de Rede Privada no Painel (`/admin/settings`):
+    - [ ] Interruptor "Modo VPN / Tailscale Guard" para ativar e desativar o bloqueio de rede sem necessidade de reimplantação na Vercel.
+    - [ ] Detecção de IP em tempo real: botão "Vincular meu IP / Exit Node atual" que captura o endereço público da conexão ativa e o salva na lista de autorizados.
+    - [ ] Suporte a múltiplos IPs e blocos CIDR para administradores com mais de um nó de saída ou rede residencial/escritório.
+    - [ ] Armazenamento defensivo das faixas autorizadas no banco de dados com leitura em cache na borda (Edge / Redis / memória).
+- [ ] Mecanismo de Recuperação de Emergência (*Emergency Bypass Token*):
+    - [ ] Geração de token criptográfico temporário de uso único (One-Time Token) exibido no terminal ou configurado via variável para desbloqueio caso o administrador perca o acesso ao nó de saída da VPN.
+- [ ] Exportação e Backups Periódicos Automatizados:
+    - [ ] Endpoint seguro ou Cron Job para gerar backups em arquivo JSON/SQL com envio para e-mail ou download manual no painel.
+    - [ ] Guia prático de implantação de Tailscale Exit Node no OPNsense, pfSense e Linux para administradores do PromoCuts.
+
 
