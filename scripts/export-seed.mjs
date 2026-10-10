@@ -69,6 +69,14 @@ async function exportSeed() {
 
             if (rows.length === 0) continue;
 
+            if (table === "_promocuts_migrations") {
+                outputSql += `CREATE TABLE IF NOT EXISTS public._promocuts_migrations (\n`;
+                outputSql += `    id SERIAL PRIMARY KEY,\n`;
+                outputSql += `    name VARCHAR(255) NOT NULL UNIQUE,\n`;
+                outputSql += `    applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()\n`;
+                outputSql += `);\n\n`;
+            }
+
             outputSql += `-- ------------------------------------------------------------------------------\n`;
             outputSql += `-- Tabela: public.${table} (${rows.length} registros)\n`;
             outputSql += `-- ------------------------------------------------------------------------------\n`;

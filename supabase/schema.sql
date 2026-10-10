@@ -266,3 +266,10 @@ INSERT INTO public.site_settings (id)
 VALUES (1)
 ON CONFLICT (id) DO NOTHING;
 
+-- 15. Tabela de Controle de Migrações do Deploy
+CREATE TABLE IF NOT EXISTS public._promocuts_migrations (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
