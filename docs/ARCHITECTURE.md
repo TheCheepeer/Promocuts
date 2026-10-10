@@ -11,7 +11,7 @@ O PromoCuts foi projetado em torno de três pilares:
 1. **Custo Operacional Zero:** Nenhum custo de armazenamento ou transferência de vídeo. A aplicação roda 100% no plano gratuito da Vercel e do Supabase.
 2. **Alta Conversão Mobile-First:** A experiência de compra é integrada diretamente à visualização de vídeos verticais (9:16), com atrito mínimo para clicar em links de afiliados ou copiar cupons.
 3. **Simplicidade Clonável:** Qualquer desenvolvedor ou criador de conteúdo pode realizar um _fork_, configurar variáveis de ambiente básicas e ter sua própria vitrine em produção em poucos minutos.
-4. **Independência de Infraestrutura (Portabilidade Total):** A aplicação não possui aprisionamento tecnológico (_vendor lock-in_), podendo rodar em nuvem serverless (Vercel + Supabase) ou totalmente auto-hospedada via Docker Compose (PostgreSQL 17.6, Redis e Next.js Standalone).
+4. **Arquitetura Serverless Plug-and-Play de Alta Performance:** A aplicação opera de ponta a ponta na borda da nuvem (Vercel Serverless + Supabase Cloud + Upstash Redis), eliminando custos fixos de servidores e a sobrecarga de manutenção de contêineres, enquanto entrega respostas de cache em milissegundos.
 
 ---
 
@@ -24,19 +24,18 @@ flowchart TD
         AdminUser["Administrador Autenticado"]
     end
 
-    subgraph HostLayer["Camada de Execução (Vercel ou Docker Standalone)"]
+    subgraph HostLayer["Camada de Execução (Vercel Edge & Serverless)"]
         NextMiddleware["Next.js Middleware (VPN Guard, Auth & Email Whitelist)"]
         PublicRoute["Rotas Publicas (/, /c/[slug], /v/[slug])"]
         AdminRoute["Rotas Administrativas (/admin, /admin/categories, /admin/products, /admin/videos, /admin/settings)"]
         UploadEndpoint["Upload Seguro de Ativos (/api/admin/upload)"]
         TrackClickEndpoint["Telemetria de Afiliados (/api/track-click)"]
         ServerAction["Next.js Server Actions (Mutations com Service Role)"]
-        RedisModule["Modulo de Cache e Rate Limit (Upstash HTTP ou Redis TCP)"]
+        RedisModule["Modulo de Cache Serverless (Upstash Redis REST)"]
     end
 
     subgraph AuthLayer["Autenticação Administrativa"]
-        SSOAuth["Single Sign-On (Google / GitHub / OIDC)"]
-        SupaAuth["Supabase Auth (Magic Link)"]
+        SupaAuth["Supabase Auth (Magic Link Seguro)"]
     end
 
     subgraph DataLayer["Armazenamento Relacional"]
@@ -145,9 +144,9 @@ sequenceDiagram
     - Permite restringir o acesso ao `/admin` exclusivamente a dispositivos conectados à VPN privada (ex: Tailscale na faixa `100.64.0.0/10`, túneis WireGuard `10.0.0.0/8`, ou IPs estáticos).
     - Qualquer conexão externa que tente acessar rotas `/admin/*` tem o tráfego bloqueado imediatamente na camada de middleware antes de processar formulários ou telas de login.
 
-2. **Autenticação Híbrida (SSO Corporativo ou Magic Link):**
-    - **No Docker / Self-Hosted:** Suporte a Single Sign-On (SSO) via OAuth2 e OpenID Connect (Google Workspace, GitHub ou provedores OIDC corporativos como Authentik, Keycloak e Authelia).
-    - **Na Nuvem Serverless:** Autenticação via _Magic Link_ seguro enviado para o e-mail do proprietário através do Supabase Auth.
+2. **Autenticação Segura sem Senhas (Magic Link via Supabase Auth):**
+    - O acesso ao painel `/admin` utiliza autenticação por *Magic Link* de uso único enviado diretamente para o e-mail do proprietário.
+    - Elimina completamente o risco de quebra de senhas por força bruta ou dicionário.
 
 3. **Whitelist Estrita de Identidade (`ADMIN_EMAIL`):**
     - Independentemente do método de login ou SSO utilizado, apenas o endereço configurado na variável de ambiente `ADMIN_EMAIL` recebe permissão de navegação e mutação.
@@ -335,8 +334,8 @@ Para unir praticidade operacional com custo zero e alto desempenho, o PromoCuts 
         - **Modo Upload Direto:** Permite selecionar o arquivo PNG ou SVG localmente através de arrastar e soltar (drag and drop).
 
 3. **Destino do Upload por Tipo de Ambiente:**
-    - **Nuvem Serverless (Supabase + Vercel):** O upload é enviado para o bucket público e gratuito `site-assets` do Supabase Storage. O Supabase fornece 1 GB de armazenamento de arquivos sem custos com distribuição global via CDN. O sistema grava a URL pública resultante no banco de dados.
-    - **Self-Hosted / Docker Compose:** O upload é salvo no diretório `/app/public/uploads` mantido pelo volume persistente `uploads_data`. O Next.js serve os arquivos com cache estático através da rota relativa correspondente.
+    - **Nuvem Serverless (Supabase Storage):** O upload é enviado para o bucket público e gratuito `site-assets` do Supabase Storage. O Supabase fornece 1 GB de armazenamento de arquivos sem custos com distribuição global via CDN. O sistema grava a URL pública resultante no banco de dados.
+    - **Armazenamento Local / Fallback:** Caso o Supabase Storage esteja indisponível, o upload é salvo no diretório `/public/uploads` servido estaticamente pelo Next.js.
     - **Vetores Leves:** Arquivos SVG de tamanho inferior a 64 KB podem opcionalmente ser codificados como Data URI direto, dispensando qualquer dependência de bucket.
 
 ---
@@ -360,36 +359,26 @@ Para avaliar quais cortes e produtos geram maior retorno sem comprometer a priva
 
 ---
 
-## 8. Arquitetura de Contêineres e Self-Hosting (Docker)
+## 8. Camada de Cache Serverless e Cabeçalhos Defensivos (Upstash Redis & Next.js Security)
 
-Para garantir autonomia e independência de fornecedores de nuvem, o PromoCuts disponibiliza orquestração completa em contêineres estruturada no princípio de Defesa em Profundidade:
+Para atingir carregamento instantâneo da vitrine pública com latência inferior a 5 milissegundos sem custos de infraestrutura e sem necessidade de gerenciar servidores ou contêineres dedicados, o PromoCuts implementa uma arquitetura híbrida de cache serverless e segurança nativa:
 
-### 8.1 Gateway e Reverse Proxy: Nginx (Porta 80)
+### 8.1 Cache em Memória Serverless: Upstash Redis
 
-- **Ponto Único de Entrada:** O contêiner `promocuts-nginx` é o único serviço que expõe porta para a máquina hospedeira (`80:80`).
-- **Terminação SSL Delegada à Nuvem:** A porta `443` (HTTPS) e os certificados SSL são gerenciados na camada de borda pela infraestrutura de nuvem (como Cloudflare, AWS ALB ou Load Balancers). O Nginx mapeia com segurança o cabeçalho `$proxy_x_forwarded_proto` prevenindo falsificação de HTTPS.
-- **Segregação Rigorosa de Redes:** A infraestrutura é segmentada em duas redes isoladas:
-    - `frontend-network`: conecta exclusivamente o `promocuts-nginx` e o `promocuts-app`.
-    - `backend-network` (marcada como `internal: true`): conecta exclusivamente o `promocuts-app`, `promocuts-db` e `promocuts-redis`. O Nginx não possui rota física nem resolução DNS para alcançar o PostgreSQL ou Redis, impedindo pivoteamento em caso de comprometimento da borda.
-- **Cabeçalhos de Segurança Defensivos e Rate Limiting:** O Nginx aplica políticas de `Content-Security-Policy` (permitindo estritamente players de TikTok, Reels e Shorts), `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy` e `Permissions-Policy`, além de zonas de rate limiting (`limit_req_zone`) para requisições gerais e rotas administrativas (`/admin`).
+- **Comunicação REST/HTTP:** Utiliza a biblioteca oficial `@upstash/redis` operando via requisições HTTP rápidas e sem estado (*stateless*), eliminando o esgotamento de conexões TCP típico de ambientes serverless (Vercel Lambdas e Edge Functions).
+- **Chaves de Cache Consolidadas:**
+  - `promocuts:settings:singleton`: Configurações de marca, título, descrição, cores dual-theme e logotipos (TTL de 600 segundos).
+  - `promocuts:categories:all`: Lista ordenada de categorias ativas para a barra de pílulas (TTL de 300 segundos).
+  - `promocuts:feed:all`: Feed completo de cortes de vídeo com produtos e categorias vinculados (TTL de 300 segundos).
+- **Degradação Graciosa (Resiliência Operacional):** Caso as variáveis `UPSTASH_REDIS_REST_URL` e `UPSTASH_REDIS_REST_TOKEN` não sejam fornecidas (ou em caso de instabilidade de rede), a aplicação faz fallback silencioso e transparente para consultas diretas ao Supabase, preservando o funcionamento contínuo do sistema sem lançar exceções aos visitantes.
+- **Invalidação Atômica nas Mutações:** Sempre que o administrador cria, edita ou remove categorias, produtos, vídeos ou configurações de marca no painel `/admin`, a função `invalidateFeedCache()` purga imediatamente as chaves no Upstash Redis junto com a revalidação nativa do App Router (`revalidatePath`), garantindo que novas publicações fiquem imediatamente visíveis para o público.
 
-### 8.2 Next.js Standalone Runner
+### 8.2 Cabeçalhos de Segurança Nativos no Next.js (`next.config.ts`)
 
-- **Build Multi-Stage Endurecido:** O arquivo `Dockerfile` compila o frontend e o servidor Next.js utilizando o recurso nativo `output: 'standalone'`.
-- **Gerenciador de Processos Tini:** Utiliza `tini` como entrypoint (PID 1) para tratamento adequado de sinais UNIX (`SIGTERM`/`SIGINT`), viabilizando encerramento gracioso (_graceful shutdown_) sem corromper transações de banco.
-- **Healthcheck Nativo:** Monitoramento integrado de integridade via comando local para orquestradores.
-- **Segurança de Execução:** O processo roda sob o usuário sem privilégios de root (`nextjs:nodejs`), acessível apenas internamente pelo Nginx na porta `3000`.
+Substituindo a necessidade de um gateway Nginx intermediário, as diretivas de proteção HTTP são injetadas diretamente na borda do Next.js através de `async headers()`:
 
-### 8.3 Banco de Dados Dedicado: PostgreSQL 17.6 (Paridade com Supabase)
-
-- **Versão:** O serviço de banco de dados utiliza a imagem oficial `postgres:17.6-alpine`, garantindo paridade estrita com a versão 17.x do Supabase. A tag é parametrizável via variável `${POSTGRES_VERSION:-17.6-alpine}` no arquivo `.env`.
-- **Inicialização Idempotente:** O volume `./supabase/migrations` é montado em `/docker-entrypoint-initdb.d/`. Na primeira inicialização, todos os scripts SQL (`001_initial_schema.sql`, `002_add_categories.sql` e `003_add_site_settings.sql`) são aplicados automaticamente, preparando papéis (`anon`, `authenticated`), tabelas, enums, triggers e o registro inicial de configurações de marca com validação de formato e RLS ativo.
-- **Credenciais Seguras:** Exigência de senhas fortes via variável obrigatória `POSTGRES_PASSWORD`, sem fallbacks para credenciais padrão conhecidas.
-- **Persistência Segura:** Os arquivos de dados residem no volume nomeado `postgres_data`, sem exposição de portas para a máquina externa.
-- **Desacoplamento e Provedores Externos:** Através da diretiva `required: false` no `depends_on` do serviço `app`, a infraestrutura local é semi-obrigatória. O usuário pode apontar a variável `DATABASE_URL` para um banco externo gerenciado (como AWS RDS, Neon ou Supabase Cloud) e desativar o contêiner `db` local sem quebrar o Docker Compose.
-
-### 8.4 Camada de Redis 8 em Contêiner (Semi-Obrigatória e Desacoplada)
-
-- **Semi-Obrigatória e Desacoplada:** O serviço vem ativado por padrão no Docker Compose para uso local imediato, mas pode ser desativado ou substituído por provedores gerenciados (como AWS ElastiCache, Upstash ou Redis Cloud). A diretiva `required: false` no `depends_on` do `app` garante que o Docker Compose inicialize sem exigir o contêiner `redis` se o usuário optar por não utilizá-lo.
-- **Instância Local Autenticada:** Quando habilitado, o serviço `redis` executa a imagem oficial `redis:8-alpine` com persistência periódica em disco (`--save 60 1`), proteção por senha configurada via flag `--requirepass` e `healthcheck` resiliente que autentica com a senha configurada.
-- **Tolerância a Falhas:** Caso o contêiner de Redis seja interrompido ou a variável `REDIS_URL` não seja informada, a aplicação continua operando normalmente através de consultas diretas ao banco de dados e cache em memória de processo.
+- **Content-Security-Policy (CSP):** Política restritiva que bloqueia fontes desconhecidas e autoriza estritamente os domínios oficiais dos reprodutores de vídeo (`https://www.tiktok.com`, `https://www.instagram.com`, `https://www.youtube.com`, `https://www.youtube-nocookie.com`).
+- **X-Content-Type-Options: nosniff:** Impede que navegadores interpretem arquivos com tipos MIME incorretos (mitigação de *MIME confusion*).
+- **X-Frame-Options: SAMEORIGIN:** Protege a interface administrativa contra ataques de *clickjacking*.
+- **Referrer-Policy: strict-origin-when-cross-origin:** Garante que informações sensíveis de rotas e parâmetros não vazem para domínios de terceiros.
+- **Permissions-Policy:** Desativa acesso desnecessário a recursos do dispositivo do visitante (`camera=(), microphone=(), geolocation=(), payment=()`).

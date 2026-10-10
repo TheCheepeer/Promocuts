@@ -27,8 +27,8 @@ Foi concebido como uma solução completa de **renda passiva** e um **projeto es
 - **Cards de Produtos Acoplados:** Cada corte exibe os produtos recomendados com foto, título, preço promocional, lojas parceiras e botões de compra imediatos com tags `rel="noopener noreferrer sponsored"`.
 - **Cópia Instantânea de Cupom:** Botão com um toque para copiar códigos promocionais para a área de transferência, acompanhado de feedback tátil e visual.
 - **Customização Total de Marca (White-Label) & Modo Claro/Escuro:** Suporte nativo a modo claro e escuro (baseado no sistema com botão de alternância manual e persistência em cache), paleta de cores primária e secundária independentes para cada modo de visualização, controle completo de logotipo, favicon, slogan e metadados de SEO pelo painel `/admin/settings`, tudo refletido dinamicamente na vitrine pública sem necessidade de novo deploy.
-- **Portabilidade Total e Self-Hosting (Docker):** Sem aprisionamento de fornecedor. Rode em nuvem gratuita ou em VPS própria com Docker Compose, Nginx Gateway (porta 80 com SSL na nuvem), PostgreSQL 17.6, Redis 8 opcional, autenticação SSO e proteção de acesso administrativo isolada por VPN (Tailscale / WireGuard).
-- **Painel Administrativo Seguro (`/admin`):** Interface fechada para cadastro ágil de categorias, links e produtos. Acesso restrito exclusivamente ao endereço em `ADMIN_EMAIL` com suporte a Magic Link ou SSO corporativo e bloqueio opcional por faixas de IP de VPN.
+- **Performance Extrema com Cache Serverless (Upstash Redis):** Integração nativa e resiliente com o Upstash Redis via HTTP/REST, entregando respostas da vitrine pública em milissegundos sem a complexidade de manter contêineres ou servidores dedicados.
+- **Painel Administrativo Seguro (`/admin`):** Interface fechada para cadastro ágil de categorias, links e produtos. Acesso restrito exclusivamente ao endereço em `ADMIN_EMAIL` com validação de sessão por Magic Link e bloqueio opcional por faixas de IP de VPN.
 - **Banco de Dados Plug and Play:** Script SQL de inicialização em [`supabase/migrations/001_initial_schema.sql`](supabase/migrations/001_initial_schema.sql) com tabelas indexadas, dados padrão de branding e regras de Row Level Security (RLS) prontas.
 - **Métricas Anônimas:** Monitoramento leve de cliques em links de afiliados sem coleta de dados pessoais e sem dependência de serviços externos pagos.
 
@@ -38,12 +38,11 @@ Foi concebido como uma solução completa de **renda passiva** e um **projeto es
 
 - **Framework Web:** [Next.js](https://nextjs.org/) (App Router, Server Actions, TypeScript)
 - **Estilização Visual:** [Tailwind CSS v4](https://tailwindcss.com/)
-- **Gateway & Proxy Reverso:** [Nginx](https://nginx.org/) (Porta 80 com SSL gerenciado na nuvem)
-- **Banco de Dados Relacional:** [PostgreSQL 17.6](https://www.postgresql.org/) / [Supabase](https://supabase.com/)
-- **Autenticação:** Supabase Auth (Magic Link) ou Single Sign-On (Google, GitHub, OIDC)
-- **Cache & Rate Limiting:** [Redis 8](https://redis.io/) (Opcional: Upstash Serverless ou Docker Alpine)
+- **Banco de Dados Relacional:** [Supabase](https://supabase.com/) (PostgreSQL 17 com Row Level Security)
+- **Autenticação:** Supabase Auth (Magic Link seguro)
+- **Cache em Memória:** [Upstash Redis](https://upstash.com/) (Serverless REST via `@upstash/redis`)
 - **Ícones:** [Lucide React](https://lucide.dev/)
-- **Hospedagem & Deploy:** [Vercel](https://vercel.com/) (100% Free Tier) ou Contêineres Docker (VPS / Homelab)
+- **Hospedagem & Deploy:** [Vercel](https://vercel.com/) (100% Free Tier)
 
 ---
 
@@ -51,40 +50,22 @@ Foi concebido como uma solução completa de **renda passiva** e um **projeto es
 
 Para entender a arquitetura em detalhes, consulte a documentação dedicada na pasta [`docs/`](docs/):
 
-- [**Arquitetura do Sistema**](docs/ARCHITECTURE.md): Estrutura de software, motor de embeds nativos, sistema de customização visual, modelo de segurança e contêineres.
+- [**Arquitetura do Sistema**](docs/ARCHITECTURE.md): Estrutura de software, motor de embeds nativos, sistema de customização visual, modelo de segurança e cache serverless.
 - [**Modelagem de Dados**](docs/DATABASE.md): Diagrama Entidade-Relacionamento, dicionário de campos e políticas de Row Level Security.
-- [**Guia de Implantação e Deploy**](docs/DEPLOYMENT.md): Passo a passo para subir na Vercel com Supabase ou com Docker Compose e PostgreSQL 17.6.
+- [**Guia de Implantação e Deploy**](docs/DEPLOYMENT.md): Passo a passo para subir na Vercel com Supabase e Upstash Redis.
 - [**Roadmap de Desenvolvimento**](docs/ROADMAP.md): Acompanhamento das fases de desenvolvimento, tarefas e status de implementação.
 
 ---
 
-## Opções de Implantação
+## Implantação na Nuvem (1 Clique — Custo Zero)
 
-### Opção 1: Deploy na Vercel (1 Clique — Custo Zero)
-
-1. Clique no botão abaixo:
+1. Clique no botão abaixo para criar seu projeto diretamente na Vercel:
 
     [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FTheCheepeer%2FPromocuts&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,SUPABASE_SERVICE_ROLE_KEY,ADMIN_EMAIL,NEXT_PUBLIC_APP_URL&envDescription=Variaveis%20de%20conexao%20do%20Supabase%20e%20e-mail%20do%20administrador&project-name=promocuts&repo-name=promocuts)
 
 2. Conecte sua conta do GitHub e preencha as variáveis de ambiente solicitadas.
 3. Clique em **Deploy**. Sua aplicação estará em produção em cerca de 2 minutos.
-
-### Opção 2: Deploy com Docker Compose (Self-Hosted / VPS)
-
-1. Clone o repositório e crie o arquivo de ambiente:
-    ```bash
-    git clone https://github.com/TheCheepeer/Promocuts.git
-    cd Promocuts
-    cp .env.example.docker .env
-    ```
-2. Edite o `.env` informando seu `ADMIN_EMAIL`, chave `AUTH_SECRET` e senhas do PostgreSQL 17.6.
-3. Inicie os serviços com um único comando (ou utilize `./scripts/prod.sh` para build e logs):
-    ```bash
-    docker compose up -d
-    # ou via script de automacao
-    ./scripts/prod.sh
-    ```
-    O contêiner `postgres:17.6-alpine` aplicará as migrações automaticamente no primeiro boot e a aplicação estará acessível através do Nginx Gateway na porta `80`. Todos os serviços internos permanecem isolados na rede privada do Docker.
+4. *(Opcional)* Para ativar o cache em memória ultra-rápido, adicione a integração do Upstash Redis no painel da Vercel ou cadastre as variáveis `UPSTASH_REDIS_REST_URL` e `UPSTASH_REDIS_REST_TOKEN`.
 
 ---
 
@@ -93,7 +74,7 @@ Para entender a arquitetura em detalhes, consulte a documentação dedicada na p
 ### Pré-requisitos
 
 - [Node.js](https://nodejs.org/) versão 20 ou superior
-- Instância do Supabase ou Docker com PostgreSQL 17.6
+- Conta gratuita no [Supabase](https://supabase.com/)
 
 ### 1. Clonar o repositório
 
@@ -104,17 +85,13 @@ cd Promocuts
 
 ### 2. Configurar as variáveis de ambiente
 
-Copie o modelo de variáveis de acordo com seu ambiente:
+Copie o modelo de variáveis de ambiente:
 
 ```bash
-# Para desenvolvimento com Supabase (Nuvem):
-cp .env.example.vercel .env.local
-
-# Ou para desenvolvimento com Docker (Local):
-cp .env.example.docker .env
+cp .env.example .env.local
 ```
 
-Edite `.env.local` ou `.env` com as configurações do seu banco e `ADMIN_EMAIL`. Para ativar logs detalhados e diagnósticos durante o desenvolvimento local, defina `IS_DEV=true`.
+Edite `.env.local` informando as chaves do seu projeto Supabase e seu `ADMIN_EMAIL`. Para ativar logs detalhados e diagnósticos durante o desenvolvimento local, defina `IS_DEV=true`.
 
 ### 3. Instalar dependências e rodar o servidor
 

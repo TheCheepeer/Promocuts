@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getCachedData, setCachedData } from "@/lib/cache/redis";
 import type { SiteSettings } from "@/types/database";
 
 export const DEFAULT_SITE_SETTINGS: SiteSettings = {
@@ -30,6 +31,13 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
  * Retorna valores padrao estaveis caso a tabela esteja vazia ou haja indisponibilidade temporaria.
  */
 export async function getSiteSettings(): Promise<SiteSettings> {
+    const cached = await getCachedData<SiteSettings>(
+        "promocuts:settings:singleton",
+    );
+    if (cached) {
+        return cached;
+    }
+
     try {
         const supabase = await createClient();
         const { data, error } = await supabase
@@ -42,7 +50,9 @@ export async function getSiteSettings(): Promise<SiteSettings> {
             return DEFAULT_SITE_SETTINGS;
         }
 
-        return data as SiteSettings;
+        const settings = data as SiteSettings;
+        await setCachedData("promocuts:settings:singleton", settings, 600);
+        return settings;
     } catch {
         return DEFAULT_SITE_SETTINGS;
     }

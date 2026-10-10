@@ -110,19 +110,13 @@ Para manter previsibilidade, qualidade de codigo e rastreabilidade historica, o 
 | `docs/`                | Documentacao tecnica detalhada (`ARCHITECTURE.md`, `DATABASE.md`, `DEPLOYMENT.md`, `ROADMAP.md`).                                                                                                                                                                                 |
 | `supabase/migrations/` | Scripts SQL versionados para criacao e evolucao do schema do banco de dados.                                                                                                                                                                                                      |
 | `.agents/`             | Configuracao de skills e ferramentas para agentes no projeto (`skills.json`).                                                                                                                                                                                                     |
-| `.env.example.vercel`  | Template de variaveis de ambiente especifico para deploy na Vercel com Supabase.                                                                                                                                                                                                  |
-| `.env.example.docker`  | Template de variaveis de ambiente especifico para execucao via Docker Compose e self-hosting.                                                                                                                                                                                     |
-| `README.md`            | Apresentacao publica, instrucoes de inicio rapido e deploy.                                                                                                                                                                                                                       |
-| `Dockerfile`           | Build multi-stage para geracao de imagem compacta em modo standalone.                                                                                                                                                                                                             |
-| `docker-compose.yml`   | Orquestracao de contêineres: app Next.js, PostgreSQL 17.6 e Redis opcional.                                                                                                                                                                                                       |
-| `.dockerignore`        | Regras de exclusao de arquivos e dependencias para otimizacao do build Docker.                                                                                                                                                                                                    |
-| `nginx/`               | Configuracao do reverse proxy Nginx (`default.conf`) atuando como gateway na porta 80.                                                                                                                                                                                            |
-| `scripts/`             | Scripts utilitarios shell (`dev.sh`, `prod.sh`) para automacao e orquestracao Docker.                                                                                                                                                                                             |
+| `.env.example`         | Template universal de variaveis de ambiente para Vercel e Supabase (com Upstash Redis opcional).                                                                                                                                                                                   |
+| `README.md`            | Apresentacao publica, instrucoes de inicio rapido e deploy em 1 clique.                                                                                                                                                                                                           |
 | `.github/`             | Workflows de CI/CD para GitHub Actions (qualidade de codigo e migracoes Supabase).                                                                                                                                                                                                |
 | `public/`              | Arquivos estaticos servidos publicamente e pasta de uploads locais (`public/uploads`).                                                                                                                                                                                            |
 | `src/app/`             | App Router: paginas publicas (`/`, `/c/[slug]`, `/v/[slug]`), painel administrativo (`/admin`, `/admin/categories`, `/admin/products`, `/admin/videos`, `/admin/settings`, `/admin/login`), APIs (`/api/admin/upload`, `/api/track-click`) e rota de callback (`/auth/callback`). |
 | `src/components/`      | Componentes modulares de UI organizados em `public/` (Feed, VideoPlayer, ProductCard, ProductDrawer, Header, CategoryPills), `ui/` (CategoryIcon) e `Theme`.                                                                                                                      |
-| `src/lib/`             | Utilitarios de dominio, parsers de embeds (`lib/embeds/parser.ts`), configuracoes singleton (`lib/settings.ts`), seguranca (`lib/security/`), telemetria (`lib/telemetry.ts`), logger e clientes Supabase (`client.ts`, `server.ts`, `admin.ts`, `middleware.ts`).                |
+| `src/lib/`             | Utilitarios de dominio, parsers de embeds (`lib/embeds/parser.ts`), cache (`lib/cache/redis.ts`), configuracoes (`lib/settings.ts`), seguranca (`lib/security/`), telemetria, logger e clientes Supabase (`client.ts`, `server.ts`, `admin.ts`, `middleware.ts`).                 |
 | `src/middleware.ts`    | Middleware defensivo com as quatro barreiras de seguranca (VPN/IP, sessao Supabase, whitelist de e-mail e redirecionamento).                                                                                                                                                      |
 | `src/types/`           | Tipos TypeScript compartilhados e definicoes do banco de dados (`types/database.ts`).                                                                                                                                                                                             |
 
@@ -133,10 +127,8 @@ Para manter previsibilidade, qualidade de codigo e rastreabilidade historica, o 
 ### Configuracao Inicial
 
 ```bash
-# Copiar arquivo de configuracao de ambiente (Vercel ou Docker)
-cp .env.example.vercel .env.local
-# ou
-cp .env.example.docker .env
+# Copiar arquivo de configuracao de ambiente
+cp .env.example .env.local
 
 # Instalar dependencias do projeto
 npm install

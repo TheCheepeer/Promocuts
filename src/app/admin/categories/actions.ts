@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireAdminAuth } from "@/lib/security/admin-guard";
 import { slugify } from "@/lib/formatters";
+import { invalidateFeedCache } from "@/lib/cache/redis";
 import { logger } from "@/lib/logger";
 
 export interface CategoryActionState {
@@ -87,6 +88,7 @@ export async function createCategoryAction(
         revalidatePath("/admin/categories");
         revalidatePath("/");
         revalidatePath(`/c/${slug}`);
+        await invalidateFeedCache();
 
         return {
             success: true,
@@ -194,6 +196,7 @@ export async function updateCategoryAction(
         revalidatePath("/admin/categories");
         revalidatePath("/");
         revalidatePath(`/c/${slug}`);
+        await invalidateFeedCache();
 
         return {
             success: true,
@@ -246,6 +249,7 @@ export async function deleteCategoryAction(
 
         revalidatePath("/admin/categories");
         revalidatePath("/");
+        await invalidateFeedCache();
 
         return {
             success: true,

@@ -194,57 +194,73 @@ describe("Auditoria de Seguranca - Motor de Embeds e Isolamento de Iframe", () =
     });
 });
 
-describe("Auditoria de Seguranca - Configuracao Defensiva do Gateway Nginx", () => {
-    const nginxConfPath = path.resolve(process.cwd(), "nginx/default.conf");
+describe("Auditoria de Seguranca - Cabecalhos Defensivos no Next.js (next.config.ts)", () => {
+    const nextConfigPath = path.resolve(process.cwd(), "next.config.ts");
 
-    it("deve conter o arquivo de configuracao do Nginx", () => {
+    it("deve conter o arquivo de configuracao do Next.js", () => {
         assert.equal(
-            fs.existsSync(nginxConfPath),
+            fs.existsSync(nextConfigPath),
             true,
-            "nginx/default.conf deve existir",
+            "next.config.ts deve existir",
         );
     });
 
-    it("deve desativar a exibicao da versao do Nginx (server_tokens off)", () => {
-        const content = fs.readFileSync(nginxConfPath, "utf-8");
-        assert.match(
-            content,
-            /server_tokens\s+off;/,
-            "Nginx deve ocultar a versao por seguranca (OWASP A05)",
+    it("nao deve conter output standalone apos remocao do Docker", () => {
+        const content = fs.readFileSync(nextConfigPath, "utf-8");
+        assert.equal(
+            content.includes('output: "standalone"'),
+            false,
+            "next.config.ts nao deve usar output standalone no modelo serverless",
         );
     });
 
     it("deve aplicar cabecalhos defensivos essenciais de seguranca", () => {
-        const content = fs.readFileSync(nginxConfPath, "utf-8");
+        const content = fs.readFileSync(nextConfigPath, "utf-8");
 
         assert.match(
             content,
-            /add_header\s+X-Content-Type-Options\s+"nosniff"/i,
+            /X-Content-Type-Options/i,
+            "Deve configurar X-Content-Type-Options",
         );
-        assert.match(content, /add_header\s+X-Frame-Options\s+"SAMEORIGIN"/i);
         assert.match(
             content,
-            /add_header\s+Referrer-Policy\s+"strict-origin-when-cross-origin"/i,
+            /nosniff/i,
+            "Deve aplicar nosniff para prevenir MIME confusion",
         );
-        assert.match(content, /add_header\s+Content-Security-Policy/i);
+        assert.match(
+            content,
+            /X-Frame-Options/i,
+            "Deve configurar X-Frame-Options",
+        );
+        assert.match(
+            content,
+            /SAMEORIGIN/i,
+            "Deve aplicar SAMEORIGIN para prevenir clickjacking",
+        );
+        assert.match(
+            content,
+            /Referrer-Policy/i,
+            "Deve configurar Referrer-Policy",
+        );
+        assert.match(
+            content,
+            /strict-origin-when-cross-origin/i,
+            "Deve restringir envio de referrers sensiveis",
+        );
+        assert.match(
+            content,
+            /Permissions-Policy/i,
+            "Deve restringir recursos sensiveis via Permissions-Policy",
+        );
     });
 
-    it("deve restringir conexoes e requisicoes por IP (Rate Limiting)", () => {
-        const content = fs.readFileSync(nginxConfPath, "utf-8");
+    it("deve configurar Content-Security-Policy autorizando estritamente reprodutores oficiais", () => {
+        const content = fs.readFileSync(nextConfigPath, "utf-8");
 
-        assert.match(content, /limit_req_zone.*zone=general_limit/);
-        assert.match(content, /limit_req_zone.*zone=admin_limit/);
-        assert.match(content, /limit_conn_zone.*zone=conn_limit/);
-        assert.match(content, /limit_req\s+zone=admin_limit/);
-    });
-
-    it("deve bloquear acesso a arquivos e diretorios ocultos (.env, .git)", () => {
-        const content = fs.readFileSync(nginxConfPath, "utf-8");
-
-        assert.match(
-            content,
-            /location\s+~\s+\/\\\.\s*\{[^}]*deny\s+all;/s,
-            "Nginx deve bloquear acesso a arquivos e diretorios ocultos",
-        );
+        assert.match(content, /Content-Security-Policy/i);
+        assert.match(content, /https:\/\/www\.tiktok\.com/);
+        assert.match(content, /https:\/\/www\.instagram\.com/);
+        assert.match(content, /https:\/\/www\.youtube\.com/);
+        assert.match(content, /https:\/\/www\.youtube-nocookie\.com/);
     });
 });

@@ -4,41 +4,67 @@ import { getSiteSettings } from "@/lib/settings";
 import { PublicHeader } from "@/components/public/header";
 import { CategoryPills } from "@/components/public/category-pills";
 import { Feed } from "@/components/public/feed";
+import { getCachedData, setCachedData } from "@/lib/cache/redis";
 import type { Category } from "@/types/database";
 import type { VideoWithRelations } from "@/components/public/feed-mobile";
 
 export default async function HomePage() {
     const settings = await getSiteSettings();
-    const supabase = await createClient();
 
-    // Consulta paralela de categorias e cortes publicados com relacoes
-    const [categoriesResult, videosResult] = await Promise.all([
-        supabase
-            .from("categories")
-            .select("*")
-            .order("display_order", { ascending: true })
-            .order("name", { ascending: true }),
-        supabase
-            .from("videos")
-            .select(
-                `
-                *,
-                category:categories(id, name, slug, icon),
-                video_products(
-                    id,
-                    product_id,
-                    display_order,
-                    product:products(*)
-                )
-            `,
-            )
-            .eq("is_published", true)
-            .order("order_weight", { ascending: false })
-            .order("created_at", { ascending: false }),
+    // Consulta paralela ao cache em memoria do Upstash Redis
+    const [cachedCategories, cachedVideos] = await Promise.all([
+        getCachedData<Category[]>("promocuts:categories:all"),
+        getCachedData<VideoWithRelations[]>("promocuts:feed:all"),
     ]);
 
-    const categories = (categoriesResult.data || []) as Category[];
-    const videos = (videosResult.data || []) as unknown as VideoWithRelations[];
+    let categories = cachedCategories;
+    let videos = cachedVideos;
+
+    if (!categories || !videos) {
+        const supabase = await createClient();
+
+        const [categoriesResult, videosResult] = await Promise.all([
+            categories
+                ? Promise.resolve({ data: categories })
+                : supabase
+                      .from("categories")
+                      .select("*")
+                      .order("display_order", { ascending: true })
+                      .order("name", { ascending: true }),
+            videos
+                ? Promise.resolve({ data: videos })
+                : supabase
+                      .from("videos")
+                      .select(
+                          `
+                        *,
+                        category:categories(id, name, slug, icon),
+                        video_products(
+                            id,
+                            product_id,
+                            display_order,
+                            product:products(*)
+                        )
+                    `,
+                      )
+                      .eq("is_published", true)
+                      .order("order_weight", { ascending: false })
+                      .order("created_at", { ascending: false }),
+        ]);
+
+        if (!categories && categoriesResult.data) {
+            categories = categoriesResult.data as Category[];
+            await setCachedData("promocuts:categories:all", categories, 300);
+        }
+
+        if (!videos && videosResult.data) {
+            videos = videosResult.data as unknown as VideoWithRelations[];
+            await setCachedData("promocuts:feed:all", videos, 300);
+        }
+    }
+
+    categories = categories || [];
+    videos = videos || [];
 
     return (
         <div className="flex min-h-dvh flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50">

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdminAuth } from "@/lib/security/admin-guard";
+import { invalidateFeedCache } from "@/lib/cache/redis";
 import { logger } from "@/lib/logger";
 
 export interface ProductActionState {
@@ -134,6 +135,7 @@ export async function createProductAction(
         revalidatePath("/admin/products");
         revalidatePath("/admin/videos");
         revalidatePath("/");
+        await invalidateFeedCache();
 
         return {
             success: true,
@@ -264,6 +266,7 @@ export async function updateProductAction(
         revalidatePath("/admin/products");
         revalidatePath("/admin/videos");
         revalidatePath("/");
+        await invalidateFeedCache();
 
         return { success: true, message: "Produto atualizado com sucesso." };
     } catch (err) {
@@ -311,6 +314,7 @@ export async function deleteProductAction(
         revalidatePath("/admin/products");
         revalidatePath("/admin/videos");
         revalidatePath("/");
+        await invalidateFeedCache();
 
         return { success: true, message: "Produto excluido com sucesso." };
     } catch (err) {

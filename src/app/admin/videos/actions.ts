@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdminAuth } from "@/lib/security/admin-guard";
 import { parseVideoUrl } from "@/lib/embeds/parser";
 import { slugify } from "@/lib/formatters";
+import { invalidateFeedCache } from "@/lib/cache/redis";
 import { logger } from "@/lib/logger";
 
 export interface VideoActionState {
@@ -158,6 +159,7 @@ export async function createVideoAction(
         revalidatePath("/");
         revalidatePath(`/v/${slug}`);
         if (categoryId) revalidatePath(`/c/${categoryId}`);
+        await invalidateFeedCache();
 
         return {
             success: true,
@@ -314,6 +316,7 @@ export async function updateVideoAction(
         revalidatePath("/admin/videos");
         revalidatePath("/");
         revalidatePath(`/v/${slug}`);
+        await invalidateFeedCache();
 
         return { success: true, message: "Video atualizado com sucesso." };
     } catch (err) {
@@ -354,6 +357,7 @@ export async function toggleVideoPublishedAction(
 
         revalidatePath("/admin/videos");
         revalidatePath("/");
+        await invalidateFeedCache();
 
         return {
             success: true,
@@ -393,6 +397,7 @@ export async function toggleVideoFeaturedAction(
 
         revalidatePath("/admin/videos");
         revalidatePath("/");
+        await invalidateFeedCache();
 
         return {
             success: true,
@@ -426,6 +431,7 @@ export async function deleteVideoAction(id: string): Promise<VideoActionState> {
 
         revalidatePath("/admin/videos");
         revalidatePath("/");
+        await invalidateFeedCache();
 
         return { success: true, message: "Video excluido com sucesso." };
     } catch (err) {

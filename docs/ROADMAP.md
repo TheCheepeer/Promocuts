@@ -14,7 +14,7 @@ Este documento define o roteiro de implementacao do **PromoCuts**, organizado em
 | **Fase 4** | Painel Administrativo e White-Label         | `Concluido` |
 | **Fase 5** | Vitrine Publica Mobile-First e Desktop Grid | `Concluido` |
 | **Fase 6** | Telemetria de Afiliados e Conversao         | `Concluido` |
-| **Fase 7** | Dockerizacao, Testes e Verificacao Final    | `Concluido` |
+| **Fase 7** | Cache Serverless, Cabecalhos Defensivos e Verificacao Final | `Concluido` |
 
 ---
 
@@ -126,12 +126,14 @@ Objetivo: Monitorar engajamento e cliques de saida de forma leve e sem violacao 
 
 ---
 
-### Fase 7: Dockerizacao, Testes e Verificacao Final
+### Fase 7: Cache Serverless, Cabecalhos Defensivos e Verificacao Final
 
-Objetivo: Assegurar a estabilidade, qualidade do codigo e funcionamento dos conteineres.
+Objetivo: Consolidar a arquitetura plug-and-play serverless, implementar cache em memoria resiliente com Upstash Redis, cabecalhos de seguranca nativos no Next.js e assegurar 100% de estabilidade e qualidade do codigo.
 
 - [x] Executar checagem estatica de tipos com `npx tsc --noEmit`.
 - [x] Executar analise estatica de codigo com `npm run lint`.
-- [x] Compilar a aplicacao com `npm run build` e verificar a geracao de artefatos em `.next/standalone`.
-- [x] Validar a integracao completa de conteineres no `docker-compose.yml` (Nginx, App com volume persistente de uploads, PostgreSQL 17.6 e Redis).
-- [x] Realizar testes de auditoria de seguranca garantindo que rotas administrativas estejam bloqueadas para acessos nao autorizados.
+- [x] Compilar a aplicacao com `npm run build` para a borda serverless na Vercel.
+- [x] Remover infraestrutura legada de conteineres e scripts Docker (`Dockerfile`, `compose`, `Nginx`, `scripts/`).
+- [x] Implementar modulo de cache serverless Upstash Redis (`@upstash/redis`) com fallback gracioso e transparente.
+- [x] Migrar cabecalhos defensivos de seguranca (CSP, X-Frame-Options, nosniff) diretamente para `next.config.ts`.
+- [x] Expandir suite de testes unitarios automatizados (`tests/security-audit.test.ts` e `tests/cache.test.ts`) totalizando 115 testes passando com 0 falhas.

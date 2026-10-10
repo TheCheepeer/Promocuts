@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdminAuth } from "@/lib/security/admin-guard";
+import { invalidateFeedCache } from "@/lib/cache/redis";
 import { logger } from "@/lib/logger";
 
 export interface SettingsActionState {
@@ -194,6 +195,7 @@ export async function updateSiteSettingsAction(
         // Revalidacao instantanea do cache do layout publico e da tela administrativa
         revalidatePath("/", "layout");
         revalidatePath("/admin/settings");
+        await invalidateFeedCache();
 
         return {
             success: true,
