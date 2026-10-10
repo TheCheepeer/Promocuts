@@ -83,7 +83,7 @@ export default async function HomePage() {
                             `${settings.site_name} — Todos os direitos reservados.`}
                     </span>
                     <a
-                        href="https://github.com"
+                        href="https://github.com/TheCheepeer/Promocuts"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
