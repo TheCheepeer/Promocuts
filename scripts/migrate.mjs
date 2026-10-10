@@ -7,7 +7,7 @@ import postgres from "postgres";
  * Executado durante o pipeline de deploy na Vercel antes da compilação do Next.js.
  */
 async function runMigrations() {
-    const connectionString =
+    let connectionString =
         process.env.DATABASE_URL || process.env.POSTGRES_URL;
 
     if (!connectionString) {
@@ -20,18 +20,26 @@ async function runMigrations() {
         process.exit(0);
     }
 
+    // Sanitização defensiva da URL: remove aspas externas, espaços ou colchetes na senha
+    connectionString = connectionString.trim().replace(/^["']|["']$/g, "");
+    connectionString = connectionString.replace(
+        /:["'\[]([^"'\]]+)["'\]]@/,
+        ":$1@",
+    );
+
     console.log(
         "[Migrações] Conectando ao banco de dados PostgreSQL via conexão segura...",
     );
 
-    const sql = postgres(connectionString, {
-        ssl: "require",
-        max: 1,
-        connect_timeout: 15,
-        prepare: false,
-    });
-
+    let sql;
     try {
+        sql = postgres(connectionString, {
+            ssl: "require",
+            max: 1,
+            connect_timeout: 15,
+            prepare: false,
+        });
+
         // Garante a existência da tabela de controle de histórico de migrações
         await sql`
             CREATE TABLE IF NOT EXISTS public._promocuts_migrations (
@@ -109,7 +117,14 @@ async function runMigrations() {
         console.error("[Migrações] Erro crítico ao aplicar migrações no banco de dados:");
         const message = err instanceof Error ? err.message : String(err);
         console.error(message);
-        if (message.includes("ENETUNREACH") || message.includes("2600:")) {
+        if (message.includes("Invalid URL") || err?.code === "ERR_INVALID_URL") {
+            console.error(
+                "[Migrações] Causa identificada: Formato inválido em DATABASE_URL.",
+            );
+            console.error(
+                "[Migrações] Solução: Certifique-se de que a URL começa com postgresql:// e que a senha não possui aspas (\") ou colchetes ([]).",
+            );
+        } else if (message.includes("ENETUNREACH") || message.includes("2600:")) {
             console.error(
                 "[Migrações] Causa identificada: A Vercel opera em rede IPv4 e não alcança o endereço direto IPv6 do Supabase.",
             );
@@ -117,7 +132,7 @@ async function runMigrations() {
                 "[Migrações] Solução: Altere DATABASE_URL na Vercel para a URL do Connection Pooler do Supabase (*.pooler.supabase.com).",
             );
         }
-        await sql.end().catch(() => {});
+        if (sql) await sql.end().catch(() => {});
         process.exit(1);
     }
 }
