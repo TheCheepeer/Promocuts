@@ -97,3 +97,22 @@ O repositório possui fluxos de integração e entrega contínua pré-configurad
 * **Atualizações de código:** São aplicadas automaticamente a cada _push_ na branch `main` do GitHub pela integração nativa da Vercel.
 * **Novas migrações SQL:** Se a variável `DATABASE_URL` estiver configurada na Vercel, qualquer nova migração adicionada em `supabase/migrations/` será aplicada automaticamente durante o build de deploy. Caso prefira o modo manual, basta executar as novas migrações pelo SQL Editor do Supabase.
 
+---
+
+## 5. Estratégia de Ambientes Duplos (Produção e Staging/Preview)
+
+Para desenvolver novas funcionalidades (como a Fase 9) sem comprometer o tráfego e os dados da aplicação no ar, o PromoCuts opera sob a estratégia de ambientes isolados a custo zero:
+
+### 1. Separação de Branches no Git
+* **Branch `main` (Produção):** Contém estritamente o código aprovado e estável. Dispara o deploy de Produção na Vercel.
+* **Branch `develop` (Desenvolvimento / Homologação):** Usada para implementar novas fases, testes e ajustes. Dispara automaticamente um deploy de **Preview** na Vercel com domínio fixo `https://promocuts-git-develop-[usuario].vercel.app`.
+
+### 2. Separação de Bancos de Dados no Supabase
+* **Projeto Principal (`Promocuts`):** Armazena dados reais de produção.
+* **Projeto de Testes (`Promocuts-Dev`):** Instância gratuita secundária para homologação. Os dados da produção podem ser clonados para o banco de desenvolvimento executando `node scripts/export-seed.mjs` e aplicando o arquivo `supabase/seed.sql` gerado.
+
+### 3. Gerenciamento de Variáveis na Vercel
+Em **Settings > Environment Variables**, cada variável é associada ao seu escopo correspondente:
+* **Escopo `Production`:** Aponta para as credenciais do Supabase de produção (`DATABASE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` e `IS_DEV=false`).
+* **Escopos `Preview` e `Development`:** Apontam para as credenciais do Supabase de desenvolvimento (`DATABASE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `AUTH_SECRET` exclusivo e `IS_DEV=true`).
+

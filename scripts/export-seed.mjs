@@ -69,6 +69,14 @@ async function exportSeed() {
 
             if (rows.length === 0) continue;
 
+            if (table === "_promocuts_migrations") {
+                outputSql += `CREATE TABLE IF NOT EXISTS public._promocuts_migrations (\n`;
+                outputSql += `    id SERIAL PRIMARY KEY,\n`;
+                outputSql += `    name VARCHAR(255) NOT NULL UNIQUE,\n`;
+                outputSql += `    applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()\n`;
+                outputSql += `);\n\n`;
+            }
+
             outputSql += `-- ------------------------------------------------------------------------------\n`;
             outputSql += `-- Tabela: public.${table} (${rows.length} registros)\n`;
             outputSql += `-- ------------------------------------------------------------------------------\n`;
@@ -86,7 +94,15 @@ async function exportSeed() {
                     return `'${String(val).replace(/'/g, "''")}'`;
                 });
 
-                outputSql += `INSERT INTO public."${table}" (${columns.map((c) => `"${c}"`).join(", ")}) VALUES (${values.join(", ")}) ON CONFLICT DO NOTHING;\n`;
+                const conflictClause =
+                    table === "site_settings"
+                        ? `ON CONFLICT ("id") DO UPDATE SET ${columns
+                              .filter((c) => c !== "id")
+                              .map((c) => `"${c}" = EXCLUDED."${c}"`)
+                              .join(", ")}`
+                        : `ON CONFLICT DO NOTHING`;
+
+                outputSql += `INSERT INTO public."${table}" (${columns.map((c) => `"${c}"`).join(", ")}) VALUES (${values.join(", ")}) ${conflictClause};\n`;
             }
 
             outputSql += "\n";

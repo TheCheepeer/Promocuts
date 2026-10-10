@@ -318,3 +318,16 @@ Se optar por não fornecer a `DATABASE_URL` durante o deploy, é possível provi
 
 Para atualizar projetos já existentes que possuam versões anteriores instaladas, aplique sequencialmente no SQL Editor apenas as migrações incrementais necessárias a partir da pasta [`supabase/migrations/`](../supabase/migrations/).
 
+---
+
+## 5. Clonagem de Dados para Ambiente de Desenvolvimento (`seed.sql`)
+
+Para replicar exatamente as configurações de marca (`site_settings`), categorias cadastradas e histórico de migrações em um banco secundário de desenvolvimento (`promocuts-dev`):
+
+1. Execute o utilitário de exportação local:
+   ```bash
+   node scripts/export-seed.mjs
+   ```
+2. O script se conectará à base de produção (usando a `DATABASE_URL` configurada), extrairá os registros atuais e gerará o arquivo local `supabase/seed.sql` (automaticamente ignorado pelo `.gitignore` para proteger dados privados).
+3. No SQL Editor do novo projeto Supabase de desenvolvimento, execute primeiramente o [`supabase/schema.sql`](../supabase/schema.sql) e, em seguida, cole e execute o `supabase/seed.sql` gerado.
+
