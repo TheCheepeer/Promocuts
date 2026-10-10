@@ -28,6 +28,7 @@ async function runMigrations() {
         ssl: "require",
         max: 1,
         connect_timeout: 15,
+        prepare: false,
     });
 
     try {
@@ -106,7 +107,16 @@ async function runMigrations() {
         process.exit(0);
     } catch (err) {
         console.error("[Migrações] Erro crítico ao aplicar migrações no banco de dados:");
-        console.error(err instanceof Error ? err.message : String(err));
+        const message = err instanceof Error ? err.message : String(err);
+        console.error(message);
+        if (message.includes("ENETUNREACH") || message.includes("2600:")) {
+            console.error(
+                "[Migrações] Causa identificada: A Vercel opera em rede IPv4 e não alcança o endereço direto IPv6 do Supabase.",
+            );
+            console.error(
+                "[Migrações] Solução: Altere DATABASE_URL na Vercel para a URL do Connection Pooler do Supabase (*.pooler.supabase.com).",
+            );
+        }
         await sql.end().catch(() => {});
         process.exit(1);
     }
