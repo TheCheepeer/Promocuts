@@ -94,7 +94,15 @@ async function exportSeed() {
                     return `'${String(val).replace(/'/g, "''")}'`;
                 });
 
-                outputSql += `INSERT INTO public."${table}" (${columns.map((c) => `"${c}"`).join(", ")}) VALUES (${values.join(", ")}) ON CONFLICT DO NOTHING;\n`;
+                const conflictClause =
+                    table === "site_settings"
+                        ? `ON CONFLICT ("id") DO UPDATE SET ${columns
+                              .filter((c) => c !== "id")
+                              .map((c) => `"${c}" = EXCLUDED."${c}"`)
+                              .join(", ")}`
+                        : `ON CONFLICT DO NOTHING`;
+
+                outputSql += `INSERT INTO public."${table}" (${columns.map((c) => `"${c}"`).join(", ")}) VALUES (${values.join(", ")}) ${conflictClause};\n`;
             }
 
             outputSql += "\n";
