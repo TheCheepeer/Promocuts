@@ -1,5 +1,6 @@
 "use server";
 
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { sanitizeRedirectUrl, isEmailAuthorized } from "@/lib/security/auth";
 import { logger } from "@/lib/logger";
@@ -76,8 +77,34 @@ export async function sendMagicLink(
             "/admin",
         );
 
-        const appUrl =
-            process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+        let appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
+
+        // Se NEXT_PUBLIC_APP_URL nao estiver configurado ou apontar para localhost,
+        // tenta detectar a URL publica real a partir dos cabecalhos da requisicao HTTP
+        if (!appUrl || appUrl.includes("localhost")) {
+            try {
+                const headerList = await headers();
+                const host =
+                    headerList.get("x-forwarded-host") || headerList.get("host");
+                const proto =
+                    headerList.get("x-forwarded-proto") ||
+                    (host?.includes("localhost") ? "http" : "https");
+
+                if (host && !host.includes("localhost")) {
+                    appUrl = `${proto}://${host}`;
+                }
+            } catch {
+                // Silencioso se invocado fora do ciclo de requisicao HTTP
+            }
+        }
+
+        if (!appUrl) {
+            appUrl = "http://localhost:3000";
+        }
+
+        // Remove barras finais para evitar URLs duplicadas (ex: //auth/callback)
+        appUrl = appUrl.replace(/\/+$/, "");
+
         const emailRedirectTo = `${appUrl}/auth/callback?next=${encodeURIComponent(safeNext)}`;
 
         const { error } = await supabase.auth.signInWithOtp({
