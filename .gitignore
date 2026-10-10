@@ -147,3 +147,6 @@ vite.config.ts.timestamp-*
 # Agents
 .agents/
 
+# Seed de dados locais/privados
+supabase/seed.sql
+
