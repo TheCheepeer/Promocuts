@@ -67,15 +67,52 @@ export async function POST(request: NextRequest) {
         // 5. Tentativa de upload no Supabase Storage (bucket 'site-assets')
         try {
             const adminDb = createAdminClient();
-            const { data: storageData, error: storageError } =
-                await adminDb.storage
-                    .from("site-assets")
-                    .upload(fileName, buffer, {
-                        contentType: file.type,
-                        upsert: true,
-                    });
+            let storageResult = await adminDb.storage
+                .from("site-assets")
+                .upload(fileName, buffer, {
+                    contentType: file.type,
+                    upsert: true,
+                });
 
-            if (!storageError && storageData) {
+            // Se o bucket 'site-assets' nao existir, tenta cria-lo automaticamente como publico
+            if (
+                storageResult.error &&
+                (storageResult.error.message?.toLowerCase().includes("bucket") ||
+                    storageResult.error.message?.toLowerCase().includes("not found"))
+            ) {
+                logger.info(
+                    "Bucket 'site-assets' nao encontrado. Tentando cria-lo automaticamente no Supabase Storage...",
+                );
+                try {
+                    const { error: createBucketError } =
+                        await adminDb.storage.createBucket("site-assets", {
+                            public: true,
+                            fileSizeLimit: MAX_FILE_SIZE,
+                            allowedMimeTypes: ALLOWED_MIME_TYPES,
+                        });
+
+                    if (!createBucketError) {
+                        storageResult = await adminDb.storage
+                            .from("site-assets")
+                            .upload(fileName, buffer, {
+                                contentType: file.type,
+                                upsert: true,
+                            });
+                    }
+                } catch (createErr) {
+                    logger.warn(
+                        "Nao foi possivel criar bucket site-assets automaticamente",
+                        {
+                            erro:
+                                createErr instanceof Error
+                                    ? createErr.message
+                                    : String(createErr),
+                        },
+                    );
+                }
+            }
+
+            if (!storageResult.error && storageResult.data) {
                 const {
                     data: { publicUrl },
                 } = adminDb.storage.from("site-assets").getPublicUrl(fileName);
@@ -88,19 +125,34 @@ export async function POST(request: NextRequest) {
                 );
                 return NextResponse.json({ url: publicUrl });
             }
+
+            if (storageResult.error) {
+                logger.warn("Supabase Storage retornou erro ao gravar arquivo", {
+                    erro: storageResult.error.message,
+                });
+            }
         } catch (storageErr) {
-            logger.warn(
-                "Supabase Storage indisponivel, utilizando armazenamento local em /public/uploads",
+            logger.warn("Falha ao comunicar com o Supabase Storage", {
+                erro:
+                    storageErr instanceof Error
+                        ? storageErr.message
+                        : String(storageErr),
+            });
+        }
+
+        // Em ambientes serverless (Vercel), o sistema de arquivos local e estritamente somente-leitura.
+        // Nao devemos tentar fs.mkdir/fs.writeFile pois causara EROFS (500).
+        if (process.env.VERCEL || process.env.NODE_ENV === "production") {
+            return NextResponse.json(
                 {
-                    erro:
-                        storageErr instanceof Error
-                            ? storageErr.message
-                            : String(storageErr),
+                    error:
+                        "Nao foi possivel gravar no Supabase Storage. Crie o bucket publico 'site-assets' no painel do Supabase (Storage > New bucket) para habilitar uploads.",
                 },
+                { status: 502 },
             );
         }
 
-        // 6. Fallback para armazenamento em disco local / Docker persistente (public/uploads)
+        // 6. Fallback para armazenamento em disco local apenas em desenvolvimento local (localhost)
         const uploadsDir = path.join(process.cwd(), "public", "uploads");
         await fs.mkdir(uploadsDir, { recursive: true });
         const filePath = path.join(uploadsDir, fileName);
