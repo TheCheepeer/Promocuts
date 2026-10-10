@@ -20,22 +20,22 @@ export async function POST(request: NextRequest) {
 
     if (!body || typeof body !== "object") {
         return NextResponse.json(
-            { error: "Corpo da requisicao invalido ou ausente." },
+            { error: "Corpo da requisição inválido ou ausente." },
             { status: 400 },
         );
     }
 
-    const { product_id, video_id } = body;
+    const { product_id, video_id, link_id, store_name } = body;
 
-    // Validacao estrita do ID de produto obrigatorio
+    // Validação estrita do ID de produto obrigatório
     if (!isValidUuid(product_id)) {
         return NextResponse.json(
-            { error: "Identificador de produto invalido." },
+            { error: "Identificador de produto inválido." },
             { status: 400 },
         );
     }
 
-    // Validacao estrita do ID de video opcional
+    // Validação estrita do ID de vídeo opcional
     if (
         video_id !== undefined &&
         video_id !== null &&
@@ -43,24 +43,41 @@ export async function POST(request: NextRequest) {
         !isValidUuid(video_id)
     ) {
         return NextResponse.json(
-            { error: "Identificador de video invalido." },
+            { error: "Identificador de vídeo inválido." },
             { status: 400 },
         );
     }
 
-    // Extracao e truncamento defensivo de cabecalhos
+    // Validação estrita do ID de link opcional
+    if (
+        link_id !== undefined &&
+        link_id !== null &&
+        link_id !== "" &&
+        !isValidUuid(link_id)
+    ) {
+        return NextResponse.json(
+            { error: "Identificador de oferta inválido." },
+            { status: 400 },
+        );
+    }
+
+    // Extração e truncamento defensivo de cabeçalhos e strings
     const rawUserAgent = request.headers.get("user-agent");
     const rawReferrer =
         request.headers.get("referer") || request.headers.get("referrer");
 
     const userAgent = sanitizeHeader(rawUserAgent, 512);
     const referrer = sanitizeHeader(rawReferrer, 1024);
+    const sanitizedStoreName =
+        typeof store_name === "string" ? store_name.slice(0, 100).trim() : null;
 
     try {
         const supabase = createAdminClient();
         const clickData: AffiliateClickInsert = {
             product_id: product_id as string,
             video_id: (video_id as string) || null,
+            link_id: (link_id as string) || null,
+            store_name: sanitizedStoreName || null,
             user_agent: userAgent,
             referrer: referrer,
         };
@@ -81,7 +98,7 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({ success: true }, { status: 200 });
     } catch (err) {
-        logger.error("Excecao ao processar clique de afiliado", {
+        logger.error("Exceção ao processar clique de afiliado", {
             erro: err instanceof Error ? err.message : String(err),
         });
         return NextResponse.json(

@@ -21,22 +21,24 @@ Este guia detalha o processo para colocar o **PromoCuts** em produção utilizan
 
 1. Acesse [supabase.com](https://supabase.com) e crie uma conta gratuita.
 2. Clique em **New Project**, defina o nome e uma senha forte. Escolha a região mais próxima do seu público (`sa-east-1` para São Paulo).
-3. No menu lateral, acesse **SQL Editor**.
-4. Abra o arquivo local [`supabase/migrations/001_initial_schema.sql`](../supabase/migrations/001_initial_schema.sql), cole o conteúdo e execute clicando em **Run**. Em seguida, aplique incrementalmente [`supabase/migrations/002_add_categories.sql`](../supabase/migrations/002_add_categories.sql) e [`supabase/migrations/003_add_site_settings.sql`](../supabase/migrations/003_add_site_settings.sql).
-5. Em **Authentication** > **URL Configuration**, cadastre seu domínio de produção no campo **Site URL** e adicione as URLs de callback em **Redirect URLs**:
+3. *(Opcional se usar migrações automáticas)*: Se você configurar a variável `DATABASE_URL` no deploy (Passo 2 e 4), **não é necessário executar nenhum SQL manualmente** — as migrações serão aplicadas sozinhas durante a compilação na Vercel. Caso prefira aplicar manualmente, acesse o menu **SQL Editor**, abra o arquivo unificado [`supabase/schema.sql`](../supabase/schema.sql), cole o conteúdo e clique em **Run**.
+4. Em **Authentication** > **URL Configuration**, cadastre seu domínio de produção no campo **Site URL** e adicione as URLs de callback em **Redirect URLs**:
     ```text
     http://localhost:3000/auth/callback
     https://seu-dominio.vercel.app/auth/callback
     ```
-6. Em **Storage** (opcional para upload em nuvem), crie um bucket público com o nome `site-assets` para hospedar logotipos e favicons personalizados enviados pelo painel `/admin/settings`. Caso prefira, o sistema também aceita URLs externas diretas de CDNs ou armazenamento local automático.
+5. Em **Storage** (opcional para upload em nuvem), crie um bucket público com o nome `site-assets` para hospedar logotipos e favicons personalizados enviados pelo painel `/admin/settings`. Caso prefira, o sistema também aceita URLs externas diretas de CDNs ou armazenamento local automático.
 
 ### Passo 2: Coletar as Chaves do Supabase
 
-No painel do Supabase, acesse **Project Settings** > **API** e copie:
+No painel do Supabase, colete as seguintes credenciais:
 
-* `NEXT_PUBLIC_SUPABASE_URL`
-* `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-* `SUPABASE_SERVICE_ROLE_KEY`
+1. Em **Project Settings** > **API**:
+   * `NEXT_PUBLIC_SUPABASE_URL`
+   * `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   * `SUPABASE_SERVICE_ROLE_KEY`
+2. Em **Project Settings** > **Database** > **Connection string** > **URI** (modo Transaction Pooler ou Direct):
+   * `DATABASE_URL`: Copie a string de conexão (ex: `postgresql://postgres.[ref]:[SUA-SENHA]@aws-0-sa-east-1.pooler.supabase.com:6543/postgres`) e substitua pelo valor da sua senha. Esta variável habilita o pipeline de migrações 100% automático no deploy.
 
 ### Passo 3: Configurar o Upstash Redis (Opcional — Alta Performance)
 
@@ -55,7 +57,7 @@ Para ativar o cache em memória ultra-rápido (respostas da vitrine pública em 
 
 Inicie o deploy clicando no botão abaixo:
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FTheCheepeer%2FPromocuts&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,SUPABASE_SERVICE_ROLE_KEY,ADMIN_EMAIL,NEXT_PUBLIC_APP_URL&envDescription=Variaveis%20de%20conexao%20do%20Supabase%20e%20e-mail%20do%20administrador&project-name=promocuts&repo-name=promocuts)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FTheCheepeer%2FPromocuts&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,SUPABASE_SERVICE_ROLE_KEY,ADMIN_EMAIL,NEXT_PUBLIC_APP_URL,DATABASE_URL&envDescription=Variaveis%20de%20conexao%20do%20Supabase%2C%20e-mail%20do%20administrador%20e%20migracoes%20automaticas&project-name=promocuts&repo-name=promocuts)
 
 1. Conecte sua conta do GitHub.
 2. Preencha as variáveis de ambiente solicitadas pelo assistente:
@@ -63,11 +65,13 @@ Inicie o deploy clicando no botão abaixo:
    * `NEXT_PUBLIC_SUPABASE_URL`: URL da API do seu Supabase.
    * `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Chave anônima pública do Supabase.
    * `SUPABASE_SERVICE_ROLE_KEY`: Chave secreta de serviço do Supabase.
+   * `DATABASE_URL`: Connection string PostgreSQL do Supabase (executa migrações de banco automaticamente a cada deploy).
    * `NEXT_PUBLIC_APP_URL`: URL base da aplicação (ex: `https://seu-projeto.vercel.app`).
    * `AUTH_SECRET`: Segredo criptográfico de 32 bytes (gerar com `openssl rand -base64 32`).
+   * `CRON_SECRET`: *(Opcional)* Segredo de autorização para o Vercel Cron Job diário (`/api/cron/check-offers`).
    * `UPSTASH_REDIS_REST_URL`: *(Opcional)* URL da API REST do Upstash.
    * `UPSTASH_REDIS_REST_TOKEN`: *(Opcional)* Token de autenticação da API REST do Upstash.
-3. Clique em **Deploy**. Sua vitrine estará ativa e em produção em cerca de 2 minutos.
+3. Clique em **Deploy**. Suas migrações serão executadas e a vitrine estará ativa e em produção em cerca de 2 minutos.
 
 ---
 
@@ -91,4 +95,5 @@ O repositório possui fluxos de integração e entrega contínua pré-configurad
 ## 4. Atualizações e Manutenção
 
 * **Atualizações de código:** São aplicadas automaticamente a cada _push_ na branch `main` do GitHub pela integração nativa da Vercel.
-* **Novas migrações SQL:** Devem ser aplicadas via SQL Editor do painel do Supabase ou automaticamente via GitHub Actions.
+* **Novas migrações SQL:** Se a variável `DATABASE_URL` estiver configurada na Vercel, qualquer nova migração adicionada em `supabase/migrations/` será aplicada automaticamente durante o build de deploy. Caso prefira o modo manual, basta executar as novas migrações pelo SQL Editor do Supabase.
+

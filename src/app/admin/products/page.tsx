@@ -10,11 +10,11 @@ export const metadata = {
 export default async function AdminProductsPage() {
     const { adminDb } = await requireAdminAuth();
 
-    // Consulta produtos com categorias e a lista completa de categorias
+    // Consulta produtos com categorias, ofertas multi-loja vinculadas e categorias ativas
     const [productsResult, categoriesResult] = await Promise.all([
         adminDb
             .from("products")
-            .select("*, category:categories(name, slug)")
+            .select("*, category:categories(name, slug), product_links(*)")
             .order("created_at", { ascending: false }),
         adminDb
             .from("categories")
@@ -34,8 +34,8 @@ export default async function AdminProductsPage() {
                     Produtos Afiliados
                 </h1>
                 <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-                    Gerencie os produtos recomendados nos cortes com precos
-                    promocionais, cupons e links de comissao.
+                    Gerencie os produtos recomendados nos cortes com ofertas
+                    multi-loja, cupons e monitoramento de links.
                 </p>
             </div>
 

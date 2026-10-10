@@ -70,7 +70,10 @@ export default async function VideoPage({ params }: VideoPageProps) {
                 id,
                 product_id,
                 display_order,
-                product:products(*)
+                product:products(
+                    *,
+                    product_links(*)
+                )
             )
         `,
         )

@@ -78,7 +78,10 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
                 id,
                 product_id,
                 display_order,
-                product:products(*)
+                product:products(
+                    *,
+                    product_links(*)
+                )
             )
         `,
         )

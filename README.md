@@ -24,13 +24,15 @@ Foi concebido como uma solução completa de **renda passiva** e um **projeto es
 - **Vitrine Pública Mobile-First:** Feed de alta conversão otimizado para navegação rápida por toque, com rolagem fluida (_scroll-snap_) em smartphones e modo de catálogo responsivo no desktop.
 - **Feed Geral e Categorização Temática:** Descoberta rápida de reviews por meio de barra de navegação com pílulas ("Todos", "Tecnologia", "Casa & Cozinha", etc.), com alternância imediata de nichos e rotas amigáveis.
 - **Embeds Nativos (Zero Custo de Tráfego e Armazenamento):** Nenhum arquivo `.mp4` é armazenado no servidor. Os reprodutores utilizam iframes oficiais do TikTok, Instagram e YouTube, eliminando custos de CDN e armazenamento de vídeo.
-- **Cards de Produtos Acoplados:** Cada corte exibe os produtos recomendados com foto, título, preço promocional, lojas parceiras e botões de compra imediatos com tags `rel="noopener noreferrer sponsored"`.
+- **Cards de Produtos Acoplados & Suporte Multi-Loja:** Cada corte exibe os produtos recomendados com comparador de lojas parceiras (Amazon, Shopee, Mercado Livre, AliExpress, etc.), permitindo que o visitante compare preços e cupons em tempo real antes de comprar.
+- **Autopreenchimento Inteligente por Link:** Extração instantânea de metadados Open Graph (título, foto, loja e preço sugerido) ao colar o link no painel, com blindagem ativa contra ataques de SSRF.
+- **Monitoramento Automatizado de Ofertas (Vercel Cron Job):** Auditoria diária de integridade em segundo plano que identifica links quebrados ou produtos esgotados (códigos 404/410) e sinaliza alertas no painel para revisão proativa do administrador.
 - **Cópia Instantânea de Cupom:** Botão com um toque para copiar códigos promocionais para a área de transferência, acompanhado de feedback tátil e visual.
 - **Customização Total de Marca (White-Label) & Modo Claro/Escuro:** Suporte nativo a modo claro e escuro (baseado no sistema com botão de alternância manual e persistência em cache), paleta de cores primária e secundária independentes para cada modo de visualização, controle completo de logotipo, favicon, slogan e metadados de SEO pelo painel `/admin/settings`, tudo refletido dinamicamente na vitrine pública sem necessidade de novo deploy.
 - **Performance Extrema com Cache Serverless (Upstash Redis):** Integração nativa e resiliente com o Upstash Redis via HTTP/REST, entregando respostas da vitrine pública em milissegundos sem a complexidade de manter contêineres ou servidores dedicados.
 - **Painel Administrativo Seguro (`/admin`):** Interface fechada para cadastro ágil de categorias, links e produtos. Acesso restrito exclusivamente ao endereço em `ADMIN_EMAIL` com validação de sessão por Magic Link e bloqueio opcional por faixas de IP de VPN.
-- **Banco de Dados Plug and Play:** Script SQL de inicialização em [`supabase/migrations/001_initial_schema.sql`](supabase/migrations/001_initial_schema.sql) com tabelas indexadas, dados padrão de branding e regras de Row Level Security (RLS) prontas.
-- **Métricas Anônimas:** Monitoramento leve de cliques em links de afiliados sem coleta de dados pessoais e sem dependência de serviços externos pagos.
+- **Banco de Dados Plug and Play:** Scripts SQL versionados em `supabase/migrations/` com tabelas indexadas, dados padrão de branding e regras de Row Level Security (RLS) prontas.
+- **Métricas Anônimas e Telemetria:** Monitoramento leve de cliques em links de afiliados discriminando a loja parceira específica selecionada, sem coleta de dados pessoais e sem dependência de serviços externos pagos.
 
 ---
 
@@ -61,11 +63,12 @@ Para entender a arquitetura em detalhes, consulte a documentação dedicada na p
 
 1. Clique no botão abaixo para criar seu projeto diretamente na Vercel:
 
-    [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FTheCheepeer%2FPromocuts&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,SUPABASE_SERVICE_ROLE_KEY,ADMIN_EMAIL,NEXT_PUBLIC_APP_URL&envDescription=Variaveis%20de%20conexao%20do%20Supabase%20e%20e-mail%20do%20administrador&project-name=promocuts&repo-name=promocuts)
+    [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FTheCheepeer%2FPromocuts&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,SUPABASE_SERVICE_ROLE_KEY,ADMIN_EMAIL,NEXT_PUBLIC_APP_URL,DATABASE_URL&envDescription=Variaveis%20de%20conexao%20do%20Supabase%2C%20e-mail%20do%20administrador%20e%20migracoes%20automaticas&project-name=promocuts&repo-name=promocuts)
 
-2. Conecte sua conta do GitHub e preencha as variáveis de ambiente solicitadas.
-3. Clique em **Deploy**. Sua aplicação estará em produção em cerca de 2 minutos.
+2. Conecte sua conta do GitHub e preencha as variáveis de ambiente solicitadas (incluindo a `DATABASE_URL` para provisionamento automático do banco).
+3. Clique em **Deploy**. As migrações do banco de dados serão aplicadas automaticamente e sua aplicação estará em produção em cerca de 2 minutos.
 4. *(Opcional)* Para ativar o cache em memória ultra-rápido, adicione a integração do Upstash Redis no painel da Vercel ou cadastre as variáveis `UPSTASH_REDIS_REST_URL` e `UPSTASH_REDIS_REST_TOKEN`.
+
 
 ---
 

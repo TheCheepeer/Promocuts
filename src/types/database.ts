@@ -107,6 +107,43 @@ export type VideoUpdate = Partial<
     Omit<Video, "id" | "created_at" | "updated_at">
 >;
 
+export type ProductLink = {
+    id: string;
+    product_id: string;
+    store_name: string;
+    affiliate_url: string;
+    regular_price: number | null;
+    discount_price: number | null;
+    coupon_code: string | null;
+    is_available: boolean;
+    last_checked_at: string | null;
+    status_code: number | null;
+    display_order: number;
+    created_at: string;
+    updated_at: string;
+};
+
+export type ProductLinkInsert = Omit<
+    ProductLink,
+    | "id"
+    | "created_at"
+    | "updated_at"
+    | "is_available"
+    | "last_checked_at"
+    | "status_code"
+    | "display_order"
+> & {
+    id?: string;
+    is_available?: boolean;
+    last_checked_at?: string | null;
+    status_code?: number | null;
+    display_order?: number;
+};
+
+export type ProductLinkUpdate = Partial<
+    Omit<ProductLink, "id" | "created_at" | "updated_at">
+>;
+
 export type Product = {
     id: string;
     category_id: string | null;
@@ -121,18 +158,19 @@ export type Product = {
     store_name: string;
     created_at: string;
     updated_at: string;
+    product_links?: ProductLink[];
 };
 
 export type ProductInsert = Omit<
     Product,
-    "id" | "created_at" | "updated_at" | "currency"
+    "id" | "created_at" | "updated_at" | "currency" | "product_links"
 > & {
     id?: string;
     currency?: string;
 };
 
 export type ProductUpdate = Partial<
-    Omit<Product, "id" | "created_at" | "updated_at">
+    Omit<Product, "id" | "created_at" | "updated_at" | "product_links">
 >;
 
 export type VideoProduct = {
@@ -159,6 +197,8 @@ export type AffiliateClick = {
     id: string;
     product_id: string;
     video_id: string | null;
+    link_id: string | null;
+    store_name: string | null;
     created_at: string;
     user_agent: string | null;
     referrer: string | null;
@@ -168,6 +208,8 @@ export type AffiliateClickInsert = {
     id?: string;
     product_id: string;
     video_id?: string | null;
+    link_id?: string | null;
+    store_name?: string | null;
     created_at?: string;
     user_agent?: string | null;
     referrer?: string | null;
@@ -198,6 +240,12 @@ export type Database = {
                 Row: Product;
                 Insert: ProductInsert;
                 Update: ProductUpdate;
+                Relationships: [];
+            };
+            product_links: {
+                Row: ProductLink;
+                Insert: ProductLinkInsert;
+                Update: ProductLinkUpdate;
                 Relationships: [];
             };
             video_products: {

@@ -107,63 +107,69 @@ Para manter previsibilidade, qualidade de codigo e rastreabilidade historica, o 
 
 | Diretorio / Arquivo    | Finalidade Principal                                                                                                                                                                                                                                                              |
 | :--------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `docs/`                | Documentacao tecnica detalhada (`ARCHITECTURE.md`, `DATABASE.md`, `DEPLOYMENT.md`, `ROADMAP.md`).                                                                                                                                                                                 |
-| `supabase/migrations/` | Scripts SQL versionados para criacao e evolucao do schema do banco de dados.                                                                                                                                                                                                      |
-| `.agents/`             | Configuracao de skills e ferramentas para agentes no projeto (`skills.json`).                                                                                                                                                                                                     |
-| `.env.example`         | Template universal de variaveis de ambiente para Vercel e Supabase (com Upstash Redis opcional).                                                                                                                                                                                   |
-| `README.md`            | Apresentacao publica, instrucoes de inicio rapido e deploy em 1 clique.                                                                                                                                                                                                           |
-| `.github/`             | Workflows de CI/CD para GitHub Actions (qualidade de codigo e migracoes Supabase).                                                                                                                                                                                                |
-| `public/`              | Arquivos estaticos servidos publicamente e pasta de uploads locais (`public/uploads`).                                                                                                                                                                                            |
-| `src/app/`             | App Router: paginas publicas (`/`, `/c/[slug]`, `/v/[slug]`), painel administrativo (`/admin`, `/admin/categories`, `/admin/products`, `/admin/videos`, `/admin/settings`, `/admin/login`), APIs (`/api/admin/upload`, `/api/track-click`) e rota de callback (`/auth/callback`). |
+| `docs/`                | Documentação técnica detalhada (`ARCHITECTURE.md`, `DATABASE.md`, `DEPLOYMENT.md`, `ROADMAP.md`).                                                                                                                                                                                 |
+| `scripts/`             | Utilitários operacionais e de automação, incluindo o executor de migrações no deploy (`scripts/migrate.mjs`).                                                                                                                                                                     |
+| `supabase/`            | Esquema unificado consolidado (`supabase/schema.sql`) e scripts versionados de evolução (`supabase/migrations/`).                                                                                                                                                                 |
+| `.agents/`             | Configuração de skills e ferramentas para agentes no projeto (`skills.json`).                                                                                                                                                                                                     |
+| `.env.example`         | Template universal de variáveis de ambiente para Vercel e Supabase (com Upstash Redis e migrações opcionais).                                                                                                                                                                       |
+| `README.md`            | Apresentação pública, instruções de início rápido e deploy em 1 clique.                                                                                                                                                                                                           |
+| `.github/`             | Workflows de CI/CD para GitHub Actions (qualidade de código e migrações Supabase).                                                                                                                                                                                                |
+| `public/`              | Arquivos estáticos servidos publicamente e pasta de uploads locais (`public/uploads`).                                                                                                                                                                                            |
+| `src/app/`             | App Router: páginas públicas (`/`, `/c/[slug]`, `/v/[slug]`), painel administrativo (`/admin`, `/admin/categories`, `/admin/products`, `/admin/videos`, `/admin/settings`, `/admin/login`), APIs (`/api/admin/upload`, `/api/track-click`) e rota de callback (`/auth/callback`). |
 | `src/components/`      | Componentes modulares de UI organizados em `public/` (Feed, VideoPlayer, ProductCard, ProductDrawer, Header, CategoryPills), `ui/` (CategoryIcon) e `Theme`.                                                                                                                      |
-| `src/lib/`             | Utilitarios de dominio, parsers de embeds (`lib/embeds/parser.ts`), cache (`lib/cache/redis.ts`), configuracoes (`lib/settings.ts`), seguranca (`lib/security/`), telemetria, logger e clientes Supabase (`client.ts`, `server.ts`, `admin.ts`, `middleware.ts`).                 |
-| `src/middleware.ts`    | Middleware defensivo com as quatro barreiras de seguranca (VPN/IP, sessao Supabase, whitelist de e-mail e redirecionamento).                                                                                                                                                      |
-| `src/types/`           | Tipos TypeScript compartilhados e definicoes do banco de dados (`types/database.ts`).                                                                                                                                                                                             |
+| `src/lib/`             | Utilitários de domínio, parsers de embeds (`lib/embeds/parser.ts`), cache (`lib/cache/redis.ts`), configurações (`lib/settings.ts`), segurança (`lib/security/`), telemetria, logger e clientes Supabase (`client.ts`, `server.ts`, `admin.ts`, `middleware.ts`).                 |
+| `src/middleware.ts`    | Middleware defensivo com as quatro barreiras de segurança (VPN/IP, sessão Supabase, whitelist de e-mail e redirecionamento).                                                                                                                                                      |
+| `src/types/`           | Tipos TypeScript compartilhados e definições do banco de dados (`types/database.ts`).                                                                                                                                                                                             |
 
 ---
 
 ## 6. Comandos Comuns de Desenvolvimento
 
-### Configuracao Inicial
+### Configuração Inicial
 
 ```bash
-# Copiar arquivo de configuracao de ambiente
+# Copiar arquivo de configuração de ambiente
 cp .env.example .env.local
 
-# Instalar dependencias do projeto
+# Instalar dependências do projeto
 npm install
 ```
 
-### Execucao Local
+### Execução Local
 
 ```bash
 # Iniciar o servidor de desenvolvimento
 npm run dev
 
-# Compilar para producao
+# Compilar para produção (executa scripts/migrate.mjs e next build)
 npm run build
 
-# Executar a versao compilada em producao
+# Executar a versão compilada em produção
 npm run start
 ```
 
-### Qualidade e Verificacao
+### Qualidade e Verificação
 
 ```bash
-# Executar testes unitarios automatizados
+# Executar testes unitários automatizados
 npm run test
 
-# Executar verificacao estatica e linter
+# Executar verificação estática e linter
 npm run lint
 
-# Executar verificacao de tipos do TypeScript
+# Executar verificação de tipos do TypeScript
 npx tsc --noEmit
 ```
 
 ### Banco de Dados (Supabase)
 
-As migracoes sao aplicadas por meio do SQL Editor do painel Supabase utilizando a sequencia de scripts:
+O gerenciamento de esquema e migrações do banco de dados opera sob três opções:
 
-1. `supabase/migrations/001_initial_schema.sql` (estrutura inicial, enums, triggers, branding e RLS).
-2. `supabase/migrations/002_add_categories.sql` (ajustes e extensoes incrementais de categorias).
-3. `supabase/migrations/003_add_site_settings.sql` (configuracoes de marca, cores e white-label).
+1. **Automático no Deploy (Vercel):** Se `DATABASE_URL` estiver configurada, o script `scripts/migrate.mjs` é executado antes do `next build`, descobrindo e aplicando incrementalmente todas as migrações de `supabase/migrations/` e registrando o histórico na tabela `_promocuts_migrations`.
+2. **Esquema Consolidado Único:** Para inicialização manual em um único comando no SQL Editor do Supabase, utilize o arquivo idempotente [`supabase/schema.sql`](supabase/schema.sql).
+3. **Migrações Incrementais Sequenciais:** Aplicadas manualmente pelo SQL Editor conforme necessário:
+   - `supabase/migrations/001_initial_schema.sql` (estrutura inicial, enums, triggers, branding e RLS).
+   - `supabase/migrations/002_add_categories.sql` (ajustes e extensões incrementais de categorias).
+   - `supabase/migrations/003_add_site_settings.sql` (configurações de marca, cores e personalização).
+   - `supabase/migrations/004_multi_store_and_link_monitoring.sql` (tabela de links multi-loja, histórico de preços e monitoramento).
+

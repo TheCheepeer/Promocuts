@@ -43,7 +43,10 @@ export default async function HomePage() {
                             id,
                             product_id,
                             display_order,
-                            product:products(*)
+                            product:products(
+                                *,
+                                product_links(*)
+                            )
                         )
                     `,
                       )

@@ -15,7 +15,7 @@ Este documento define o roteiro de implementacao do **PromoCuts**, organizado em
 | **Fase 5** | Vitrine Publica Mobile-First e Desktop Grid | `Concluido` |
 | **Fase 6** | Telemetria de Afiliados e Conversao         | `Concluido` |
 | **Fase 7** | Cache Serverless, Cabecalhos Defensivos e Verificacao Final | `Concluido` |
-| **Fase 8** | Automacao de Ofertas, Suporte Multi-Loja e Monitoramento     | `Planejado` |
+| **Fase 8** | Automacao de Ofertas, Suporte Multi-Loja e Monitoramento     | `Concluido` |
 
 ---
 
@@ -145,14 +145,14 @@ Objetivo: Consolidar a arquitetura plug-and-play serverless, implementar cache e
 
 Objetivo: Maximizar a conversao de vendas permitindo multiplas lojas parceiras por produto, autopreenchimento de dados por link e monitoramento automatizado de integridade de ofertas sem custos adicionais.
 
-- [ ] Modelar suporte a multiplos links afiliados por produto:
-    - [ ] Permitir que um mesmo produto possua multiplos links de lojas parceiras (Amazon, Shopee, Mercado Livre, AliExpress, etc.) com precos e cupons individuais.
-    - [ ] Atualizar o formulario administrativo de produtos para gerenciar a lista de lojas parceiras por produto.
-    - [ ] Adaptar o `ProductCard` e `ProductDrawer` na vitrine publica para exibir seletores ou botoes comparativos de lojas ("Comprar na Amazon", "Comprar na Shopee", etc.).
-    - [ ] Manter a telemetria `/api/track-click` registrando a loja parceira especifica selecionada no clique.
-- [ ] Implementar extrator leve de metadados Open Graph:
-    - [ ] Endpoint utilitario para inspecionar URLs de produtos e extrair titulo (`og:title`), imagem (`og:image`) e preco sugerido (`og:price:amount`).
-    - [ ] Botao de autopreenchimento no formulario de produtos ao colar o link de afiliado.
-- [ ] Criar rotina de verificacao de links em segundo plano (Vercel Cron Job):
-    - [ ] Verificacao periodica de integridade (HTTP status, deteccao de pagina 404 ou produto esgotado).
-    - [ ] Indicadores visuais de alerta no painel administrativo para ofertas que necessitam de revisao.
+- [x] Modelar suporte a multiplos links afiliados por produto:
+    - [x] Permitir que um mesmo produto possua multiplos links de lojas parceiras (Amazon, Shopee, Mercado Livre, AliExpress, etc.) com precos e cupons individuais.
+    - [x] Atualizar o formulario administrativo de produtos para gerenciar a lista de lojas parceiras por produto.
+    - [x] Adaptar o `ProductCard` e `ProductDrawer` na vitrine publica para exibir seletores ou botoes comparativos de lojas ("Comprar na Amazon", "Comprar na Shopee", etc.).
+    - [x] Manter a telemetria `/api/track-click` registrando a loja parceira especifica selecionada no clique.
+- [x] Implementar extrator leve de metadados Open Graph:
+    - [x] Endpoint utilitario para inspecionar URLs de produtos e extrair titulo (`og:title`), imagem (`og:image`) e preco sugerido (`og:price:amount`).
+    - [x] Botao de autopreenchimento no formulario de produtos ao colar o link de afiliado.
+- [x] Criar rotina de verificacao de links em segundo plano (Vercel Cron Job):
+    - [x] Verificacao periodica de integridade (HTTP status, deteccao de pagina 404 ou produto esgotado).
+    - [x] Indicadores visuais de alerta no painel administrativo para ofertas que necessitam de revisao.

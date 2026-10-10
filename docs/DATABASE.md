@@ -12,8 +12,10 @@ erDiagram
     CATEGORIES ||--o{ PRODUCTS : "classifica"
     VIDEOS ||--o{ VIDEO_PRODUCTS : "possui"
     PRODUCTS ||--o{ VIDEO_PRODUCTS : "pertence a"
+    PRODUCTS ||--o{ PRODUCT_LINKS : "possui ofertas"
     PRODUCTS ||--o{ AFFILIATE_CLICKS : "recebe cliques"
     VIDEOS ||--o{ AFFILIATE_CLICKS : "origina cliques"
+    PRODUCT_LINKS ||--o{ AFFILIATE_CLICKS : "registra clique"
 
     SITE_SETTINGS {
         int id PK
@@ -82,6 +84,22 @@ erDiagram
         timestamptz updated_at
     }
 
+    PRODUCT_LINKS {
+        uuid id PK
+        uuid product_id FK
+        varchar store_name
+        text affiliate_url
+        numeric regular_price
+        numeric discount_price
+        varchar coupon_code
+        boolean is_available
+        timestamptz last_checked_at
+        int status_code
+        int display_order
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
     VIDEO_PRODUCTS {
         uuid id PK
         uuid video_id FK
@@ -94,6 +112,8 @@ erDiagram
         uuid id PK
         uuid product_id FK
         uuid video_id FK
+        uuid link_id FK
+        varchar store_name
         timestamptz created_at
         text user_agent
         text referrer
@@ -146,27 +166,49 @@ Armazena as informações dos cortes de vídeo e os dados de incorporação.
 
 ### 2.3 Tabela `public.products`
 
-Armazena o catálogo de itens recomendados com links de afiliados.
+Armazena o catálogo de itens recomendados com links de afiliados (mantendo compatibilidade direta para a loja principal).
 
-| Coluna           | Tipo            | Nulo | Padrão               | Descrição                                           |
-| :--------------- | :-------------- | :--: | :------------------- | :-------------------------------------------------- |
-| `id`             | `UUID`          | Não  | `uuid_generate_v4()` | Identificador único do produto                      |
-| `category_id`    | `UUID`          | Sim  | `NULL`               | Categoria do produto (ON DELETE SET NULL)           |
-| `name`           | `VARCHAR(255)`  | Não  | —                    | Nome comercial do produto                           |
-| `description`    | `TEXT`          | Sim  | `NULL`               | Detalhes curtos ou diferencial do produto           |
-| `image_url`      | `TEXT`          | Não  | —                    | URL da imagem do produto (hospedada na loja ou CDN) |
-| `affiliate_url`  | `TEXT`          | Não  | —                    | Link de redirecionamento com código de comissão     |
-| `regular_price`  | `NUMERIC(10,2)` | Sim  | `NULL`               | Preço original do item (para exibição de desconto)  |
-| `discount_price` | `NUMERIC(10,2)` | Sim  | `NULL`               | Preço final com desconto ativo                      |
-| `currency`       | `VARCHAR(10)`   | Não  | `'BRL'`              | Código da moeda (padrão: real brasileiro)           |
-| `coupon_code`    | `VARCHAR(100)`  | Sim  | `NULL`               | Código promocional para cópia rápida                |
-| `store_name`     | `VARCHAR(100)`  | Não  | —                    | Nome da loja (ex: "Amazon", "Shopee", "AliExpress") |
-| `created_at`     | `TIMESTAMPTZ`   | Não  | `NOW()`              | Data e hora de inclusão                             |
-| `updated_at`     | `TIMESTAMPTZ`   | Não  | `NOW()`              | Data e hora da última atualização                   |
+| Coluna           | Tipo            | Nulo | Padrão               | Descrição                                                  |
+| :--------------- | :-------------- | :--: | :------------------- | :--------------------------------------------------------- |
+| `id`             | `UUID`          | Não  | `uuid_generate_v4()` | Identificador único do produto                             |
+| `category_id`    | `UUID`          | Sim  | `NULL`               | Categoria do produto (ON DELETE SET NULL)                  |
+| `name`           | `VARCHAR(255)`  | Não  | —                    | Nome comercial do produto                                  |
+| `description`    | `TEXT`          | Sim  | `NULL`               | Detalhes curtos ou diferencial do produto                  |
+| `image_url`      | `TEXT`          | Não  | —                    | URL da imagem do produto (hospedada na loja ou CDN)        |
+| `affiliate_url`  | `TEXT`          | Não  | —                    | Link principal de redirecionamento com código de comissão  |
+| `regular_price`  | `NUMERIC(10,2)` | Sim  | `NULL`               | Preço original do item (para exibição de desconto)         |
+| `discount_price` | `NUMERIC(10,2)` | Sim  | `NULL`               | Preço final com desconto ativo                             |
+| `currency`       | `VARCHAR(10)`   | Não  | `'BRL'`              | Código da moeda (padrão: real brasileiro)                  |
+| `coupon_code`    | `VARCHAR(100)`  | Sim  | `NULL`               | Código promocional para cópia rápida                       |
+| `store_name`     | `VARCHAR(100)`  | Não  | —                    | Nome da loja principal (ex: "Amazon", "Shopee")            |
+| `created_at`     | `TIMESTAMPTZ`   | Não  | `NOW()`              | Data e hora de inclusão                                    |
+| `updated_at`     | `TIMESTAMPTZ`   | Não  | `NOW()`              | Data e hora da última atualização                          |
 
 ---
 
-### 2.4 Tabela `public.video_products`
+### 2.4 Tabela `public.product_links`
+
+Armazena múltiplas lojas parceiras e links afiliados associados a cada produto (suporte multi-loja e monitoramento de ofertas).
+
+| Coluna            | Tipo            | Nulo | Padrão               | Descrição                                                   |
+| :---------------- | :-------------- | :--: | :------------------- | :---------------------------------------------------------- |
+| `id`              | `UUID`          | Não  | `uuid_generate_v4()` | Identificador único do link da oferta                       |
+| `product_id`      | `UUID`          | Não  | —                    | Referência à tabela `public.products` (ON DELETE CASCADE)   |
+| `store_name`      | `VARCHAR(100)`  | Não  | —                    | Nome da loja parceira (ex: "Amazon", "Shopee", "Kabum")     |
+| `affiliate_url`   | `TEXT`          | Não  | —                    | URL de redirecionamento com código de afiliado              |
+| `regular_price`   | `NUMERIC(10,2)` | Sim  | `NULL`               | Preço regular nesta loja específica                         |
+| `discount_price`  | `NUMERIC(10,2)` | Sim  | `NULL`               | Preço com desconto nesta loja específica                    |
+| `coupon_code`     | `VARCHAR(100)`  | Sim  | `NULL`               | Cupom específico para esta loja                             |
+| `is_available`    | `BOOLEAN`       | Não  | `true`               | Status de integridade (falso se link quebrado ou 404)       |
+| `last_checked_at` | `TIMESTAMPTZ`   | Sim  | `NULL`               | Data e hora da última verificação automatizada              |
+| `status_code`     | `INT`           | Sim  | `NULL`               | Código de resposta HTTP obtido na última auditoria          |
+| `display_order`   | `INT`           | Não  | `0`                  | Ordem de exibição da loja no seletor comparativo            |
+| `created_at`      | `TIMESTAMPTZ`   | Não  | `NOW()`              | Data de inclusão da oferta                                  |
+| `updated_at`      | `TIMESTAMPTZ`   | Não  | `NOW()`              | Data da última atualização (via trigger)                    |
+
+---
+
+### 2.5 Tabela `public.video_products`
 
 Tabela de associação de muitos-para-muitos entre vídeos e produtos.
 
@@ -182,22 +224,24 @@ _Restrição:_ Chave única composta `UNIQUE(video_id, product_id)` para impedir
 
 ---
 
-### 2.5 Tabela `public.affiliate_clicks`
+### 2.6 Tabela `public.affiliate_clicks`
 
-Registros anônimos de engajamento para cálculo de métricas de conversão com mitigação ativa contra DoS.
+Registros anônimos de engajamento para cálculo de métricas de conversão com suporte a identificação da loja e link específico.
 
 | Coluna       | Tipo            | Nulo | Padrão               | Descrição                                                       |
 | :----------- | :-------------- | :--: | :------------------- | :-------------------------------------------------------------- |
 | `id`         | `UUID`          | Não  | `uuid_generate_v4()` | Identificador do evento                                         |
 | `product_id` | `UUID`          | Não  | —                    | Referência ao produto clicado (ON DELETE CASCADE)               |
 | `video_id`   | `UUID`          | Sim  | `NULL`               | Referência ao vídeo de onde partiu o clique                     |
+| `link_id`    | `UUID`          | Sim  | `NULL`               | Referência ao link específico da loja (ON DELETE SET NULL)      |
+| `store_name` | `VARCHAR(100)`  | Sim  | `NULL`               | Nome da loja parceira que recebeu o clique                      |
 | `created_at` | `TIMESTAMPTZ`   | Não  | `NOW()`              | Data e hora do clique                                           |
 | `user_agent` | `VARCHAR(512)`  | Sim  | `NULL`               | Informação do navegador/dispositivo (limitado a 512 caracteres) |
 | `referrer`   | `VARCHAR(1024)` | Sim  | `NULL`               | Origem da requisição (limitado a 1024 caracteres)               |
 
 ---
 
-### 2.6 Tabela `public.site_settings`
+### 2.7 Tabela `public.site_settings`
 
 Armazena os parâmetros globais de customização de marca, cores, logotipos e metadados no padrão singleton (apenas 1 registro).
 
@@ -236,13 +280,13 @@ Todas as tabelas possuem a opção `ROW LEVEL SECURITY` estritamente ativada:
     - Todas as categorias podem ser consultadas publicamente (`USING (true)`) para popular o feed geral e as barras de navegação.
 3. **Leitura Pública de Vídeos:**
     - Apenas registros com `is_published = true` podem ser lidos por conexões anônimas.
-4. **Leitura Pública de Produtos:**
-    - Produtos só são listados para o público se estiverem atrelados a pelo menos um vídeo com `is_published = true`.
+4. **Leitura Pública de Produtos e Links Multi-Loja:**
+    - Produtos e seus registros filhos em `product_links` só são listados para o público se estiverem atrelados a pelo menos um vídeo com `is_published = true`.
 5. **Escrita Restrita:**
-    - Operações de `INSERT`, `UPDATE` e `DELETE` nas tabelas principais (`site_settings`, `categories`, `videos`, `products`, `video_products`) são bloqueadas para o papel anônimo (`anon`).
+    - Operações de `INSERT`, `UPDATE` e `DELETE` nas tabelas principais (`site_settings`, `categories`, `videos`, `products`, `product_links`, `video_products`) são bloqueadas para o papel anônimo (`anon`).
     - Elas são realizadas pelas Server Actions autenticadas do Next.js via chave de serviço (`service_role`), após validação estrita da sessão de e-mail do administrador.
 6. **Registro de Métricas Anônimas Endurecido contra DoS:**
-    - A tabela `affiliate_clicks` permite a operação de `INSERT` pelo público (`anon` e `authenticated`) com validação defensiva estrita no `WITH CHECK`: o produto deve existir ativamente na base e os comprimentos de `user_agent` (<= 512) e `referrer` (<= 1024) são rigorosamente limitados, eliminando riscos de esgotamento de disco (Storage DoS).
+    - A tabela `affiliate_clicks` permite a operação de `INSERT` pelo público (`anon` e `authenticated`) com validação defensiva estrita no `WITH CHECK`: o produto deve existir ativamente na base e os comprimentos de `user_agent` (<= 512), `referrer` (<= 1024) e `store_name` (<= 100) são rigorosamente limitados, eliminando riscos de esgotamento de disco (Storage DoS).
 7. **Mitigação de Search Path Hijacking:**
     - A função trigger `handle_updated_at` opera sob o modelo `SECURITY DEFINER` com `SET search_path = public`, impedindo interceptação de esquemas por usuários não confiáveis.
 
@@ -250,11 +294,27 @@ Todas as tabelas possuem a opção `ROW LEVEL SECURITY` estritamente ativada:
 
 ## 4. Como Aplicar as Migrações
 
-1. Acesse o [Painel do Supabase](https://supabase.com/dashboard).
-2. Selecione o projeto desejado ou crie um novo gratuitamente.
-3. No menu lateral esquerdo, clique no ícone **SQL Editor** (ícone de terminal/código).
-4. Para instalações novas, abra o arquivo local [`supabase/migrations/001_initial_schema.sql`](../supabase/migrations/001_initial_schema.sql) do projeto.
-5. Para bancos de dados existentes criados antes da categorização, execute o arquivo complementar [`supabase/migrations/002_add_categories.sql`](../supabase/migrations/002_add_categories.sql).
-6. Para bancos de dados existentes que necessitam do módulo de customização e branding, execute o arquivo complementar [`supabase/migrations/003_add_site_settings.sql`](../supabase/migrations/003_add_site_settings.sql).
-7. Copie todo o conteúdo, cole na janela do SQL Editor e clique no botão **Run** (Executar).
-8. O retorno exibirá `Success. No rows returned`, confirmando que todas as tabelas, tipos, funções, triggers e políticas de segurança foram criados.
+O PromoCuts oferece três formas de aplicar e manter as migrações do banco de dados atualizadas:
+
+### Método 1: Automático no Deploy (Recomendado — Zero Toque)
+
+Ao preencher a variável de ambiente `DATABASE_URL` na Vercel (ou no arquivo `.env.local`), o pipeline de construção do Next.js executa o utilitário dinâmico [`scripts/migrate.mjs`](../scripts/migrate.mjs) automaticamente antes de compilar a aplicação (`node scripts/migrate.mjs && next build`).
+
+- **Descoberta Dinâmica:** O script varre a pasta `supabase/migrations/` em ordem sequencial numérica natural, garantindo suporte imediato a quaisquer arquivos presentes e futuros (`001_...`, `002_...`, `005_...`, etc.).
+- **Tabela de Controle:** Cria e gerencia a tabela interna `_promocuts_migrations` para registrar o histórico de arquivos já aplicados, impedindo reexecuções.
+- **Segurança e Conexão:** Conecta-se diretamente ao banco PostgreSQL do Supabase com SSL obrigatório (`ssl: { rejectUnauthorized: false }`).
+- **Degradação Graciosa:** Caso a variável `DATABASE_URL` não seja informada, o script registra um aviso no log e encerra com código de sucesso (0), permitindo que a compilação prossiga normalmente.
+
+### Método 2: Manual com Arquivo Único Consolidado
+
+Se optar por não fornecer a `DATABASE_URL` durante o deploy, é possível provisionar o banco de dados inteiro em um único comando:
+
+1. Acesse o [Painel do Supabase](https://supabase.com/dashboard) e selecione o seu projeto.
+2. No menu lateral esquerdo, clique no ícone **SQL Editor**.
+3. Abra o arquivo unificado [`supabase/schema.sql`](../supabase/schema.sql) deste repositório, copie todo o seu conteúdo, cole na janela do editor e clique em **Run** (Executar).
+4. O esquema consolidado é totalmente idempotente e provisiona todas as tabelas, tipos enumerados, índices de busca, gatilhos e políticas de segurança RLS de uma só vez.
+
+### Método 3: Manual Incremental
+
+Para atualizar projetos já existentes que possuam versões anteriores instaladas, aplique sequencialmente no SQL Editor apenas as migrações incrementais necessárias a partir da pasta [`supabase/migrations/`](../supabase/migrations/).
+

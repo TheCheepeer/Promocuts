@@ -15,9 +15,15 @@ export function sanitizeHeader(
     return value.slice(0, maxLength);
 }
 
+/**
+ * Registra o engajamento de clique de afiliado, identificando opcionalmente o vídeo,
+ * o link específico e a loja parceira escolhida pelo visitante.
+ */
 export function trackAffiliateClick(
     productId: string,
     videoId?: string | null,
+    linkId?: string | null,
+    storeName?: string | null,
 ): void {
     if (!productId || typeof window === "undefined") {
         return;
@@ -26,6 +32,8 @@ export function trackAffiliateClick(
     const payload = JSON.stringify({
         product_id: productId,
         video_id: videoId || null,
+        link_id: linkId || null,
+        store_name: storeName ? storeName.slice(0, 100) : null,
     });
 
     try {
@@ -46,7 +54,7 @@ export function trackAffiliateClick(
             body: payload,
             keepalive: true,
         }).catch(() => {
-            // Falha silenciosa defensiva para preservar a navegacao do visitante
+            // Falha silenciosa defensiva para preservar a navegação do visitante
         });
     } catch {
         // Falha silenciosa defensiva

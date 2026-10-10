@@ -382,3 +382,35 @@ Substituindo a necessidade de um gateway Nginx intermediário, as diretivas de p
 - **X-Frame-Options: SAMEORIGIN:** Protege a interface administrativa contra ataques de *clickjacking*.
 - **Referrer-Policy: strict-origin-when-cross-origin:** Garante que informações sensíveis de rotas e parâmetros não vazem para domínios de terceiros.
 - **Permissions-Policy:** Desativa acesso desnecessário a recursos do dispositivo do visitante (`camera=(), microphone=(), geolocation=(), payment=()`).
+
+---
+
+## 9. Automação de Ofertas, Suporte Multi-Loja e Monitoramento Serverless (Fase 8)
+
+Para maximizar a conversão de vendas, a velocidade operacional do gestor e a confiabilidade dos links sem gerar custos adicionais, o PromoCuts implementa a camada de automação de ofertas e auditoria contínua:
+
+### 9.1 Catálogo Multi-Loja e Comparador Dinâmico de Ofertas
+
+- **Flexibilidade Relacional (1:N):** Cada item do catálogo pode possuir múltiplos links afiliados de diferentes plataformas (Amazon, Shopee, Mercado Livre, AliExpress, Magalu, Kabum, etc.), cada um com preço regular, preço promocional e cupom específicos.
+- **Retrocompatibilidade com a Tabela `products`:** A tabela `public.products` armazena os valores da loja primária para preservar integrações existentes, enquanto `public.product_links` gerencia a totalidade das ofertas vinculadas.
+- **Experiência Comparativa sem Atrito:** Tanto no `ProductCard` quanto no `ProductDrawer`, o visitante visualiza botões de alternância rápida entre lojas parceiras. A seleção recalcula dinamicamente o preço, o badge de desconto e o código do cupom.
+- **Telemetria com Discriminação de Loja:** Ao clicar em "Comprar" ou copiar cupom, a função `trackAffiliateClick` envia os parâmetros `link_id` e `store_name`, permitindo auditar com exatidão qual parceiro gera maior volume de saídas.
+
+### 9.2 Extrator Open Graph Defensivo (Proteção Ativa contra SSRF)
+
+- **Autopreenchimento de Produtos:** No painel administrativo (`/admin/products`), o administrador cola a URL de um produto e clica em "Autopreencher". O endpoint protegido `/api/admin/extract-og` inspeciona a página remota e extrai título, imagem, preço sugerido e identifica a loja parceira de forma instantânea.
+- **Mitigação Estrita de SSRF (Server-Side Request Forgery):**
+  - Protocolos restritos exclusivamente a `http:` e `https:`.
+  - Bloqueio imediato de nomes locais (`localhost`, `*.local`, `*.internal`, `*.lan`).
+  - Bloqueio de endereços IP de loopback (`127.0.0.1`, `::1`, `0.0.0.0`).
+  - Bloqueio de faixas privadas RFC 1918 (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`).
+  - Bloqueio de endereços link-local e metadados de nuvem (`169.254.0.0/16`, incluindo o endpoint `169.254.169.254`).
+- **Consumo Mínimo de Recursos:** As requisições utilizam timeout de 5 segundos e leitor de stream limitado a 512 KB, interrompendo a transferência assim que a tag `</head>` é detectada.
+
+### 9.3 Monitoramento Periódico de Integridade via Vercel Cron Job
+
+- **Auditoria Serverless de Baixo Custo:** A rota `/api/cron/check-offers` é executada automaticamente uma vez ao dia pela infraestrutura gratuita da Vercel (conforme agendamento em `vercel.json`: `"schedule": "0 3 * * *"`).
+- **Proteção por Segredo de Cron (`CRON_SECRET`):** Requisições externas devem fornecer o cabeçalho `Authorization: Bearer ${CRON_SECRET}` para execução autorizada.
+- **Checagem Leve por Cabeçalhos HTTP:** O utilitário `checkOfferLink` realiza requisições `HEAD` (com fallback para `GET` cancelado no stream) seguindo redirecionamentos para classificar links como disponíveis (`200..399`) ou inativos (`404`, `410`).
+- **Alertas Visuais no Painel:** Links com falha são sinalizados na tabela de produtos com insígnia de alerta ("Revisar"), permitindo ao gestor filtrar produtos com problemas e auditar links manualmente via Server Action (`checkOffersAction`).
+
