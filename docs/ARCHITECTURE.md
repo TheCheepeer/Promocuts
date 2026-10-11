@@ -198,6 +198,7 @@ A vitrine pública é organizada nos seguintes componentes em `src/components/pu
 | `FeedMobile`          | `src/components/public/feed-mobile.tsx`    | Feed vertical com rolagem magnética (`scroll-snap` em `h-dvh`), `IntersectionObserver` e botões flutuantes.           |
 | `FeedDesktop`         | `src/components/public/feed-desktop.tsx`   | Grade responsiva de cartões 9:16 com prévia de produtos e modal de reprodução imersiva.                               |
 | `Feed`                | `src/components/public/feed.tsx`           | Orquestrador responsivo chaveando entre a visão mobile e a visão desktop conforme o viewport.                         |
+| `Storefront`          | `src/components/public/storefront.tsx`     | Orquestrador da vitrine com filtragem de categorias em memória (0ms), resposta tátil e sincronização de histórico.    |
 | `CreatorProfile`      | `src/components/public/creator-profile.tsx`| Perfil retrátil do criador com bio links, crachás dinâmicos de transmissão ("AO VIVO") e telemetria de cliques.        |
 
 ---

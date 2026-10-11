@@ -2,9 +2,8 @@ import React from "react";
 import { createClient } from "@/lib/supabase/server";
 import { getSiteSettings } from "@/lib/settings";
 import { PublicHeader } from "@/components/public/header";
-import { CategoryPills } from "@/components/public/category-pills";
 import { CreatorProfile } from "@/components/public/creator-profile";
-import { Feed } from "@/components/public/feed";
+import { Storefront } from "@/components/public/storefront";
 import { getCachedData, setCachedData } from "@/lib/cache/redis";
 import type { Category, BioLink } from "@/types/database";
 import type { VideoWithRelations } from "@/components/public/feed-mobile";
@@ -90,11 +89,7 @@ export default async function HomePage() {
         <div className="flex min-h-dvh flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50">
             <PublicHeader settings={settings} />
             <CreatorProfile settings={settings} bioLinks={bioLinks} />
-            <CategoryPills categories={categories} />
-
-            <main className="flex-1">
-                <Feed videos={videos} />
-            </main>
+            <Storefront categories={categories} allVideos={videos} />
 
             {/* Rodape visivel exclusivamente em telas desktop */}
             <footer className="hidden border-t border-zinc-200/80 bg-white py-6 text-center text-xs text-zinc-500 dark:border-zinc-800/80 dark:bg-zinc-950 dark:text-zinc-400 md:block">

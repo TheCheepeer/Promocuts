@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Play, Share2, Check, ExternalLink, X } from "lucide-react";
 import { VideoPlayer } from "./video-player";
@@ -16,6 +16,10 @@ export function FeedDesktop({ videos }: FeedDesktopProps) {
     const [selectedVideo, setSelectedVideo] =
         useState<VideoWithRelations | null>(null);
     const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
+
+    useEffect(() => {
+        setSelectedVideo(null);
+    }, [videos]);
 
     const handleShare = (e: React.MouseEvent, video: VideoWithRelations) => {
         e.preventDefault();

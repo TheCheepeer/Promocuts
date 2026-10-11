@@ -8,13 +8,30 @@ import type { Category } from "@/types/database";
 interface CategoryPillsProps {
     categories: Category[];
     activeSlug?: string | null;
+    onSelectCategory?: (slug: string | null) => void;
 }
 
 export function CategoryPills({
     categories,
     activeSlug = null,
+    onSelectCategory,
 }: CategoryPillsProps) {
     const isAllActive = !activeSlug;
+
+    const handleItemClick = (
+        e: React.MouseEvent<HTMLAnchorElement>,
+        slug: string | null,
+    ) => {
+        // Permite abertura nativa em nova aba se teclas modificadoras estiverem pressionadas
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) {
+            return;
+        }
+
+        if (onSelectCategory) {
+            e.preventDefault();
+            onSelectCategory(slug);
+        }
+    };
 
     return (
         <div className="w-full border-b border-zinc-200/80 bg-white/70 backdrop-blur-xs transition-colors dark:border-zinc-800/80 dark:bg-zinc-950/70">
@@ -26,8 +43,10 @@ export function CategoryPills({
                     {/* Chip "Todos" */}
                     <Link
                         href="/"
+                        prefetch={true}
+                        onClick={(e) => handleItemClick(e, null)}
                         className={cn(
-                            "inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all duration-200",
+                            "inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium cursor-pointer transition-all duration-200 active:scale-95",
                             isAllActive
                                 ? "bg-brand-primary text-white shadow-xs"
                                 : "border border-zinc-200/70 bg-zinc-100 text-zinc-700 hover:bg-zinc-200/70 hover:text-zinc-950 dark:border-zinc-800/80 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-50",
@@ -53,8 +72,10 @@ export function CategoryPills({
                             <Link
                                 key={category.id}
                                 href={`/c/${category.slug}`}
+                                prefetch={true}
+                                onClick={(e) => handleItemClick(e, category.slug)}
                                 className={cn(
-                                    "inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all duration-200",
+                                    "inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium cursor-pointer transition-all duration-200 active:scale-95",
                                     isActive
                                         ? "bg-brand-primary text-white shadow-xs"
                                         : "border border-zinc-200/70 bg-zinc-100 text-zinc-700 hover:bg-zinc-200/70 hover:text-zinc-950 dark:border-zinc-800/80 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-50",
