@@ -146,6 +146,7 @@ vite.config.ts.timestamp-*
 
 # Agents
 .agents/
+skills-lock.json
 
 # Seed de dados locais/privados
 supabase/seed.sql

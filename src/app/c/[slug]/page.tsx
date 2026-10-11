@@ -5,8 +5,9 @@ import { createClient } from "@/lib/supabase/server";
 import { getSiteSettings } from "@/lib/settings";
 import { PublicHeader } from "@/components/public/header";
 import { CategoryPills } from "@/components/public/category-pills";
+import { CreatorProfile } from "@/components/public/creator-profile";
 import { Feed } from "@/components/public/feed";
-import type { Category } from "@/types/database";
+import type { Category, BioLink } from "@/types/database";
 import type { VideoWithRelations } from "@/components/public/feed-mobile";
 
 interface CategoryPageProps {
@@ -30,13 +31,13 @@ export async function generateMetadata({
 
     if (!categoryMeta) {
         return {
-            title: `Categoria nao encontrada | ${settings.site_name}`,
+            title: `Categoria não encontrada | ${settings.site_name}`,
         };
     }
 
     return {
         title: `${categoryMeta.name}`,
-        description: `Explore os melhores achadinhos e cortes de recomendacao na categoria ${categoryMeta.name}.`,
+        description: `Explore os melhores achadinhos e cortes de recomendação na categoria ${categoryMeta.name}.`,
     };
 }
 
@@ -58,43 +59,50 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         notFound();
     }
 
-    // 2. Busca todas as categorias para popular a barra de selecao
-    const { data: rawCategories } = await supabase
-        .from("categories")
-        .select("*")
-        .order("display_order", { ascending: true })
-        .order("name", { ascending: true });
-
-    const categories = (rawCategories || []) as Category[];
-
-    // 3. Busca videos publicados para a categoria ativa
-    const { data: rawVideos } = await supabase
-        .from("videos")
-        .select(
-            `
-            *,
-            category:categories(id, name, slug, icon),
-            video_products(
-                id,
-                product_id,
-                display_order,
-                product:products(
-                    *,
-                    product_links(*)
+    // 2. Busca todas as categorias, bio links e vídeos em paralelo
+    const [categoriesResult, bioLinksResult, videosResult] = await Promise.all([
+        supabase
+            .from("categories")
+            .select("*")
+            .order("display_order", { ascending: true })
+            .order("name", { ascending: true }),
+        supabase
+            .from("bio_links")
+            .select("*")
+            .eq("is_active", true)
+            .order("display_order", { ascending: true })
+            .order("created_at", { ascending: true }),
+        supabase
+            .from("videos")
+            .select(
+                `
+                *,
+                category:categories(id, name, slug, icon),
+                video_products(
+                    id,
+                    product_id,
+                    display_order,
+                    product:products(
+                        *,
+                        product_links(*)
+                    )
                 )
+            `,
             )
-        `,
-        )
-        .eq("is_published", true)
-        .eq("category_id", category.id)
-        .order("order_weight", { ascending: false })
-        .order("created_at", { ascending: false });
+            .eq("is_published", true)
+            .eq("category_id", category.id)
+            .order("order_weight", { ascending: false })
+            .order("created_at", { ascending: false }),
+    ]);
 
-    const videos = (rawVideos || []) as unknown as VideoWithRelations[];
+    const categories = (categoriesResult.data || []) as Category[];
+    const bioLinks = (bioLinksResult.data || []) as BioLink[];
+    const videos = (videosResult.data || []) as unknown as VideoWithRelations[];
 
     return (
         <div className="flex min-h-dvh flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50">
             <PublicHeader settings={settings} />
+            <CreatorProfile settings={settings} bioLinks={bioLinks} />
             <CategoryPills categories={categories} activeSlug={slug} />
 
             <main className="flex-1">

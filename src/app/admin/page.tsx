@@ -4,35 +4,42 @@ import {
     Video,
     ShoppingBag,
     FolderTree,
-    MousePointerClick,
     PlusCircle,
     ArrowUpRight,
     Sparkles,
     Eye,
+    Link2,
+    TrendingUp,
 } from "lucide-react";
 import { requireAdminAuth } from "@/lib/security/admin-guard";
 import { formatCompactNumber } from "@/lib/formatters";
 
 export const metadata = {
-    title: "Visao Geral",
+    title: "Visão Geral",
 };
 
 export default async function AdminDashboardPage() {
     const { adminDb } = await requireAdminAuth();
 
-    // Consulta em paralelo das metricas principais
+    // Consulta em paralelo das métricas principais
     const [
         videosResult,
         productsResult,
-        categoriesResult,
         clicksResult,
+        bioLinksResult,
+        bioClicksResult,
         recentVideosResult,
     ] = await Promise.all([
         adminDb.from("videos").select("id, is_published", { count: "exact" }),
         adminDb.from("products").select("id", { count: "exact", head: true }),
-        adminDb.from("categories").select("id", { count: "exact", head: true }),
         adminDb
             .from("affiliate_clicks")
+            .select("id", { count: "exact", head: true }),
+        adminDb
+            .from("bio_links")
+            .select("id, is_active", { count: "exact" }),
+        adminDb
+            .from("bio_link_clicks")
             .select("id", { count: "exact", head: true }),
         adminDb
             .from("videos")
@@ -48,13 +55,17 @@ export default async function AdminDashboardPage() {
         videosResult.data?.filter((v) => v.is_published).length || 0;
     const draftVideos = totalVideos - publishedVideos;
     const totalProducts = productsResult.count || 0;
-    const totalCategories = categoriesResult.count || 0;
-    const totalClicks = clicksResult.count || 0;
+    const totalAffiliateClicks = clicksResult.count || 0;
+    const totalBioLinks = bioLinksResult.count || 0;
+    const activeBioLinks =
+        bioLinksResult.data?.filter((l) => l.is_active).length || 0;
+    const totalBioClicks = bioClicksResult.count || 0;
+    const totalConversions = totalAffiliateClicks + totalBioClicks;
     const recentVideos = recentVideosResult.data || [];
 
     const stats = [
         {
-            title: "Cortes de Video",
+            title: "Cortes de Vídeo",
             value: totalVideos,
             subtitle: `${publishedVideos} publicados, ${draftVideos} rascunhos`,
             icon: Video,
@@ -68,18 +79,18 @@ export default async function AdminDashboardPage() {
             href: "/admin/products",
         },
         {
-            title: "Categorias Tematicas",
-            value: totalCategories,
-            subtitle: "Filtros da vitrine",
-            icon: FolderTree,
-            href: "/admin/categories",
+            title: "Bio Links e Comunidades",
+            value: totalBioLinks,
+            subtitle: `${activeBioLinks} ativos na vitrine`,
+            icon: Link2,
+            href: "/admin/bio-links",
         },
         {
-            title: "Cliques de Afiliados",
-            value: totalClicks,
-            subtitle: "Total de cliques registrados",
-            icon: MousePointerClick,
-            href: "/admin/products",
+            title: "Métricas de Conversão",
+            value: totalConversions,
+            subtitle: `${totalAffiliateClicks} em produtos, ${totalBioClicks} em bio links`,
+            icon: TrendingUp,
+            href: "/admin/metrics",
         },
     ];
 
@@ -94,25 +105,32 @@ export default async function AdminDashboardPage() {
 
     return (
         <div className="space-y-8">
-            {/* Cabecalho da Pagina */}
+            {/* Cabeçalho da Página */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-zinc-200 pb-5 dark:border-zinc-800">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-                        Visao Geral
+                        Visão Geral
                     </h1>
                     <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-                        Metricas principais e controle centralizado do catalogo
+                        Métricas principais e controle centralizado do catálogo
                         da vitrine.
                     </p>
                 </div>
 
                 <div className="flex items-center gap-2">
                     <Link
+                        href="/admin/metrics"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-zinc-200 bg-white text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors shadow-xs"
+                    >
+                        <TrendingUp className="h-4 w-4" />
+                        Ver Métricas
+                    </Link>
+                    <Link
                         href="/admin/videos"
                         className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 text-sm font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors shadow-xs"
                     >
                         <PlusCircle className="h-4 w-4" />
-                        Cadastrar Video
+                        Cadastrar Vídeo
                     </Link>
                 </div>
             </div>

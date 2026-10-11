@@ -14,6 +14,8 @@ import {
     Menu,
     X,
     Shield,
+    BarChart3,
+    Link2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -28,13 +30,23 @@ interface NavItem {
 
 const navItems: NavItem[] = [
     {
-        label: "Visao Geral",
+        label: "Visão Geral",
         href: "/admin",
         icon: LayoutDashboard,
         exact: true,
     },
     {
-        label: "Videos",
+        label: "Métricas",
+        href: "/admin/metrics",
+        icon: BarChart3,
+    },
+    {
+        label: "Bio Links",
+        href: "/admin/bio-links",
+        icon: Link2,
+    },
+    {
+        label: "Vídeos",
         href: "/admin/videos",
         icon: Video,
     },
@@ -49,7 +61,7 @@ const navItems: NavItem[] = [
         icon: FolderTree,
     },
     {
-        label: "Configuracoes",
+        label: "Configurações",
         href: "/admin/settings",
         icon: Palette,
     },

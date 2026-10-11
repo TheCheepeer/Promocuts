@@ -27,9 +27,9 @@ flowchart TD
     subgraph HostLayer["Camada de Execução (Vercel Edge & Serverless)"]
         NextMiddleware["Next.js Middleware (VPN Guard, Auth & Email Whitelist)"]
         PublicRoute["Rotas Publicas (/, /c/[slug], /v/[slug])"]
-        AdminRoute["Rotas Administrativas (/admin, /admin/categories, /admin/products, /admin/videos, /admin/settings)"]
+        AdminRoute["Rotas Administrativas (/admin, /admin/categories, /admin/products, /admin/videos, /admin/settings, /admin/bio-links, /admin/metrics)"]
         UploadEndpoint["Upload Seguro de Ativos (/api/admin/upload)"]
-        TrackClickEndpoint["Telemetria de Afiliados (/api/track-click)"]
+        TrackClickEndpoint["Telemetria de Afiliados e Bio Links (/api/track-click)"]
         ServerAction["Next.js Server Actions (Mutations com Service Role)"]
         RedisModule["Modulo de Cache Serverless (Upstash Redis REST)"]
     end
@@ -48,21 +48,23 @@ flowchart TD
         ReelsEmbed["Instagram Reels Embed Player"]
         ShortsEmbed["YouTube Shorts Iframe Player"]
         AffiliateDestination["Lojas Parceiras (Amazon, Shopee, etc.)"]
+        SocialDestination["Destinos Sociais / Lives (Twitch, YouTube, etc.)"]
     end
 
     Visitor -->|Navega no feed geral ou por categoria| PublicRoute
-    PublicRoute -->|Consulta conteúdo publicado, categorias e branding| PostgresDB
+    PublicRoute -->|Consulta conteúdo publicado, categorias, branding e bio links| PostgresDB
     PublicRoute -->|Carrega iframe sob demanda| TikTokEmbed
     PublicRoute -->|Carrega iframe sob demanda| ReelsEmbed
     PublicRoute -->|Carrega iframe sob demanda| ShortsEmbed
     Visitor -->|Clica em produto de afiliado| AffiliateDestination
+    Visitor -->|Clica em link da bio ou canal social| SocialDestination
     Visitor -.->|Disparo assíncrono de beacon / fetch| TrackClickEndpoint
-    TrackClickEndpoint -->|Gravação na tabela affiliate_clicks| PostgresDB
+    TrackClickEndpoint -->|Gravação nas tabelas affiliate_clicks e bio_link_clicks| PostgresDB
 
     AdminUser -->|Acessa /admin via VPN ou IP autorizado| NextMiddleware
     NextMiddleware -->|Verifica sessão e provedor de identidade| AuthLayer
     NextMiddleware -->|Valida e-mail estritamente contra ADMIN_EMAIL| AdminRoute
-    AdminRoute -->|Gestão de categorias, vídeos, produtos e customização de marca| ServerAction
+    AdminRoute -->|Gestão de catálogo, bio links, métricas de conversão e branding| ServerAction
     ServerAction -->|Gravação de dados| PostgresDB
     NextMiddleware -.->|Rate Limiting opcional| RedisModule
 ```
@@ -196,6 +198,7 @@ A vitrine pública é organizada nos seguintes componentes em `src/components/pu
 | `FeedMobile`          | `src/components/public/feed-mobile.tsx`    | Feed vertical com rolagem magnética (`scroll-snap` em `h-dvh`), `IntersectionObserver` e botões flutuantes.           |
 | `FeedDesktop`         | `src/components/public/feed-desktop.tsx`   | Grade responsiva de cartões 9:16 com prévia de produtos e modal de reprodução imersiva.                               |
 | `Feed`                | `src/components/public/feed.tsx`           | Orquestrador responsivo chaveando entre a visão mobile e a visão desktop conforme o viewport.                         |
+| `CreatorProfile`      | `src/components/public/creator-profile.tsx`| Perfil retrátil do criador com bio links, crachás dinâmicos de transmissão ("AO VIVO") e telemetria de cliques.        |
 
 ---
 
@@ -340,21 +343,24 @@ Para unir praticidade operacional com custo zero e alto desempenho, o PromoCuts 
 
 ---
 
-## 7. Métricas Anônimas de Afiliados e Telemetria
+## 7. Métricas Anônimas de Afiliados, Bio Links e Telemetria
 
-Para avaliar quais cortes e produtos geram maior retorno sem comprometer a privacidade do visitante:
+Para avaliar quais cortes, produtos e canais sociais geram maior retorno sem comprometer a privacidade do visitante:
 
 1. **Disparo Client-Side Não Bloqueante (`src/lib/telemetry.ts`):**
-    - Cada clique em "Comprar" ou "Copiar Cupom" no componente `ProductCard` dispara a função auxiliar `trackAffiliateClick(productId, videoId)`.
-    - O envio utiliza a API nativa `navigator.sendBeacon` com payload em Blob JSON, permitindo que a requisição ocorra de forma assíncrona mesmo quando o usuário é redirecionado para a loja parceira em outra aba.
+    - Cada clique em "Comprar" ou "Copiar Cupom" no componente `ProductCard` dispara a função auxiliar `trackAffiliateClick(productId, videoId, linkId, storeName)`.
+    - Cada clique em um link do agregador no componente `CreatorProfile` dispara a função auxiliar `trackBioLinkClick(bioLinkId)`.
+    - O envio utiliza a API nativa `navigator.sendBeacon` com payload em Blob JSON, permitindo que a requisição ocorra de forma assíncrona mesmo quando o usuário é redirecionado para a loja parceira ou canal social em outra aba.
     - Se a API de beacon não estiver disponível ou falhar, o utilitário executa um fallback para `fetch` com a flag `keepalive: true`.
-    - Toda a execução no cliente é envolvida em tratamento defensivo de exceções para que bloqueadores de anúncios (ad blockers) ou instabilidades de rede jamais impeçam a navegação ou a cópia do cupom.
+    - Toda a execução no cliente é envolvida em tratamento defensivo de exceções para que bloqueadores de anúncios (ad blockers) ou instabilidades de rede jamais impeçam a navegação, a abertura de canais ou a cópia do cupom.
 
 2. **Route Handler Endurecido (`src/app/api/track-click`):**
     - A rota recebe os identificadores via requisição HTTP `POST`.
-    - **Validação Estrita de Identificadores:** Valida o formato dos parâmetros `product_id` (obrigatório) e `video_id` (opcional) contra uma expressão regular estrita de UUID, rejeitando requisições malformadas ou tentativas de injeção com código HTTP `400 Bad Request`.
+    - **Validação Estrita de Identificadores:** Valida o formato dos parâmetros `product_id`, `video_id`, `link_id` e `bio_link_id` contra uma expressão regular estrita de UUID, rejeitando requisições malformadas ou tentativas de injeção com código HTTP `400 Bad Request`. Exige que ao menos um identificador principal (`product_id` ou `bio_link_id`) esteja presente.
     - **Mitigação contra Esgotamento de Disco (Storage DoS):** Os cabeçalhos `user-agent` e `referrer` são higienizados e truncados no servidor (máximo de 512 caracteres para `user-agent` e 1024 caracteres para `referrer`), em estrita conformidade com os limites do banco de dados.
-    - **Persistência Assíncrona:** O registro é gravado na tabela `public.affiliate_clicks` utilizando o cliente administrativo do Supabase no lado do servidor.
+    - **Persistência Assíncrona e Gatilhos Atômicos:** 
+        - Cliques em afiliados são gravados na tabela `public.affiliate_clicks`.
+        - Cliques em bio links são gravados na tabela `public.bio_link_clicks`, disparando o gatilho `handle_bio_link_click_increment()` que incrementa atomicamente o contador `clicks_count` na tabela `public.bio_links`.
     - **Privacidade por Padrão:** Nenhum dado pessoal identificável (como endereço IP completo, cookies de sessão ou parâmetros de rastreamento invasivos) é persistido.
 
 ---
@@ -413,4 +419,37 @@ Para maximizar a conversão de vendas, a velocidade operacional do gestor e a co
 - **Proteção por Segredo de Cron (`CRON_SECRET`):** Requisições externas devem fornecer o cabeçalho `Authorization: Bearer ${CRON_SECRET}` para execução autorizada.
 - **Checagem Leve por Cabeçalhos HTTP:** O utilitário `checkOfferLink` realiza requisições `HEAD` (com fallback para `GET` cancelado no stream) seguindo redirecionamentos para classificar links como disponíveis (`200..399`) ou inativos (`404`, `410`).
 - **Alertas Visuais no Painel:** Links com falha são sinalizados na tabela de produtos com insígnia de alerta ("Revisar"), permitindo ao gestor filtrar produtos com problemas e auditar links manualmente via Server Action (`checkOffersAction`).
+
+---
+
+## 10. Hub Central do Criador (Bio Links, Streamers e Dashboard de Métricas)
+
+Na Fase 9, o PromoCuts expandiu sua arquitetura para consolidar a vitrine pública como o hub definitivo de tráfego do criador de conteúdo, unindo agregador de bio links, integração para canais de streaming e painel gerencial de conversão.
+
+### 10.1 Gestão de Bio Links e Redes Sociais no Painel (`/admin/bio-links`)
+
+- **Controle Centralizado e Ordenação:** Rota fechada que permite cadastrar destinos externos (Twitch, Kick, YouTube, Discord, Telegram, WhatsApp, PIX, Apoia-se, etc.) com reordenação direta, alternância de visibilidade e prévia em tempo real.
+- **Catálogo Vetorial Nativo:** Ícones SVG oficiais de plataformas integrados em `src/app/admin/bio-links/bio-link-icons.tsx`, eliminando bibliotecas de ícones pesadas e mantendo custo zero.
+- **Crachás de Destaque e Efeito Pulsante:** Suporte a etiquetas chamativas ("AO VIVO", "NOVO", "VIP", "DESCONTO", "OFICIAL") com opção de animação de pulso para direcionar o tráfego a transmissões ou promoções urgentes.
+- **Contadores de Cliques em Tempo Real:** Cada link possui contagem acumulada atualizada automaticamente no banco relacional via gatilho atômico.
+
+### 10.2 Perfil Retrátil do Criador na Vitrine Pública (`CreatorProfile`)
+
+- **Componente Mobile-First:** Integrado ao topo do feed principal (`/`) e das páginas de categoria (`/c/[slug]`), o componente `src/components/public/creator-profile.tsx` exibe o avatar e nome do criador em formato compacto, expandindo suavemente em uma gaveta de links em estilo cartão com um toque.
+- **Sinalização Dinâmica de Transmissão:** Caso exista algum link configurado com o crachá "AO VIVO", o avatar do perfil exibe um anel pulsante de destaque imediato, avisando os visitantes da transmissão em andamento.
+- **Aceleração via Cache Serverless:** Os bio links ativos são carregados conjuntamente com o feed e preservados em cache no Upstash Redis (`promocuts:bio_links:all`), garantindo renderização instantânea sem sobrecarga ao banco.
+
+### 10.3 Dashboard Nativo de Métricas e Conversão (`/admin/metrics`)
+
+- **Zero Dependências Externas (Custo Operacional Zero):** Gráficos e visualizações construídos exclusivamente com vetores SVG nativos e classes utilitárias do Tailwind CSS v4, dispensando bibliotecas pesadas de visualização como Chart.js ou Recharts.
+- **Agrupamento Temporal e Filtros:** Seletor de período dinâmico (Hoje, 7 dias e 30 dias) com limites temporais estritos calculados pelo utilitário `src/lib/analytics.ts` (`getDateRangeBounds`).
+- **Indicadores Chave de Desempenho (KPIs):** Total de saídas para lojas parceiras, cliques consolidados em bio links, volume total de intenções de conversão e média diária.
+- **Classificação Inteligente de Fontes de Tráfego:** O utilitário `parseTrafficSource` categoriza automaticamente origens de referência, incluindo esquemas de aplicativos nativos móveis (`android-app://com.instagram.android`, `tiktok`, `youtube`, etc.), domínios web e tráfego direto.
+- **Rankings Analíticos de Desempenho:**
+  - Distribuição percentual de saída por loja parceira.
+  - Origens de tráfego com gráficos de barra de preenchimento proporcional.
+  - Tabela dos produtos mais clicados com identificação de loja e preço.
+  - Tabela dos vídeos com maior taxa de conversão vinculada.
+  - Tabela de bio links com contadores consolidados no período selecionado.
+
 

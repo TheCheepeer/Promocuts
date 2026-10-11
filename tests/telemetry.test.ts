@@ -4,6 +4,7 @@ import {
     isValidUuid,
     sanitizeHeader,
     trackAffiliateClick,
+    trackBioLinkClick,
 } from "../src/lib/telemetry.js";
 
 describe("Telemetria de Afiliados - Validacao de Identificadores (UUID)", () => {
@@ -205,6 +206,57 @@ describe("Telemetria de Afiliados - Utilitario Client-Side (trackAffiliateClick)
             assert.doesNotThrow(() => {
                 trackAffiliateClick("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11");
             });
+        } finally {
+            // @ts-expect-error limpeza de mock
+            delete globalThis.window;
+            // @ts-expect-error limpeza de mock
+            delete globalThis.navigator.sendBeacon;
+        }
+    });
+});
+
+describe("Telemetria de Bio Links - Utilitário Client-Side (trackBioLinkClick)", () => {
+    it("não deve disparar requisição se bioLinkId for vazio ou indefinido", () => {
+        let called = false;
+        const originalFetch = globalThis.fetch;
+        globalThis.fetch = (() => {
+            called = true;
+            return Promise.resolve(new Response());
+        }) as unknown as typeof fetch;
+
+        try {
+            trackBioLinkClick("");
+            assert.equal(called, false);
+        } finally {
+            globalThis.fetch = originalFetch;
+        }
+    });
+
+    it("deve disparar sendBeacon ou fetch para /api/track-click com bio_link_id", () => {
+        const testBioLinkId = "550e8400-e29b-41d4-a716-446655440000";
+        let beaconUrl: string | null = null;
+        let beaconPayload: string | null = null;
+
+        Object.defineProperty(globalThis, "window", {
+            value: globalThis,
+            configurable: true,
+            writable: true,
+        });
+
+        Object.defineProperty(globalThis.navigator, "sendBeacon", {
+            value: (url: string, data: Blob) => {
+                beaconUrl = url;
+                beaconPayload = "blob";
+                return true;
+            },
+            configurable: true,
+            writable: true,
+        });
+
+        try {
+            trackBioLinkClick(testBioLinkId);
+            assert.equal(beaconUrl, "/api/track-click");
+            assert.ok(beaconPayload);
         } finally {
             // @ts-expect-error limpeza de mock
             delete globalThis.window;

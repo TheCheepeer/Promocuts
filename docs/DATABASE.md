@@ -16,6 +16,29 @@ erDiagram
     PRODUCTS ||--o{ AFFILIATE_CLICKS : "recebe cliques"
     VIDEOS ||--o{ AFFILIATE_CLICKS : "origina cliques"
     PRODUCT_LINKS ||--o{ AFFILIATE_CLICKS : "registra clique"
+    BIO_LINKS ||--o{ BIO_LINK_CLICKS : "recebe cliques"
+
+    BIO_LINKS {
+        uuid id PK
+        varchar title
+        text url
+        varchar icon
+        varchar badge_text
+        boolean is_active
+        boolean is_highlighted
+        int display_order
+        int clicks_count
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    BIO_LINK_CLICKS {
+        uuid id PK
+        uuid bio_link_id FK
+        timestamptz created_at
+        varchar user_agent
+        varchar referrer
+    }
 
     SITE_SETTINGS {
         int id PK
@@ -270,6 +293,40 @@ Armazena os parâmetros globais de customização de marca, cores, logotipos e m
 
 ---
 
+### 2.8 Tabela `public.bio_links` (Fase 9)
+
+Armazena os links e comunidades do hub central do criador (Twitch, Kick, Discord, YouTube, Telegram, WhatsApp, PIX, Apoia-se, etc.) com crachás visuais e controles de destaque.
+
+| Coluna           | Tipo           | Nulo | Padrão               | Descrição                                                                      |
+| :--------------- | :------------- | :--: | :------------------- | :----------------------------------------------------------------------------- |
+| `id`             | `UUID`         | Não  | `uuid_generate_v4()` | Identificador único do link                                                    |
+| `title`          | `VARCHAR(100)` | Não  | —                    | Título amigável exibido no card de bio link                                    |
+| `url`            | `TEXT`         | Não  | —                    | Endereço web de destino com validação `CHECK (url ~* '^https?://')`            |
+| `icon`           | `VARCHAR(50)`  | Sim  | `NULL`               | Identificador da plataforma ou ícone (`twitch`, `kick`, `discord`, etc.)       |
+| `badge_text`     | `VARCHAR(50)`  | Sim  | `NULL`               | Rótulo do crachá de destaque (ex: "AO VIVO", "GRUPO VIP", "COMUNIDADE")        |
+| `is_active`      | `BOOLEAN`      | Não  | `true`               | Status de visibilidade na vitrine pública                                      |
+| `is_highlighted` | `BOOLEAN`      | Não  | `false`              | Ativa efeito visual pulsante de atenção                                        |
+| `display_order`  | `INT`          | Não  | `0`                  | Ordem de exibição na lista de links                                            |
+| `clicks_count`   | `INT`          | Não  | `0`                  | Contador agregado acumulado de cliques                                         |
+| `created_at`     | `TIMESTAMPTZ`  | Não  | `NOW()`              | Data e hora de criação                                                         |
+| `updated_at`     | `TIMESTAMPTZ`  | Não  | `NOW()`              | Data da última modificação (via trigger)                                       |
+
+---
+
+### 2.9 Tabela `public.bio_link_clicks` (Fase 9)
+
+Registros históricos individuais de cliques nos bio links para alimentação do painel temporal de métricas e conversão.
+
+| Coluna        | Tipo            | Nulo | Padrão               | Descrição                                                       |
+| :------------ | :-------------- | :--: | :------------------- | :-------------------------------------------------------------- |
+| `id`          | `UUID`          | Não  | `uuid_generate_v4()` | Identificador do evento                                         |
+| `bio_link_id` | `UUID`          | Não  | —                    | Referência à tabela `public.bio_links` (ON DELETE CASCADE)      |
+| `created_at`  | `TIMESTAMPTZ`   | Não  | `NOW()`              | Data e hora do clique                                           |
+| `user_agent`  | `VARCHAR(512)`  | Sim  | `NULL`               | Informação do navegador/dispositivo (limitado a 512 caracteres) |
+| `referrer`    | `VARCHAR(1024)` | Sim  | `NULL`               | Origem da requisição / rede social (limitado a 1024 caracteres) |
+
+---
+
 ## 3. Políticas de Segurança (Row Level Security - RLS)
 
 Todas as tabelas possuem a opção `ROW LEVEL SECURITY` estritamente ativada:
@@ -282,12 +339,16 @@ Todas as tabelas possuem a opção `ROW LEVEL SECURITY` estritamente ativada:
     - Apenas registros com `is_published = true` podem ser lidos por conexões anônimas.
 4. **Leitura Pública de Produtos e Links Multi-Loja:**
     - Produtos e seus registros filhos em `product_links` só são listados para o público se estiverem atrelados a pelo menos um vídeo com `is_published = true`.
-5. **Escrita Restrita:**
-    - Operações de `INSERT`, `UPDATE` e `DELETE` nas tabelas principais (`site_settings`, `categories`, `videos`, `products`, `product_links`, `video_products`) são bloqueadas para o papel anônimo (`anon`).
+5. **Leitura Pública de Bio Links:**
+    - Apenas bio links com `is_active = true` podem ser lidos por conexões anônimas na vitrine pública.
+6. **Escrita Restrita:**
+    - Operações de `INSERT`, `UPDATE` e `DELETE` nas tabelas principais (`site_settings`, `categories`, `videos`, `products`, `product_links`, `video_products`, `bio_links`) são bloqueadas para o papel anônimo (`anon`).
     - Elas são realizadas pelas Server Actions autenticadas do Next.js via chave de serviço (`service_role`), após validação estrita da sessão de e-mail do administrador.
-6. **Registro de Métricas Anônimas Endurecido contra DoS:**
-    - A tabela `affiliate_clicks` permite a operação de `INSERT` pelo público (`anon` e `authenticated`) com validação defensiva estrita no `WITH CHECK`: o produto deve existir ativamente na base e os comprimentos de `user_agent` (<= 512), `referrer` (<= 1024) e `store_name` (<= 100) são rigorosamente limitados, eliminando riscos de esgotamento de disco (Storage DoS).
-7. **Mitigação de Search Path Hijacking:**
+7. **Registro de Métricas Anônimas Endurecido contra DoS:**
+    - As tabelas `affiliate_clicks` e `bio_link_clicks` permitem a operação de `INSERT` pelo público (`anon` e `authenticated`) com validação defensiva estrita no `WITH CHECK`: o alvo deve existir ativamente na base e os comprimentos de `user_agent` (<= 512) e `referrer` (<= 1024) são rigorosamente limitados, eliminando riscos de esgotamento de disco (Storage DoS).
+8. **Sincronização Atômica de Contadores:**
+    - O gatilho `trg_increment_bio_link_clicks` incrementa o contador `clicks_count` em `bio_links` sob o modelo `SECURITY DEFINER` de forma atômica no banco de dados.
+9. **Mitigação de Search Path Hijacking:**
     - A função trigger `handle_updated_at` opera sob o modelo `SECURITY DEFINER` com `SET search_path = public`, impedindo interceptação de esquemas por usuários não confiáveis.
 
 ---
