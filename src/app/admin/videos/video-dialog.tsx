@@ -12,10 +12,12 @@ import {
     ArrowDown,
     Image as ImageIcon,
     ShoppingBag,
+    Sparkles,
 } from "lucide-react";
 import { parseVideoUrl } from "@/lib/embeds/parser";
 import { slugify } from "@/lib/formatters";
 import { createVideoAction, updateVideoAction } from "./actions";
+import { AssetInput } from "@/components/ui/asset-input";
 import type { Video, Category, Product } from "@/types/database";
 
 interface LinkedProductItem {
@@ -72,6 +74,8 @@ export function VideoDialog({
     );
     const [selectedAddProductId, setSelectedAddProductId] = useState("");
     const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false);
+    const [isExtracting, setIsExtracting] = useState(false);
+    const [extractSuccess, setExtractSuccess] = useState<string | null>(null);
 
     const isEditing = Boolean(video?.id);
 
@@ -125,6 +129,7 @@ export function VideoDialog({
             setIsSlugManuallyEdited(false);
         }
         setErrorMessage(null);
+        setExtractSuccess(null);
         setSelectedAddProductId("");
     }, [video, isOpen, categories]);
 
@@ -133,6 +138,7 @@ export function VideoDialog({
     // Analisa a URL original ao digitar ou colar
     const handleUrlChange = (val: string) => {
         setOriginalUrl(val);
+        setExtractSuccess(null);
         if (!val.trim()) {
             setDetectedPlatform(null);
             setPlatformVideoId(null);
@@ -149,6 +155,66 @@ export function VideoDialog({
             setDetectedPlatform(null);
             setPlatformVideoId(null);
             setUrlError(true);
+        }
+    };
+
+    // Busca automaticamente o título e a miniatura na plataforma
+    const handleExtractMetadata = async (urlToExtract?: string) => {
+        const target = (urlToExtract || originalUrl).trim();
+        if (!target) {
+            setErrorMessage("Informe a URL do vídeo antes de buscar os dados.");
+            return;
+        }
+
+        setIsExtracting(true);
+        setErrorMessage(null);
+        setExtractSuccess(null);
+
+        try {
+            const res = await fetch("/api/admin/extract-video", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ url: target }),
+            });
+
+            const json = await res.json();
+            if (!res.ok || !json.success) {
+                setErrorMessage(
+                    json.error ||
+                        "Não foi possível extrair os metadados do vídeo.",
+                );
+                return;
+            }
+
+            const data = json.data;
+            let updatedCount = 0;
+
+            if (data.title) {
+                setTitle(data.title);
+                if (!isSlugManuallyEdited || !slug) {
+                    setSlug(slugify(data.title));
+                }
+                updatedCount++;
+            }
+
+            if (data.thumbnailUrl) {
+                setThumbnailUrl(data.thumbnailUrl);
+                updatedCount++;
+            }
+
+            if (updatedCount > 0) {
+                setExtractSuccess(
+                    "Dados capturados com sucesso! Você pode editá-los livremente nos campos abaixo.",
+                );
+            } else {
+                setExtractSuccess(
+                    "Plataforma detectada, mas nenhum dado foi retornado pela origem.",
+                );
+            }
+        } catch {
+            setErrorMessage("Falha de conexão ao buscar dados do vídeo.");
+        } finally {
+            setIsExtracting(false);
         }
     };
 
@@ -314,25 +380,62 @@ export function VideoDialog({
                             className="w-full font-mono text-xs px-3 py-2 rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100"
                         />
 
-                        {/* Feedback Visual da Deteccao de Plataforma */}
+                        {/* Feedback Visual da Deteccao de Plataforma e Botao de Captura */}
                         {detectedPlatform &&
                             platformLabels[detectedPlatform] && (
-                                <div className="flex items-center gap-2 mt-2 p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 text-xs text-emerald-800 dark:text-emerald-300">
-                                    <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
-                                    <span>
-                                        Plataforma detectada:{" "}
-                                        <strong className="font-semibold">
-                                            {
-                                                platformLabels[detectedPlatform]
-                                                    .name
+                                <div className="mt-2 space-y-2">
+                                    <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 text-xs text-emerald-800 dark:text-emerald-300">
+                                        <div className="flex items-center gap-2">
+                                            <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+                                            <span>
+                                                Plataforma detectada:{" "}
+                                                <strong className="font-semibold">
+                                                    {
+                                                        platformLabels[
+                                                            detectedPlatform
+                                                        ].name
+                                                    }
+                                                </strong>{" "}
+                                                (ID:{" "}
+                                                <span className="font-mono">
+                                                    {platformVideoId}
+                                                </span>
+                                                )
+                                            </span>
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                handleExtractMetadata()
                                             }
-                                        </strong>{" "}
-                                        (ID:{" "}
-                                        <span className="font-mono">
-                                            {platformVideoId}
-                                        </span>
-                                        )
-                                    </span>
+                                            disabled={isExtracting}
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
+                                        >
+                                            {isExtracting ? (
+                                                <>
+                                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                                    <span>
+                                                        Buscando dados...
+                                                    </span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Sparkles className="h-3.5 w-3.5" />
+                                                    <span>
+                                                        Capturar Título e Miniatura
+                                                    </span>
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+
+                                    {extractSuccess && (
+                                        <div className="flex items-center gap-2 p-2 rounded-lg bg-emerald-100/70 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-800 text-xs text-emerald-900 dark:text-emerald-200">
+                                            <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+                                            <span>{extractSuccess}</span>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
@@ -441,47 +544,17 @@ export function VideoDialog({
                         </div>
                     </div>
 
-                    {/* Miniatura Alternativa */}
-                    <div>
-                        <label
-                            htmlFor="vid-thumb"
-                            className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1"
-                        >
-                            Miniatura Alternativa (Opcional)
-                        </label>
-                        <div className="flex items-center gap-3">
-                            <input
-                                id="vid-thumb"
-                                type="url"
-                                value={thumbnailUrl}
-                                onChange={(e) =>
-                                    setThumbnailUrl(e.target.value)
-                                }
-                                placeholder="https://... imagem para pre-carregamento rapido"
-                                className="flex-1 font-mono text-xs px-3 py-2 rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100"
-                            />
-
-                            {thumbnailUrl ? (
-                                <div className="h-9 w-9 shrink-0 rounded-lg border border-zinc-200 overflow-hidden bg-zinc-100 flex items-center justify-center">
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img
-                                        src={thumbnailUrl}
-                                        alt="Preview miniatura"
-                                        className="h-full w-full object-cover"
-                                        onError={(e) => {
-                                            (
-                                                e.currentTarget as HTMLElement
-                                            ).style.display = "none";
-                                        }}
-                                    />
-                                </div>
-                            ) : (
-                                <div className="h-9 w-9 shrink-0 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 flex items-center justify-center text-zinc-400">
-                                    <ImageIcon className="h-3.5 w-3.5" />
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                    {/* Miniatura Alternativa com Suporte a Upload Direto */}
+                    <AssetInput
+                        name="vid-thumb"
+                        label="Miniatura do Vídeo (Opcional)"
+                        description="Capturada da plataforma ou envie uma imagem personalizada"
+                        value={thumbnailUrl}
+                        onChange={setThumbnailUrl}
+                        placeholder="https://... ou faça upload de um arquivo"
+                        aspectRatio="video"
+                        uploadTitle="Fazer upload de miniatura (PNG, JPG, WebP)"
+                    />
 
                     {/* Descricao */}
                     <div>

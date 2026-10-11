@@ -7,8 +7,14 @@ import fs from "fs/promises";
 import path from "path";
 import crypto from "crypto";
 
-const ALLOWED_MIME_TYPES = ["image/png", "image/svg+xml"];
-const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 MB
+const ALLOWED_MIME_TYPES = [
+    "image/png",
+    "image/jpeg",
+    "image/jpg",
+    "image/webp",
+    "image/svg+xml",
+];
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 
 export async function POST(request: NextRequest) {
     try {
@@ -43,7 +49,7 @@ export async function POST(request: NextRequest) {
         if (!ALLOWED_MIME_TYPES.includes(file.type)) {
             return NextResponse.json(
                 {
-                    error: "Formato de arquivo invalido. Sao permitidos estritamente arquivos PNG (.png) ou SVG (.svg).",
+                    error: "Formato de arquivo invalido. Sao permitidos arquivos PNG (.png), JPEG (.jpg, .jpeg), WebP (.webp) ou SVG (.svg).",
                 },
                 { status: 400 },
             );
@@ -53,13 +59,20 @@ export async function POST(request: NextRequest) {
         if (file.size > MAX_FILE_SIZE) {
             return NextResponse.json(
                 {
-                    error: "O arquivo excede o limite maximo permitido de 2 MB.",
+                    error: "O arquivo excede o limite maximo permitido de 5 MB.",
                 },
                 { status: 400 },
             );
         }
 
-        const ext = file.type === "image/svg+xml" ? "svg" : "png";
+        let ext = "png";
+        if (file.type === "image/svg+xml") {
+            ext = "svg";
+        } else if (file.type === "image/jpeg" || file.type === "image/jpg") {
+            ext = "jpg";
+        } else if (file.type === "image/webp") {
+            ext = "webp";
+        }
         const uniqueId = crypto.randomUUID().slice(0, 12);
         const fileName = `asset-${Date.now()}-${uniqueId}.${ext}`;
         const buffer = Buffer.from(await file.arrayBuffer());

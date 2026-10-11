@@ -27,8 +27,9 @@ flowchart TD
     subgraph HostLayer["Camada de Execução (Vercel Edge & Serverless)"]
         NextMiddleware["Next.js Middleware (VPN Guard, Auth & Email Whitelist)"]
         PublicRoute["Rotas Publicas (/, /c/[slug], /v/[slug])"]
-        AdminRoute["Rotas Administrativas (/admin, /admin/categories, /admin/products, /admin/videos, /admin/settings, /admin/bio-links, /admin/metrics)"]
+        AdminRoute["Rotas Publicas e Administrativas (/admin, /admin/videos, etc.)"]
         UploadEndpoint["Upload Seguro de Ativos (/api/admin/upload)"]
+        ExtractVideoEndpoint["Extrator de Dados de Vídeo (/api/admin/extract-video)"]
         TrackClickEndpoint["Telemetria de Afiliados e Bio Links (/api/track-click)"]
         ServerAction["Next.js Server Actions (Mutations com Service Role)"]
         RedisModule["Modulo de Cache Serverless (Upstash Redis REST)"]
@@ -94,6 +95,25 @@ No painel `/admin`, o administrador precisa apenas colar a URL original da posta
 1. Detectar automaticamente a plataforma de origem (`tiktok`, `reels` ou `shorts`).
 2. Extrair o identificador único do corte (`platform_video_id`).
 3. Construir a URL padronizada de incorporação (_embed URL_).
+
+### 3.1 Extração Automática de Metadados de Vídeo e Miniaturas Híbridas
+
+Para agilizar o fluxo operacional de curadoria e cadastro de cortes, o PromoCuts disponibiliza extração instantânea de metadados e gestão flexível de miniaturas:
+
+1. **Captura Automatizada via oEmbed e Open Graph (`src/lib/extractor/video-parser.ts`):**
+    - Ao colar ou informar a URL pública de um vídeo no modal `/admin/videos`, a rota protegida `/api/admin/extract-video` inspeciona a origem:
+        - **YouTube Shorts:** Consulta a API oficial oEmbed (`youtube.com/oembed`) retornando o título original e a miniatura em alta definição. Caso haja oscilação na rede, executa fallback determinístico para `https://img.youtube.com/vi/{id}/hqdefault.jpg`.
+        - **TikTok:** Consulta a API oficial oEmbed (`tiktok.com/oembed`) simulando cabeçalhos de requisição aceitos pela plataforma, recuperando a legenda/título e a miniatura direta da CDN do TikTok.
+        - **Instagram Reels:** Realiza extração defensiva via Open Graph (`og:title` e `og:image`).
+    - Todos os dados extraídos preenchem dinamicamente os campos de título, slug e miniatura, permanecendo 100% editáveis pelo administrador.
+    - O extrator possui blindagem estrita contra ataques de falsificação de requisição no lado do servidor (SSRF), bloqueando endereços locais e faixas de rede privada.
+
+2. **Upload Híbrido de Miniaturas Alternativas (`src/components/ui/asset-input.tsx`):**
+    - O campo de miniatura adota o componente reutilizável `AssetInput`:
+        - Permite manter a miniatura capturada da plataforma de origem;
+        - Permite colar qualquer link de imagem externa (CDN, Imgur, etc.);
+        - Permite fazer upload direto de arquivo local (formatos PNG, JPEG, WebP e SVG de até 5 MB) via `/api/admin/upload`, armazenado no bucket `site-assets` do Supabase Storage ou em armazenamento local em ambiente de desenvolvimento;
+        - Exibe pré-visualização em tempo real e botão de limpeza instantânea.
 
 ---
 
