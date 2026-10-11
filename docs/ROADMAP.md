@@ -16,8 +16,9 @@ Este documento define o roteiro de implementacao do **PromoCuts**, organizado em
 | **Fase 6** | Telemetria de Afiliados e Conversao         | `Concluido` |
 | **Fase 7** | Cache Serverless, Cabecalhos Defensivos e Verificacao Final | `Concluido` |
 | **Fase 8** | Automacao de Ofertas, Suporte Multi-Loja e Monitoramento     | `Concluido` |
-| **Fase 9** | Hub Central do Criador (Bio Links, Streamers e Métricas)    | `Pendente`  |
+| **Fase 9** | Hub Central do Criador (Bio Links, Streamers e Métricas)    | `Concluido` |
 | **Fase 10**| Segurança Avançada e Redes Privadas (Tailscale e Backups)   | `Pendente`  |
+| **Fase 11**| Internacionalização (i18n), Multi-Idiomas (next-intl) e Localização Global | `Pendente`  |
 
 ---
 
@@ -165,28 +166,28 @@ Objetivo: Maximizar a conversao de vendas permitindo multiplas lojas parceiras p
 
 Objetivo: Transformar o PromoCuts no hub central soberano e descentralizado do criador de conteúdo, integrando links tradicionais de bio (Twitch, Kick, Discord, lives, comunidades, redes sociais e doações com crachás de destaque) à vitrine de cortes, e disponibilizando um painel visual gráfico de métricas e conversão no painel administrativo sem custos adicionais.
 
-- [ ] Modelar suporte a links de bio e comunidades no banco de dados:
-    - [ ] Criação da tabela `public.bio_links` (`id`, `title`, `url`, `icon`, `badge_text`, `is_active`, `is_highlighted`, `display_order`, `clicks_count`, `created_at`, `updated_at`).
-    - [ ] Habilitar Row Level Security (RLS) com leitura pública para links com `is_active = true` e escrita restrita à chave de serviço do servidor.
-    - [ ] Criar a migração incremental versionada `supabase/migrations/005_bio_links_and_analytics.sql`.
-- [ ] Módulo Administrativo de Bio Links (`/admin/bio-links`):
-    - [ ] Interface de cadastro com seletor de ícones representativos (Twitch, Kick, YouTube, Discord, Telegram, WhatsApp, PIX/Apoia-se e links externos).
-    - [ ] Controles de destaque visual (crachás configuráveis como "AO VIVO", "GRUPO VIP", "COMUNIDADE") e ativação instantânea.
-    - [ ] Reordenação manual de prioridade de exibição.
-    - [ ] Server Actions autenticadas de criação, edição, remoção e ordenação de links.
-- [ ] Integração Visual na Vitrine Pública (Mobile-First e Desktop):
-    - [ ] Componente superior retrátil de perfil com avatar, biografia do criador e gaveta de Bio Links com animação suave e crachás pulsantes.
-    - [ ] Coexistência fluida entre a seção de Bio Links e o feed vertical de cortes com produtos afiliados.
-    - [ ] Rastreamento de telemetria anônima nos cliques de bio links (`/api/track-click`) com suporte a contagem individual.
-- [ ] Dashboard Visual de Métricas no Painel Administrativo (`/admin/metrics`):
-    - [ ] Cartões de indicadores-chave de desempenho (KPIs): total de cliques em produtos, total de cliques em bio links e taxa de engajamento diária/semanal.
-    - [ ] Gráficos visuais responsivos e leves (sem introduzir custos ou bibliotecas pesadas de terceiros):
-        - [ ] Evolução temporal de cliques nos últimos 7 e 30 dias.
-        - [ ] Distribuição percentual de cliques por loja parceira (Amazon, Shopee, Mercado Livre, etc.).
-        - [ ] Ranking dos cortes de vídeo e produtos com maior volume de conversão.
-        - [ ] Ranking de cliques por rede social de origem (Instagram, TikTok, YouTube, tráfego direto).
-        - [ ] Ranking de cliques por Bio Link (Twitch, Discord, Telegram, etc.).
-    - [ ] Filtro temporal flexível (Hoje, Últimos 7 dias, Últimos 30 dias e Período completo).
+- [x] Modelar suporte a links de bio e comunidades no banco de dados:
+    - [x] Criação da tabela `public.bio_links` (`id`, `title`, `url`, `icon`, `badge_text`, `is_active`, `is_highlighted`, `display_order`, `clicks_count`, `created_at`, `updated_at`).
+    - [x] Habilitar Row Level Security (RLS) com leitura pública para links com `is_active = true` e escrita restrita à chave de serviço do servidor.
+    - [x] Criar a migração incremental versionada `supabase/migrations/005_bio_links_and_analytics.sql`.
+- [x] Módulo Administrativo de Bio Links (`/admin/bio-links`):
+    - [x] Interface de cadastro com seletor de ícones representativos (Twitch, Kick, YouTube, Discord, Telegram, WhatsApp, PIX/Apoia-se e links externos).
+    - [x] Controles de destaque visual (crachás configuráveis como "AO VIVO", "GRUPO VIP", "COMUNIDADE") e ativação instantânea.
+    - [x] Reordenação manual de prioridade de exibição.
+    - [x] Server Actions autenticadas de criação, edição, remoção e ordenação de links.
+- [x] Integração Visual na Vitrine Pública (Mobile-First e Desktop):
+    - [x] Componente superior retrátil de perfil com avatar, biografia do criador e gaveta de Bio Links com animação suave e crachás pulsantes.
+    - [x] Coexistência fluida entre a seção de Bio Links e o feed vertical de cortes com produtos afiliados.
+    - [x] Rastreamento de telemetria anônima nos cliques de bio links (`/api/track-click`) com suporte a contagem individual.
+- [x] Dashboard Visual de Métricas no Painel Administrativo (`/admin/metrics`):
+    - [x] Cartões de indicadores-chave de desempenho (KPIs): total de cliques em produtos, total de cliques em bio links e taxa de engajamento diária/semanal.
+    - [x] Gráficos visuais responsivos e leves (sem introduzir custos ou bibliotecas pesadas de terceiros):
+        - [x] Evolução temporal de cliques nos últimos 7 e 30 dias.
+        - [x] Distribuição percentual de cliques por loja parceira (Amazon, Shopee, Mercado Livre, etc.).
+        - [x] Ranking dos cortes de vídeo e produtos com maior volume de conversão.
+        - [x] Ranking de cliques por rede social de origem (Instagram, TikTok, YouTube, tráfego direto).
+        - [x] Ranking de cliques por Bio Link (Twitch, Discord, Telegram, etc.).
+    - [x] Filtro temporal flexível (Hoje, Últimos 7 dias, Últimos 30 dias e Período completo).
 
 ---
 
@@ -204,5 +205,31 @@ Objetivo: Elevar a postura defensiva do PromoCuts a padrões corporativos de inf
 - [ ] Exportação e Backups Periódicos Automatizados:
     - [ ] Endpoint seguro ou Cron Job para gerar backups em arquivo JSON/SQL com envio para e-mail ou download manual no painel.
     - [ ] Guia prático de implantação de Tailscale Exit Node no OPNsense, pfSense e Linux para administradores do PromoCuts.
+
+---
+
+### Fase 11: Internacionalização (i18n), Multi-Idiomas (next-intl) e Localização Global
+
+Objetivo: Tornar o PromoCuts uma plataforma globalmente acessível e internacionalizada, permitindo que criadores e visitantes utilizem a vitrine e o painel em Português (`pt-BR`) ou Inglês (`en-US`) com detecção automática pelo navegador, fallback gerenciável no painel administrativo e suporte nativo ao Next.js App Router via biblioteca oficial `next-intl`.
+
+- [ ] Infraestrutura e Dicionários de Tradução (`next-intl`):
+    - [ ] Instalação e configuração do pacote `next-intl` compatível com o Next.js App Router e Server Components.
+    - [ ] Criação dos arquivos estruturados de localização: `src/locales/pt-BR.json` e `src/locales/en-US.json`.
+    - [ ] Configuração de tipagem estrita com TypeScript (`IntlMessages` em declaração global) para validação de integridade de chaves em tempo de compilação.
+- [ ] Configuração de Idiomas no Banco de Dados e Painel (`/admin/settings`):
+    - [ ] Migração do banco estendendo `site_settings`: colunas `default_locale` ('pt-BR' ou 'en-US') e `supported_locales` (array de idiomas autorizados na vitrine).
+    - [ ] Interface visual no painel administrativo para escolha do idioma padrão da plataforma e ativação seletiva de idiomas suportados.
+    - [ ] Server Action autenticada para atualização das preferências com revalidação de cache.
+- [ ] Detecção Automática e Alternância na Vitrine:
+    - [ ] Middleware para detecção de preferência de linguagem via cabeçalho `Accept-Language` e persistência em cookie (`promocuts-locale`).
+    - [ ] Seletor sutil e acessível de idioma no cabeçalho público (`PublicHeader`).
+    - [ ] Fallback transparente para o idioma principal definido pelo criador caso o idioma do visitante não seja suportado.
+- [ ] Tradução Integral dos Módulos:
+    - [ ] Vitrine pública: feed de vídeos, gaveta de produtos, comparador multi-loja, botões de cópia de cupom, pílulas de categorias, perfil do criador e rodapé.
+    - [ ] Painel administrativo: navegação, gestão de categorias, vídeos, produtos, bio links, métricas e configurações.
+    - [ ] Tratamento de mensagens de feedback, modais de diálogo e metadados de SEO (Open Graph e descrições).
+- [ ] Documentação Técnica Bilingue:
+    - [ ] Criação do `README.en.md` com apresentação, guia de início rápido e instruções de deploy para a comunidade global do GitHub.
+
 
 

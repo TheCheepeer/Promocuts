@@ -29,7 +29,15 @@ interface FeedMobileProps {
 export function FeedMobile({ videos }: FeedMobileProps) {
     const [activeIndex, setActiveIndex] = useState(0);
     const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
     const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+    useEffect(() => {
+        setActiveIndex(0);
+        if (containerRef.current) {
+            containerRef.current.scrollTo({ top: 0, behavior: "instant" });
+        }
+    }, [videos]);
 
     useEffect(() => {
         const observer = new IntersectionObserver(
@@ -97,7 +105,10 @@ export function FeedMobile({ videos }: FeedMobileProps) {
     }
 
     return (
-        <div className="h-[calc(100dvh-57px)] w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth bg-black scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+        <div
+            ref={containerRef}
+            className="h-[calc(100dvh-57px)] w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth bg-black scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+        >
             {videos.map((video, idx) => {
                 const isActive = activeIndex === idx;
                 const products = (video.video_products || [])

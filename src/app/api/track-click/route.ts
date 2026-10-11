@@ -25,12 +25,62 @@ export async function POST(request: NextRequest) {
         );
     }
 
-    const { product_id, video_id, link_id, store_name } = body;
+    const { product_id, video_id, link_id, store_name, bio_link_id } = body;
 
-    // Validação estrita do ID de produto obrigatório
+    // Extração e truncamento defensivo de cabeçalhos e strings
+    const rawUserAgent = request.headers.get("user-agent");
+    const rawReferrer =
+        request.headers.get("referer") || request.headers.get("referrer");
+
+    const userAgent = sanitizeHeader(rawUserAgent, 512);
+    const referrer = sanitizeHeader(rawReferrer, 1024);
+
+    // Fluxo 1: Telemetria de Clique em Bio Link / Comunidade
+    if (bio_link_id !== undefined && bio_link_id !== null) {
+        if (!isValidUuid(bio_link_id)) {
+            return NextResponse.json(
+                { error: "Identificador de link de bio inválido." },
+                { status: 400 },
+            );
+        }
+
+        try {
+            const supabase = createAdminClient();
+            const { error } = await supabase
+                .from("bio_link_clicks")
+                .insert({
+                    bio_link_id: bio_link_id as string,
+                    user_agent: userAgent,
+                    referrer: referrer,
+                });
+
+            if (error) {
+                logger.warn("Falha ao registrar clique de bio link no banco", {
+                    message: error.message,
+                    code: error.code,
+                });
+                return NextResponse.json(
+                    { error: "Falha ao registrar telemetria de clique em bio link." },
+                    { status: 500 },
+                );
+            }
+
+            return NextResponse.json({ success: true }, { status: 200 });
+        } catch (err) {
+            logger.error("Exceção ao processar clique em bio link", {
+                erro: err instanceof Error ? err.message : String(err),
+            });
+            return NextResponse.json(
+                { error: "Erro interno ao processar telemetria." },
+                { status: 500 },
+            );
+        }
+    }
+
+    // Fluxo 2: Telemetria de Clique de Afiliado (Produtos e Ofertas)
     if (!isValidUuid(product_id)) {
         return NextResponse.json(
-            { error: "Identificador de produto inválido." },
+            { error: "Identificador de produto ou link de bio inválido." },
             { status: 400 },
         );
     }
@@ -61,13 +111,6 @@ export async function POST(request: NextRequest) {
         );
     }
 
-    // Extração e truncamento defensivo de cabeçalhos e strings
-    const rawUserAgent = request.headers.get("user-agent");
-    const rawReferrer =
-        request.headers.get("referer") || request.headers.get("referrer");
-
-    const userAgent = sanitizeHeader(rawUserAgent, 512);
-    const referrer = sanitizeHeader(rawReferrer, 1024);
     const sanitizedStoreName =
         typeof store_name === "string" ? store_name.slice(0, 100).trim() : null;
 

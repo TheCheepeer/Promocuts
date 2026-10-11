@@ -147,6 +147,7 @@ export async function invalidateFeedCache(): Promise<void> {
             "promocuts:feed:all",
             "promocuts:categories:all",
             "promocuts:settings:singleton",
+            "promocuts:bio_links:all",
         );
         logger.info("Cache da vitrine publica invalidado com sucesso");
     } catch (err) {

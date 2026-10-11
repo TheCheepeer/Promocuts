@@ -215,6 +215,51 @@ export type AffiliateClickInsert = {
     referrer?: string | null;
 };
 
+export type BioLink = {
+    id: string;
+    title: string;
+    url: string;
+    icon: string | null;
+    badge_text: string | null;
+    is_active: boolean;
+    is_highlighted: boolean;
+    display_order: number;
+    clicks_count: number;
+    created_at: string;
+    updated_at: string;
+};
+
+export type BioLinkInsert = Omit<
+    BioLink,
+    "id" | "created_at" | "updated_at" | "clicks_count"
+> & {
+    id?: string;
+    is_active?: boolean;
+    is_highlighted?: boolean;
+    display_order?: number;
+    clicks_count?: number;
+};
+
+export type BioLinkUpdate = Partial<
+    Omit<BioLink, "id" | "created_at" | "updated_at">
+>;
+
+export type BioLinkClick = {
+    id: string;
+    bio_link_id: string;
+    created_at: string;
+    user_agent: string | null;
+    referrer: string | null;
+};
+
+export type BioLinkClickInsert = {
+    id?: string;
+    bio_link_id: string;
+    created_at?: string;
+    user_agent?: string | null;
+    referrer?: string | null;
+};
+
 export type Database = {
     public: {
         Tables: {
@@ -258,6 +303,18 @@ export type Database = {
                 Row: AffiliateClick;
                 Insert: AffiliateClickInsert;
                 Update: Partial<AffiliateClickInsert>;
+                Relationships: [];
+            };
+            bio_links: {
+                Row: BioLink;
+                Insert: BioLinkInsert;
+                Update: BioLinkUpdate;
+                Relationships: [];
+            };
+            bio_link_clicks: {
+                Row: BioLinkClick;
+                Insert: BioLinkClickInsert;
+                Update: Partial<BioLinkClickInsert>;
                 Relationships: [];
             };
         };

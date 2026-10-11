@@ -127,7 +127,31 @@ CREATE TABLE IF NOT EXISTS public.site_settings (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- 10. Funcao e Triggers de Atualizacao de updated_at
+-- 10. Tabela de Bio Links e Comunidades (Fase 9)
+CREATE TABLE IF NOT EXISTS public.bio_links (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    title VARCHAR(100) NOT NULL,
+    url TEXT NOT NULL CHECK (url ~* '^https?://'),
+    icon VARCHAR(50),
+    badge_text VARCHAR(50),
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    is_highlighted BOOLEAN NOT NULL DEFAULT false,
+    display_order INT NOT NULL DEFAULT 0,
+    clicks_count INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 11. Tabela de Telemetria Histórica de Cliques em Bio Links (Fase 9)
+CREATE TABLE IF NOT EXISTS public.bio_link_clicks (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    bio_link_id UUID NOT NULL REFERENCES public.bio_links(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    user_agent VARCHAR(512) CHECK (user_agent IS NULL OR length(user_agent) <= 512),
+    referrer VARCHAR(1024) CHECK (referrer IS NULL OR length(referrer) <= 1024)
+);
+
+-- 12. Funcao e Triggers de Atualizacao de updated_at
 CREATE OR REPLACE FUNCTION public.handle_updated_at()
 RETURNS TRIGGER 
 LANGUAGE plpgsql
@@ -170,7 +194,34 @@ CREATE TRIGGER set_site_settings_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION public.handle_updated_at();
 
--- 11. Indices de Alta Performance
+DROP TRIGGER IF EXISTS set_bio_links_updated_at ON public.bio_links;
+CREATE TRIGGER set_bio_links_updated_at
+    BEFORE UPDATE ON public.bio_links
+    FOR EACH ROW
+    EXECUTE FUNCTION public.handle_updated_at();
+
+-- 13. Funcao e Trigger de Incremento de Cliques em Bio Links (Fase 9)
+CREATE OR REPLACE FUNCTION public.handle_bio_link_click_increment()
+RETURNS TRIGGER 
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+    UPDATE public.bio_links
+    SET clicks_count = clicks_count + 1
+    WHERE id = NEW.bio_link_id;
+    RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_increment_bio_link_clicks ON public.bio_link_clicks;
+CREATE TRIGGER trg_increment_bio_link_clicks
+    AFTER INSERT ON public.bio_link_clicks
+    FOR EACH ROW
+    EXECUTE FUNCTION public.handle_bio_link_click_increment();
+
+-- 14. Indices de Alta Performance
 CREATE INDEX IF NOT EXISTS idx_categories_slug ON public.categories(slug);
 CREATE INDEX IF NOT EXISTS idx_categories_display_order ON public.categories(display_order ASC);
 CREATE INDEX IF NOT EXISTS idx_videos_is_published ON public.videos(is_published, order_weight DESC, created_at DESC);
@@ -183,8 +234,11 @@ CREATE INDEX IF NOT EXISTS idx_product_links_is_available ON public.product_link
 CREATE INDEX IF NOT EXISTS idx_product_links_last_checked ON public.product_links(last_checked_at);
 CREATE INDEX IF NOT EXISTS idx_affiliate_clicks_product_id ON public.affiliate_clicks(product_id);
 CREATE INDEX IF NOT EXISTS idx_affiliate_clicks_link_id ON public.affiliate_clicks(link_id);
+CREATE INDEX IF NOT EXISTS idx_bio_links_is_active ON public.bio_links(is_active, display_order ASC);
+CREATE INDEX IF NOT EXISTS idx_bio_link_clicks_bio_link_id ON public.bio_link_clicks(bio_link_id);
+CREATE INDEX IF NOT EXISTS idx_bio_link_clicks_created_at ON public.bio_link_clicks(created_at DESC);
 
--- 12. Habilitacao Estrita de Row Level Security (RLS)
+-- 15. Habilitacao Estrita de Row Level Security (RLS)
 ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.videos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
@@ -192,8 +246,10 @@ ALTER TABLE public.product_links ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.video_products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.affiliate_clicks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.site_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.bio_links ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.bio_link_clicks ENABLE ROW LEVEL SECURITY;
 
--- 13. Politicas de Acesso Publico
+-- 16. Politicas de Acesso Publico
 DROP POLICY IF EXISTS "Public read access for site_settings" ON public.site_settings;
 CREATE POLICY "Public read access for site_settings"
     ON public.site_settings FOR SELECT
@@ -261,12 +317,31 @@ CREATE POLICY "Public insert access for click tracking"
         AND (store_name IS NULL OR length(store_name) <= 100)
     );
 
--- 14. Carga Inicial Singleton de Configuracoes de Marca
+DROP POLICY IF EXISTS "Public read access for active bio_links" ON public.bio_links;
+CREATE POLICY "Public read access for active bio_links"
+    ON public.bio_links FOR SELECT
+    TO anon, authenticated
+    USING (is_active = true);
+
+DROP POLICY IF EXISTS "Public insert access for bio link click tracking" ON public.bio_link_clicks;
+CREATE POLICY "Public insert access for bio link click tracking"
+    ON public.bio_link_clicks FOR INSERT
+    TO anon, authenticated
+    WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM public.bio_links b
+            WHERE b.id = public.bio_link_clicks.bio_link_id AND b.is_active = true
+        )
+        AND (user_agent IS NULL OR length(user_agent) <= 512)
+        AND (referrer IS NULL OR length(referrer) <= 1024)
+    );
+
+-- 17. Carga Inicial Singleton de Configuracoes de Marca
 INSERT INTO public.site_settings (id)
 VALUES (1)
 ON CONFLICT (id) DO NOTHING;
 
--- 15. Tabela de Controle de Migrações do Deploy
+-- 18. Tabela de Controle de Migrações do Deploy
 CREATE TABLE IF NOT EXISTS public._promocuts_migrations (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL UNIQUE,

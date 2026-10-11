@@ -49,6 +49,15 @@ async function runMigrations() {
             );
         `;
 
+        // Sincroniza a sequence do SERIAL caso registros tenham sido inseridos com id explícito
+        await sql`
+            SELECT setval(
+                pg_get_serial_sequence('public._promocuts_migrations', 'id'),
+                COALESCE((SELECT MAX(id) FROM public._promocuts_migrations), 0) + 1,
+                false
+            );
+        `.catch(() => {});
+
         // Consulta as migrações que já foram executadas anteriormente
         const appliedRows = await sql`
             SELECT name FROM public._promocuts_migrations;
@@ -92,9 +101,19 @@ async function runMigrations() {
             await sql.begin(async (tx) => {
                 await tx.unsafe(content);
                 await tx`
-                    INSERT INTO public._promocuts_migrations (name)
-                    VALUES (${file});
+                    INSERT INTO public._promocuts_migrations (id, name)
+                    VALUES (
+                        COALESCE((SELECT MAX(id) FROM public._promocuts_migrations), 0) + 1,
+                        ${file}
+                    )
+                    ON CONFLICT (name) DO NOTHING;
                 `;
+                await tx`
+                    SELECT setval(
+                        pg_get_serial_sequence('public._promocuts_migrations', 'id'),
+                        COALESCE((SELECT MAX(id) FROM public._promocuts_migrations), 1)
+                    );
+                `.catch(() => {});
             });
 
             console.log(`[Migrações] Concluída com sucesso: ${file}`);

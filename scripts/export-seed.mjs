@@ -105,6 +105,10 @@ async function exportSeed() {
                 outputSql += `INSERT INTO public."${table}" (${columns.map((c) => `"${c}"`).join(", ")}) VALUES (${values.join(", ")}) ${conflictClause};\n`;
             }
 
+            if (table === "_promocuts_migrations") {
+                outputSql += `SELECT setval(pg_get_serial_sequence('public._promocuts_migrations', 'id'), COALESCE((SELECT MAX(id) FROM public._promocuts_migrations), 1));\n`;
+            }
+
             outputSql += "\n";
         }
 

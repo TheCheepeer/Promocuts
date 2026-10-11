@@ -60,3 +60,41 @@ export function trackAffiliateClick(
         // Falha silenciosa defensiva
     }
 }
+
+/**
+ * Registra o clique em um bio link ou comunidade do criador.
+ */
+export function trackBioLinkClick(bioLinkId: string): void {
+    if (!bioLinkId || typeof window === "undefined") {
+        return;
+    }
+
+    const payload = JSON.stringify({
+        bio_link_id: bioLinkId,
+    });
+
+    try {
+        if (
+            typeof navigator !== "undefined" &&
+            typeof navigator.sendBeacon === "function"
+        ) {
+            const blob = new Blob([payload], { type: "application/json" });
+            const sent = navigator.sendBeacon("/api/track-click", blob);
+            if (sent) return;
+        }
+
+        fetch("/api/track-click", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: payload,
+            keepalive: true,
+        }).catch(() => {
+            // Falha silenciosa defensiva para preservar a navegação do visitante
+        });
+    } catch {
+        // Falha silenciosa defensiva
+    }
+}
+
