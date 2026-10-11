@@ -18,6 +18,7 @@ Este documento define o roteiro de implementacao do **PromoCuts**, organizado em
 | **Fase 8** | Automacao de Ofertas, Suporte Multi-Loja e Monitoramento     | `Concluido` |
 | **Fase 9** | Hub Central do Criador (Bio Links, Streamers e Métricas)    | `Concluido` |
 | **Fase 10**| Segurança Avançada e Redes Privadas (Tailscale e Backups)   | `Pendente`  |
+| **Fase 11**| Internacionalização (i18n), Multi-Idiomas (next-intl) e Localização Global | `Pendente`  |
 
 ---
 
@@ -204,5 +205,31 @@ Objetivo: Elevar a postura defensiva do PromoCuts a padrões corporativos de inf
 - [ ] Exportação e Backups Periódicos Automatizados:
     - [ ] Endpoint seguro ou Cron Job para gerar backups em arquivo JSON/SQL com envio para e-mail ou download manual no painel.
     - [ ] Guia prático de implantação de Tailscale Exit Node no OPNsense, pfSense e Linux para administradores do PromoCuts.
+
+---
+
+### Fase 11: Internacionalização (i18n), Multi-Idiomas (next-intl) e Localização Global
+
+Objetivo: Tornar o PromoCuts uma plataforma globalmente acessível e internacionalizada, permitindo que criadores e visitantes utilizem a vitrine e o painel em Português (`pt-BR`) ou Inglês (`en-US`) com detecção automática pelo navegador, fallback gerenciável no painel administrativo e suporte nativo ao Next.js App Router via biblioteca oficial `next-intl`.
+
+- [ ] Infraestrutura e Dicionários de Tradução (`next-intl`):
+    - [ ] Instalação e configuração do pacote `next-intl` compatível com o Next.js App Router e Server Components.
+    - [ ] Criação dos arquivos estruturados de localização: `src/locales/pt-BR.json` e `src/locales/en-US.json`.
+    - [ ] Configuração de tipagem estrita com TypeScript (`IntlMessages` em declaração global) para validação de integridade de chaves em tempo de compilação.
+- [ ] Configuração de Idiomas no Banco de Dados e Painel (`/admin/settings`):
+    - [ ] Migração do banco estendendo `site_settings`: colunas `default_locale` ('pt-BR' ou 'en-US') e `supported_locales` (array de idiomas autorizados na vitrine).
+    - [ ] Interface visual no painel administrativo para escolha do idioma padrão da plataforma e ativação seletiva de idiomas suportados.
+    - [ ] Server Action autenticada para atualização das preferências com revalidação de cache.
+- [ ] Detecção Automática e Alternância na Vitrine:
+    - [ ] Middleware para detecção de preferência de linguagem via cabeçalho `Accept-Language` e persistência em cookie (`promocuts-locale`).
+    - [ ] Seletor sutil e acessível de idioma no cabeçalho público (`PublicHeader`).
+    - [ ] Fallback transparente para o idioma principal definido pelo criador caso o idioma do visitante não seja suportado.
+- [ ] Tradução Integral dos Módulos:
+    - [ ] Vitrine pública: feed de vídeos, gaveta de produtos, comparador multi-loja, botões de cópia de cupom, pílulas de categorias, perfil do criador e rodapé.
+    - [ ] Painel administrativo: navegação, gestão de categorias, vídeos, produtos, bio links, métricas e configurações.
+    - [ ] Tratamento de mensagens de feedback, modais de diálogo e metadados de SEO (Open Graph e descrições).
+- [ ] Documentação Técnica Bilingue:
+    - [ ] Criação do `README.en.md` com apresentação, guia de início rápido e instruções de deploy para a comunidade global do GitHub.
+
 
 
