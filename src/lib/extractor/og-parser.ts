@@ -4,6 +4,7 @@ export interface ExtractedMetadata {
     title: string | null;
     image: string | null;
     price: number | null;
+    regularPrice?: number | null;
     store: string | null;
     siteName: string | null;
 }
@@ -194,12 +195,36 @@ export function cleanProductTitle(rawTitle: string | null): string | null {
 }
 
 /**
+ * Converte strings numéricas de moeda em ponto flutuante válido (suporta formatos BRL e USD).
+ */
+export function parsePriceNumber(raw: string): number | null {
+    if (!raw) return null;
+    let clean = raw.replace(/R\$\s*/gi, "").replace(/BRL\s*/gi, "").trim();
+
+    if (clean.includes(".") && clean.includes(",")) {
+        if (clean.lastIndexOf(",") > clean.lastIndexOf(".")) {
+            // Formato brasileiro: 1.499,90
+            clean = clean.replace(/\./g, "").replace(",", ".");
+        } else {
+            // Formato americano: 1,499.90
+            clean = clean.replace(/,/g, "");
+        }
+    } else if (clean.includes(",")) {
+        clean = clean.replace(",", ".");
+    }
+
+    const val = parseFloat(clean);
+    return !isNaN(val) && val > 0 ? Math.round(val * 100) / 100 : null;
+}
+
+/**
  * Analisa e extrai metadados estruturados JSON-LD (schema.org Product ou BreadcrumbList).
  */
 export function extractLdJsonProduct(html: string): {
     title: string | null;
     image: string | null;
     price: number | null;
+    regularPrice: number | null;
     store: string | null;
 } {
     const scriptRegex = /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
@@ -207,6 +232,7 @@ export function extractLdJsonProduct(html: string): {
     let title: string | null = null;
     let image: string | null = null;
     let price: number | null = null;
+    let regularPrice: number | null = null;
     let store: string | null = null;
 
     while ((match = scriptRegex.exec(html)) !== null) {
@@ -229,38 +255,162 @@ export function extractLdJsonProduct(html: string): {
                         }
                     }
                     if (item.offers) {
-                        const offers = Array.isArray(item.offers) ? item.offers[0] : item.offers;
-                        if (offers && offers.price != null) {
-                            const p = parseFloat(String(offers.price).replace(",", "."));
-                            if (!isNaN(p) && p >= 0) price = p;
-                        }
-                        if (offers && offers.seller && typeof offers.seller.name === "string") {
-                            store = offers.seller.name.trim();
-                        }
-                    }
-                    if (item.brand && typeof item.brand.name === "string" && !store) {
-                        store = item.brand.name.trim();
-                    }
-                }
+                        const offers = Array.isArray(item.offers) ? item.offers : [item.offers];
+                        for (const offer of offers) {
+                            const rawOfferPrice =
+                                offer.price ??
+                                offer.lowPrice ??
+                                (offer.priceSpecification && offer.priceSpecification.price);
+                            const rawHighPrice = offer.highPrice;
 
-                // Fallback para o último item de BreadcrumbList caso ainda não tenha título
-                if (item["@type"] === "BreadcrumbList" && item.itemListElement && !title) {
-                    const elements = item.itemListElement;
-                    if (Array.isArray(elements) && elements.length > 0) {
-                        const last = elements[elements.length - 1];
-                        const name = last?.item?.name || last?.name;
-                        if (name && typeof name === "string") {
-                            title = name.trim();
+                            if (rawOfferPrice != null) {
+                                const parsed =
+                                    typeof rawOfferPrice === "number"
+                                        ? rawOfferPrice
+                                        : parsePriceNumber(String(rawOfferPrice));
+                                if (parsed && parsed > 0 && (!price || parsed < price)) {
+                                    price = parsed;
+                                }
+                            }
+
+                            if (rawHighPrice != null) {
+                                const parsedHigh =
+                                    typeof rawHighPrice === "number"
+                                        ? rawHighPrice
+                                        : parsePriceNumber(String(rawHighPrice));
+                                if (parsedHigh && parsedHigh > 0 && (!regularPrice || parsedHigh > regularPrice)) {
+                                    regularPrice = parsedHigh;
+                                }
+                            }
+                        }
+                    }
+                    if (item.brand) {
+                        if (typeof item.brand === "string") {
+                            store = item.brand;
+                        } else if (item.brand.name && typeof item.brand.name === "string") {
+                            store = item.brand.name;
                         }
                     }
                 }
             }
         } catch {
-            // Ignora JSON-LD mal formatado
+            // Ignora JSON-LD com formatação inválida
         }
     }
 
-    return { title, image, price, store };
+    return { title, image, price, regularPrice, store };
+}
+
+/**
+ * Tenta extrair o preço promocional ou valor corrente a partir de microdados HTML e marcações de e-commerce.
+ */
+export function extractPriceFromHtml(html: string): number | null {
+    // 1. Meta tags semânticas de preço de venda / oferta corrente
+    const priceMetaRegex =
+        /<meta[^>]+(?:property|name|itemprop)=["'](?:product:sale_price:amount|og:price:amount|product:price:amount|price)["'][^>]+content=["']([^"']+)["']/i;
+    const matchMeta = html.match(priceMetaRegex);
+    if (matchMeta && matchMeta[1]) {
+        const parsed = parsePriceNumber(matchMeta[1]);
+        if (parsed) return parsed;
+    }
+
+    // 1b. Content antecedendo property/itemprop
+    const metaFirstRegex =
+        /<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name|itemprop)=["'](?:product:sale_price:amount|og:price:amount|product:price:amount|price)["']/i;
+    const matchMetaFirst = html.match(metaFirstRegex);
+    if (matchMetaFirst && matchMetaFirst[1]) {
+        const parsed = parsePriceNumber(matchMetaFirst[1]);
+        if (parsed) return parsed;
+    }
+
+    // 2. Elementos microdata com itemprop="price"
+    const itempropRegex = /<[^>]+itemprop=["']price["'][^>]+content=["']([^"']+)["']/i;
+    const matchItemprop = html.match(itempropRegex);
+    if (matchItemprop && matchItemprop[1]) {
+        const parsed = parsePriceNumber(matchItemprop[1]);
+        if (parsed) return parsed;
+    }
+
+    // 3. Amazon price buybox: ignora classe a-text-price (preço riscado)
+    const amazonPriceMatches = html.matchAll(
+        /<(?:div|span)[^>]*class=["']([^"']*a-price[^"']*)["'][^>]*>[\s\S]*?<span[^>]*class=["']a-offscreen["'][^>]*>([^<]+)<\/span>/gi,
+    );
+    for (const match of amazonPriceMatches) {
+        const classNames = match[1];
+        if (!classNames.includes("a-text-price")) {
+            const parsed = parsePriceNumber(match[2]);
+            if (parsed) return parsed;
+        }
+    }
+
+    // 4. Amazon a-offscreen fallback geral com moeda
+    const amazonOffscreen = html.match(/class=["']a-offscreen["'][^>]*>(R\$\s*[\d.,]+)<\/span>/i);
+    if (amazonOffscreen && amazonOffscreen[1]) {
+        const parsed = parsePriceNumber(amazonOffscreen[1]);
+        if (parsed) return parsed;
+    }
+
+    // 5. Mercado Livre: andes-money-amount__fraction
+    const mlFractionRegex =
+        /class=["'][^"']*andes-money-amount__fraction[^"']*["'][^>]*>([\d.,]+)<\/span>/i;
+    const matchMl = html.match(mlFractionRegex);
+    if (matchMl && matchMl[1]) {
+        const parsed = parsePriceNumber(matchMl[1]);
+        if (parsed) return parsed;
+    }
+
+    // 6. Atributos de dados (data-price ou data-product-price)
+    const dataPriceRegex = /data-(?:product-)?price=["']([\d.,]+)["']/i;
+    const matchData = html.match(dataPriceRegex);
+    if (matchData && matchData[1]) {
+        const parsed = parsePriceNumber(matchData[1]);
+        if (parsed) return parsed;
+    }
+
+    return null;
+}
+
+/**
+ * Tenta extrair o preço original / preço riscado ("de:") a partir de tags semânticas e seletores de e-commerce.
+ */
+export function extractRegularPriceFromHtml(html: string): number | null {
+    // 1. Meta tag semântica de preço original
+    const originalMetaRegex =
+        /<meta[^>]+(?:property|name|itemprop)=["'](?:product:original_price:amount|original_price)["'][^>]+content=["']([^"']+)["']/i;
+    const matchMeta = html.match(originalMetaRegex);
+    if (matchMeta && matchMeta[1]) {
+        const parsed = parsePriceNumber(matchMeta[1]);
+        if (parsed) return parsed;
+    }
+
+    // 1b. Content antecedendo property/itemprop
+    const originalContentFirstRegex =
+        /<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name|itemprop)=["'](?:product:original_price:amount|original_price)["']/i;
+    const matchContentFirst = html.match(originalContentFirstRegex);
+    if (matchContentFirst && matchContentFirst[1]) {
+        const parsed = parsePriceNumber(matchContentFirst[1]);
+        if (parsed) return parsed;
+    }
+
+    // 2. Preço riscado da Amazon: a-text-price com a-offscreen
+    const amazonStrikeRegex =
+        /class=["'][^"']*a-text-price[^"']*["'][^>]*>[\s\S]*?<span[^>]*class=["']a-offscreen["'][^>]*>([^<]+)<\/span>/i;
+    const matchStrike = html.match(amazonStrikeRegex);
+    if (matchStrike && matchStrike[1]) {
+        const parsed = parsePriceNumber(matchStrike[1]);
+        if (parsed) return parsed;
+    }
+
+    // 3. Mercado Livre: andes-money-amount--previous
+    const mlPrevRegex =
+        /andes-money-amount--previous[^>]*>[\s\S]*?class=["'][^"']*andes-money-amount__fraction[^"']*["'][^>]*>([\d.,]+)<\/span>/i;
+    const matchMlPrev = html.match(mlPrevRegex);
+    if (matchMlPrev && matchMlPrev[1]) {
+        const parsed = parsePriceNumber(matchMlPrev[1]);
+        if (parsed) return parsed;
+    }
+
+    return null;
 }
 
 /**
@@ -290,38 +440,27 @@ export function parseHtmlMetadata(html: string, baseUrl: string): ExtractedMetad
 
     const store = detectStoreFromUrl(baseUrl, siteName);
 
-    // Tentativa de extração de preço sugerido em metadados de e-commerce
+    // Tentativa de extração de preço em metadados de e-commerce, JSON-LD e microdados
     let price: number | null = ldData.price;
-    if (price == null) {
-        const rawPrice =
-            extractMetaContent(html, "og:price:amount") ||
-            extractMetaContent(html, "product:price:amount") ||
-            extractMetaContent(html, "price") ||
-            null;
+    if (price == null || price <= 0) {
+        price = extractPriceFromHtml(html);
+    }
 
-        if (rawPrice) {
-            let normalized = rawPrice.trim();
-            if (normalized.includes(".") && normalized.includes(",")) {
-                if (normalized.lastIndexOf(",") > normalized.lastIndexOf(".")) {
-                    normalized = normalized.replace(/\./g, "").replace(",", ".");
-                } else {
-                    normalized = normalized.replace(/,/g, "");
-                }
-            } else if (normalized.includes(",")) {
-                normalized = normalized.replace(",", ".");
-            }
+    let regularPrice: number | null = ldData.regularPrice;
+    if (regularPrice == null || regularPrice <= 0) {
+        regularPrice = extractRegularPriceFromHtml(html);
+    }
 
-            const parsed = parseFloat(normalized);
-            if (!isNaN(parsed) && parsed >= 0) {
-                price = Math.round(parsed * 100) / 100;
-            }
-        }
+    // Se o preço regular for menor ou igual ao promocional, descarta para evitar inconsistência
+    if (regularPrice != null && price != null && regularPrice <= price) {
+        regularPrice = null;
     }
 
     return {
         title,
         image,
         price,
+        regularPrice,
         store,
         siteName,
     };

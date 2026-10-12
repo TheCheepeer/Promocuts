@@ -45,6 +45,25 @@ const COMMON_STORES = [
     "Kabum",
 ] as const;
 
+function formatPriceInput(val: number): string {
+    return val.toFixed(2).replace(".", ",");
+}
+
+function parseNumericInput(val: string): number {
+    if (!val || typeof val !== "string") return NaN;
+    let clean = val.replace(/R\$\s*/gi, "").replace(/BRL\s*/gi, "").trim();
+    if (clean.includes(".") && clean.includes(",")) {
+        if (clean.lastIndexOf(",") > clean.lastIndexOf(".")) {
+            clean = clean.replace(/\./g, "").replace(",", ".");
+        } else {
+            clean = clean.replace(/,/g, "");
+        }
+    } else if (clean.includes(",")) {
+        clean = clean.replace(",", ".");
+    }
+    return parseFloat(clean);
+}
+
 export function ProductDialog({
     isOpen,
     onClose,
@@ -94,9 +113,13 @@ export function ProductDialog({
                         store_name: link.store_name,
                         affiliate_url: link.affiliate_url,
                         regular_price:
-                            link.regular_price != null ? String(link.regular_price) : "",
+                            link.regular_price != null
+                                ? String(link.regular_price)
+                                : "",
                         discount_price:
-                            link.discount_price != null ? String(link.discount_price) : "",
+                            link.discount_price != null
+                                ? String(link.discount_price)
+                                : "",
                         coupon_code: link.coupon_code || "",
                     })),
                 );
@@ -159,7 +182,10 @@ export function ProductDialog({
 
             const json = await res.json();
             if (!res.ok || !json.success) {
-                setErrorMessage(json.error || "Não foi possível extrair os metadados da URL.");
+                setErrorMessage(
+                    json.error ||
+                        "Não foi possível extrair os metadados da URL.",
+                );
                 setIsAutoFilling(false);
                 return;
             }
@@ -174,25 +200,41 @@ export function ProductDialog({
                 setImageUrl(data.image);
             }
 
-            // Atualiza a primeira loja com a URL e loja detectadas
+            // Atualiza a primeira loja com a URL, loja e preços detectados
             setStores((prevStores) => {
                 const next = [...prevStores];
                 if (next.length > 0) {
+                    const currentStore = next[0];
+                    const updatedDiscountPrice =
+                        data.price != null && !currentStore.discount_price
+                            ? formatPriceInput(data.price)
+                            : currentStore.discount_price;
+                    const updatedRegularPrice =
+                        data.regularPrice != null && !currentStore.regular_price
+                            ? formatPriceInput(data.regularPrice)
+                            : currentStore.regular_price;
+
                     next[0] = {
-                        ...next[0],
+                        ...currentStore,
                         affiliate_url: autoFillUrl.trim(),
-                        store_name: data.store || next[0].store_name,
-                        discount_price:
-                            data.price != null && !next[0].discount_price
-                                ? String(data.price)
-                                : next[0].discount_price,
+                        store_name: data.store || currentStore.store_name,
+                        discount_price: updatedDiscountPrice,
+                        regular_price: updatedRegularPrice,
                     };
                 }
                 return next;
             });
 
             if (data.title || data.image) {
-                setSuccessFeedback("Dados do produto e da oferta preenchidos com sucesso!");
+                if (data.price != null) {
+                    setSuccessFeedback(
+                        "Título, imagem, loja e preço preenchidos com sucesso!",
+                    );
+                } else {
+                    setSuccessFeedback(
+                        "Título, imagem e loja preenchidos! Para anúncios com múltiplas variações de preço, informe o valor da opção desejada.",
+                    );
+                }
             } else {
                 setErrorMessage(
                     "Loja identificada, mas o título e a imagem não puderam ser extraídos da página. Preencha os campos restantes manualmente.",
@@ -244,7 +286,9 @@ export function ProductDialog({
         for (let i = 0; i < stores.length; i++) {
             const item = stores[i];
             if (!item.store_name.trim()) {
-                setErrorMessage(`A loja parceira da oferta ${i + 1} é obrigatória.`);
+                setErrorMessage(
+                    `A loja parceira da oferta ${i + 1} é obrigatória.`,
+                );
                 return;
             }
             if (!item.affiliate_url.trim()) {
@@ -300,7 +344,8 @@ export function ProductDialog({
                                 : "Novo Produto Afiliado"}
                         </h2>
                         <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                            Cadastre dados gerais e múltiplas lojas parceiras para comparação.
+                            Cadastre dados gerais e múltiplas lojas parceiras
+                            para comparação.
                         </p>
                     </div>
 
@@ -336,7 +381,8 @@ export function ProductDialog({
                         <span>Autopreencher Dados por Link</span>
                     </label>
                     <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mb-2">
-                        Cole o link da página do produto para preencher título, imagem, loja e preço automaticamente.
+                        Cole o link da página do produto para preencher título,
+                        imagem, loja e preço automaticamente.
                     </p>
                     <div className="flex gap-2">
                         <input
@@ -396,7 +442,9 @@ export function ProductDialog({
                                 <select
                                     id="prod-cat"
                                     value={categoryId}
-                                    onChange={(e) => setCategoryId(e.target.value)}
+                                    onChange={(e) =>
+                                        setCategoryId(e.target.value)
+                                    }
                                     className="w-full px-3 py-2 text-xs rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100"
                                 >
                                     <option value="">Sem categoria</option>
@@ -421,7 +469,9 @@ export function ProductDialog({
                                         type="url"
                                         required
                                         value={imageUrl}
-                                        onChange={(e) => setImageUrl(e.target.value)}
+                                        onChange={(e) =>
+                                            setImageUrl(e.target.value)
+                                        }
                                         placeholder="https://.../imagem.jpg"
                                         className="flex-1 font-mono text-xs px-3 py-2 rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100"
                                     />
@@ -433,8 +483,9 @@ export function ProductDialog({
                                                 alt="Prévia"
                                                 className="h-full w-full object-cover"
                                                 onError={(e) => {
-                                                    (e.currentTarget as HTMLElement).style.display =
-                                                        "none";
+                                                    (
+                                                        e.currentTarget as HTMLElement
+                                                    ).style.display = "none";
                                                 }}
                                             />
                                         </div>
@@ -452,7 +503,7 @@ export function ProductDialog({
                                 htmlFor="prod-desc"
                                 className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1"
                             >
-                                Diferenciais / Descrição Curta
+                                Descrição
                             </label>
                             <textarea
                                 id="prod-desc"
@@ -471,10 +522,14 @@ export function ProductDialog({
                             <div>
                                 <h3 className="text-xs font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-1.5">
                                     <Store className="h-4 w-4 text-brand-primary" />
-                                    <span>Lojas Parceiras e Ofertas ({stores.length})</span>
+                                    <span>
+                                        Lojas Parceiras e Ofertas (
+                                        {stores.length})
+                                    </span>
                                 </h3>
                                 <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                                    A primeira loja é exibida como destaque principal na vitrine.
+                                    A primeira loja é exibida como destaque
+                                    principal na vitrine.
                                 </p>
                             </div>
 
@@ -490,11 +545,18 @@ export function ProductDialog({
 
                         <div className="space-y-3">
                             {stores.map((store, idx) => {
-                                const regNum = parseFloat(store.regular_price.replace(",", "."));
-                                const discNum = parseFloat(store.discount_price.replace(",", "."));
+                                const regNum = parseNumericInput(
+                                    store.regular_price,
+                                );
+                                const discNum = parseNumericInput(
+                                    store.discount_price,
+                                );
                                 const discountPct =
                                     !isNaN(regNum) && !isNaN(discNum)
-                                        ? formatDiscountPercentage(regNum, discNum)
+                                        ? formatDiscountPercentage(
+                                              regNum,
+                                              discNum,
+                                          )
                                         : 0;
 
                                 return (
@@ -505,14 +567,16 @@ export function ProductDialog({
                                         <div className="flex items-center justify-between">
                                             <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
                                                 {idx === 0
-                                                    ? "Loja Principal (Destaque)"
+                                                    ? "Loja Principal"
                                                     : `Loja Adicional ${idx + 1}`}
                                             </span>
 
                                             {stores.length > 1 && (
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleRemoveStore(idx)}
+                                                    onClick={() =>
+                                                        handleRemoveStore(idx)
+                                                    }
                                                     className="text-zinc-400 hover:text-red-500 p-1 rounded-md transition-colors"
                                                     title="Remover esta loja parceira"
                                                 >
@@ -544,7 +608,10 @@ export function ProductDialog({
                                                 />
                                                 {/* Sugestões rápidas */}
                                                 <div className="flex flex-wrap gap-1 mt-1">
-                                                    {COMMON_STORES.slice(0, 4).map((s) => (
+                                                    {COMMON_STORES.slice(
+                                                        0,
+                                                        4,
+                                                    ).map((s) => (
                                                         <button
                                                             key={s}
                                                             type="button"
@@ -565,26 +632,31 @@ export function ProductDialog({
 
                                             <div className="sm:col-span-2">
                                                 <label className="block text-[11px] font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                                                    Link de Afiliado / Redirecionamento *
+                                                    Link de Afiliado /
+                                                    Redirecionamento *
                                                 </label>
                                                 <div className="relative">
                                                     <input
                                                         type="url"
                                                         required
-                                                        value={store.affiliate_url}
+                                                        value={
+                                                            store.affiliate_url
+                                                        }
                                                         onChange={(e) =>
                                                             handleStoreChange(
                                                                 idx,
                                                                 "affiliate_url",
                                                                 e.target.value,
-                                                             )
+                                                            )
                                                         }
                                                         placeholder="Cole o link de afiliado ou parceiro..."
                                                         className="w-full font-mono text-xs px-2.5 py-1.5 pr-7 rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100"
                                                     />
                                                     {store.affiliate_url && (
                                                         <a
-                                                            href={store.affiliate_url}
+                                                            href={
+                                                                store.affiliate_url
+                                                            }
                                                             target="_blank"
                                                             rel="noopener noreferrer"
                                                             className="absolute right-2 top-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
@@ -626,7 +698,10 @@ export function ProductDialog({
                                                     {discountPct > 0 && (
                                                         <span className="inline-flex items-center gap-0.5 text-[10px] font-bold px-1 py-0.2 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
                                                             <Percent className="h-2 w-2" />
-                                                            {formatDiscountBadge(regNum, discNum)}
+                                                            {formatDiscountBadge(
+                                                                regNum,
+                                                                discNum,
+                                                            )}
                                                         </span>
                                                     )}
                                                 </div>
@@ -654,7 +729,9 @@ export function ProductDialog({
                                                     <input
                                                         type="text"
                                                         maxLength={100}
-                                                        value={store.coupon_code}
+                                                        value={
+                                                            store.coupon_code
+                                                        }
                                                         onChange={(e) =>
                                                             handleStoreChange(
                                                                 idx,

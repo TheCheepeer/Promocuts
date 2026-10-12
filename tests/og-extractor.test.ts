@@ -5,6 +5,9 @@ import {
     detectStoreFromUrl,
     parseHtmlMetadata,
     cleanProductTitle,
+    parsePriceNumber,
+    extractPriceFromHtml,
+    extractRegularPriceFromHtml,
 } from "../src/lib/extractor/og-parser.js";
 
 describe("Extrator Open Graph - Proteção contra SSRF (isSafeExternalUrl)", () => {
@@ -265,6 +268,90 @@ describe("Extrator Open Graph - Análise Sintática de HTML (parseHtmlMetadata)"
             "https://down-br.img.susercontent.com/file/sg-123",
         );
         assert.equal(metadata.store, "Shopee");
+    });
+});
+
+describe("Extrator Open Graph - Conversão Numérica de Preço (parsePriceNumber)", () => {
+    it("deve converter valores no formato brasileiro com separadores de milhar e centavos", () => {
+        assert.equal(parsePriceNumber("R$ 1.499,90"), 1499.9);
+        assert.equal(parsePriceNumber("R$ 3.899,00"), 3899);
+        assert.equal(parsePriceNumber("249,50"), 249.5);
+    });
+
+    it("deve converter valores no formato padrão internacional/americano", () => {
+        assert.equal(parsePriceNumber("1,499.90"), 1499.9);
+        assert.equal(parsePriceNumber("249.90"), 249.9);
+        assert.equal(parsePriceNumber("BRL 89.99"), 89.99);
+    });
+
+    it("deve retornar null para strings vazias, valores zerados ou inválidos", () => {
+        assert.equal(parsePriceNumber(""), null);
+        assert.equal(parsePriceNumber("R$ 0,00"), null);
+        assert.equal(parsePriceNumber("invalido"), null);
+        assert.equal(parsePriceNumber("-50.00"), null);
+    });
+});
+
+describe("Extrator Open Graph - Extração de Preços em Marcações de E-commerce (extractPriceFromHtml)", () => {
+    it("deve extrair preço a partir de meta tags semânticas (product:price:amount / og:price:amount)", () => {
+        const html = `<html><head><meta property="product:price:amount" content="319.90" /></head></html>`;
+        assert.equal(extractPriceFromHtml(html), 319.9);
+    });
+
+    it("deve extrair preço de microdados HTML com itemprop='price'", () => {
+        const html = `<div><span itemprop="price" content="549.00">R$ 549,00</span></div>`;
+        assert.equal(extractPriceFromHtml(html), 549);
+    });
+
+    it("deve extrair preço do buybox da Amazon com classe a-offscreen", () => {
+        const html = `
+            <div class="a-price a-size-medium a-color-price">
+                <span class="a-offscreen">R$ 4.099,00</span>
+                <span aria-hidden="true">R$ 4.099</span>
+            </div>
+        `;
+        assert.equal(extractPriceFromHtml(html), 4099);
+    });
+
+    it("deve extrair fração de valor monetário do Mercado Livre (andes-money-amount__fraction)", () => {
+        const html = `
+            <span class="andes-money-amount__fraction">439,90</span>
+        `;
+        assert.equal(extractPriceFromHtml(html), 439.9);
+    });
+
+    it("deve extrair preço a partir de data-price ou data-product-price", () => {
+        const html = `<button data-product-price="129.90">Comprar</button>`;
+        assert.equal(extractPriceFromHtml(html), 129.9);
+    });
+});
+
+describe("Extrator Open Graph - Extração Dupla de Preço Original e Promocional", () => {
+    it("deve extrair tanto preço original quanto promocional e calcular oferta quando disponíveis", () => {
+        const mockHtml = `
+            <html>
+            <head>
+                <meta property="og:title" content="Monitor Gamer 144Hz" />
+                <meta property="product:original_price:amount" content="1299.00" />
+                <meta property="product:price:amount" content="899.00" />
+            </head>
+            </html>
+        `;
+
+        const metadata = parseHtmlMetadata(mockHtml, "https://exemplo.com/monitor");
+        assert.equal(metadata.regularPrice, 1299);
+        assert.equal(metadata.price, 899);
+    });
+
+    it("deve extrair preço riscado da Amazon como regularPrice", () => {
+        const amazonHtml = `
+            <div class="a-section">
+                <div class="a-price a-text-price"><span class="a-offscreen">R$ 5.199,00</span></div>
+                <div class="a-price"><span class="a-offscreen">R$ 4.099,00</span></div>
+            </div>
+        `;
+        assert.equal(extractRegularPriceFromHtml(amazonHtml), 5199);
+        assert.equal(extractPriceFromHtml(amazonHtml), 4099);
     });
 });
 

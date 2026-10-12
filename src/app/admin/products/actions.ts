@@ -46,8 +46,19 @@ function parsePrice(val: unknown): number | null {
     if (val === null || val === undefined) return null;
     if (typeof val === "number") return isNaN(val) || val < 0 ? null : Math.round(val * 100) / 100;
     if (typeof val !== "string" || val.trim() === "") return null;
-    const normalized = val.replace(/\./g, "").replace(",", ".").trim();
-    const num = parseFloat(normalized);
+    let clean = val.replace(/R\$\s*/gi, "").replace(/BRL\s*/gi, "").trim();
+    if (clean.includes(".") && clean.includes(",")) {
+        if (clean.lastIndexOf(",") > clean.lastIndexOf(".")) {
+            // Formato brasileiro: 1.499,90
+            clean = clean.replace(/\./g, "").replace(",", ".");
+        } else {
+            // Formato americano: 1,499.90
+            clean = clean.replace(/,/g, "");
+        }
+    } else if (clean.includes(",")) {
+        clean = clean.replace(",", ".");
+    }
+    const num = parseFloat(clean);
     return isNaN(num) || num < 0 ? null : Math.round(num * 100) / 100;
 }
 
