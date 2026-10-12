@@ -250,7 +250,7 @@ export function SocialLinksManager({ initialLinks }: SocialLinksManagerProps) {
 
                                 {/* Controles Rápidos de Visibilidade */}
                                 <div className="flex flex-wrap items-center gap-2 pt-2 md:pt-0 border-t md:border-t-0 border-zinc-100 dark:border-zinc-800/80">
-                                    {/* Toggle: Cabeçalho da Vitrine */}
+                                    {/* Alternador: Cabeçalho da Vitrine */}
                                     <button
                                         type="button"
                                         onClick={() =>
@@ -258,23 +258,27 @@ export function SocialLinksManager({ initialLinks }: SocialLinksManagerProps) {
                                         }
                                         title={
                                             link.show_in_storefront
-                                                ? "Clique para ocultar da vitrine"
-                                                : "Clique para exibir na vitrine"
+                                                ? "Exibindo no topo da Vitrine (clique para ocultar)"
+                                                : "Oculto da Vitrine (clique para exibir)"
                                         }
-                                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+                                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                                             link.show_in_storefront
-                                                ? "bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60"
-                                                : "bg-zinc-100 text-zinc-500 border-zinc-200/80 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700/60 opacity-60"
+                                                ? "bg-zinc-100 text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
+                                                : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 opacity-60 line-through"
                                         }`}
                                     >
                                         <Store className="h-3.5 w-3.5" />
                                         <span>Vitrine</span>
-                                        <span className="text-[10px] uppercase font-bold">
-                                            {link.show_in_storefront ? "Ativo" : "Off"}
-                                        </span>
+                                        <span
+                                            className={`h-1.5 w-1.5 rounded-full transition-colors ${
+                                                link.show_in_storefront
+                                                    ? "bg-emerald-500 shadow-2xs"
+                                                    : "bg-zinc-300 dark:bg-zinc-600"
+                                            }`}
+                                        />
                                     </button>
 
-                                    {/* Toggle: Perfil de Bio Links */}
+                                    {/* Alternador: Perfil de Bio Links */}
                                     <button
                                         type="button"
                                         onClick={() =>
@@ -282,20 +286,24 @@ export function SocialLinksManager({ initialLinks }: SocialLinksManagerProps) {
                                         }
                                         title={
                                             link.show_in_bio
-                                                ? "Clique para ocultar dos bio links"
-                                                : "Clique para exibir nos bio links"
+                                                ? "Exibindo no perfil de Bio Links (clique para ocultar)"
+                                                : "Oculto de Bio Links (clique para exibir)"
                                         }
-                                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+                                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                                             link.show_in_bio
-                                                ? "bg-indigo-50 text-indigo-800 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800/60"
-                                                : "bg-zinc-100 text-zinc-500 border-zinc-200/80 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700/60 opacity-60"
+                                                ? "bg-zinc-100 text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
+                                                : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 opacity-60 line-through"
                                         }`}
                                     >
                                         <Smartphone className="h-3.5 w-3.5" />
-                                        <span>Bio Links</span>
-                                        <span className="text-[10px] uppercase font-bold">
-                                            {link.show_in_bio ? "Ativo" : "Off"}
-                                        </span>
+                                        <span>Bio</span>
+                                        <span
+                                            className={`h-1.5 w-1.5 rounded-full transition-colors ${
+                                                link.show_in_bio
+                                                    ? "bg-indigo-500 shadow-2xs"
+                                                    : "bg-zinc-300 dark:bg-zinc-600"
+                                            }`}
+                                        />
                                     </button>
 
                                     {/* Botões de Ordenação */}
@@ -351,15 +359,18 @@ export function SocialLinksManager({ initialLinks }: SocialLinksManagerProps) {
                 </div>
             )}
 
-            {/* Modal de Criação / Edição */}
-            <SocialLinkDialog
-                isOpen={isDialogOpen}
-                onClose={() => {
-                    setIsDialogOpen(false);
-                    setEditingLink(null);
-                }}
-                linkToEdit={editingLink}
-            />
+            {/* Modal de Criação / Edição com montagem limpa e chave reativa */}
+            {isDialogOpen && (
+                <SocialLinkDialog
+                    key={editingLink ? editingLink.id : "new-social-dialog"}
+                    isOpen={isDialogOpen}
+                    onClose={() => {
+                        setIsDialogOpen(false);
+                        setEditingLink(null);
+                    }}
+                    linkToEdit={editingLink}
+                />
+            )}
         </div>
     );
 }

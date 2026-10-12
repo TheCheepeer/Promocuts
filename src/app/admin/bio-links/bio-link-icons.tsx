@@ -20,9 +20,10 @@ export const BIO_LINK_AVAILABLE_ICONS: BioLinkIconOption[] = SOCIAL_PLATFORMS.ma
 
 interface BioIconProps {
     name: string | null | undefined;
+    url?: string | null | undefined;
     className?: string;
 }
 
-export function BioLinkIcon({ name, className = "h-4 w-4" }: BioIconProps) {
-    return <SocialIcon platform={name} className={className} />;
+export function BioLinkIcon({ name, url, className = "h-4 w-4" }: BioIconProps) {
+    return <SocialIcon platform={name} url={url} className={className} />;
 }

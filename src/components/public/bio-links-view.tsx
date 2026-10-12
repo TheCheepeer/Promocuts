@@ -388,6 +388,7 @@ export function BioLinksView({
                                         >
                                             <BioLinkIcon
                                                 name={link.icon}
+                                                url={link.url}
                                                 className="h-5 w-5"
                                             />
                                         </div>

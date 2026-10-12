@@ -86,3 +86,4 @@ describe("Padrão Strategy para Redes Sociais e Canais de Criador", () => {
         assert.equal(formatSocialUrl("reddit", customReddit), customReddit);
     });
 });
+

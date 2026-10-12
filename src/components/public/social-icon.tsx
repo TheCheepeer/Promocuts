@@ -1,4 +1,6 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
 import {
     Twitch,
     Youtube,
@@ -13,14 +15,62 @@ import {
 
 interface SocialIconProps {
     platform: string | null | undefined;
+    url?: string | null | undefined;
     className?: string;
+}
+
+function ExternalFavicon({
+    url,
+    className,
+    fallback,
+}: {
+    url: string;
+    className: string;
+    fallback: React.ReactNode;
+}) {
+    const [failed, setFailed] = useState(false);
+
+    let domain: string | null = null;
+    try {
+        const parsed = url.startsWith("http") ? new URL(url) : new URL(`https://${url}`);
+        domain = parsed.hostname;
+    } catch {
+        domain = null;
+    }
+
+    if (!domain || failed) {
+        return <>{fallback}</>;
+    }
+
+    return (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+            src={`https://www.google.com/s2/favicons?domain=${domain}&sz=64`}
+            alt=""
+            loading="lazy"
+            onError={() => setFailed(true)}
+            className={`${className} object-contain rounded-xs`}
+            aria-hidden="true"
+        />
+    );
 }
 
 export function SocialIcon({
     platform,
+    url,
     className = "h-4 w-4",
 }: SocialIconProps) {
     const id = (platform || "link").toLowerCase().trim();
+
+    if ((id === "link" || id === "site") && url) {
+        const fallback =
+            id === "site" ? (
+                <Globe className={className} aria-hidden="true" />
+            ) : (
+                <LinkIcon className={className} aria-hidden="true" />
+            );
+        return <ExternalFavicon url={url} className={className} fallback={fallback} />;
+    }
 
     switch (id) {
         // Vídeo e Transmissões
