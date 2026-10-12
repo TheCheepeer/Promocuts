@@ -18,6 +18,18 @@ erDiagram
     PRODUCT_LINKS ||--o{ AFFILIATE_CLICKS : "registra clique"
     BIO_LINKS ||--o{ BIO_LINK_CLICKS : "recebe cliques"
 
+    BRAND_SOCIAL_LINKS {
+        uuid id PK
+        varchar platform
+        text url
+        boolean show_in_storefront
+        boolean show_in_bio
+        int display_order
+        boolean is_active
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
     BIO_LINKS {
         uuid id PK
         varchar title
@@ -343,6 +355,24 @@ Registros históricos individuais de cliques nos bio links para alimentação do
 
 ---
 
+### 2.10 Tabela `public.brand_social_links` (Fase 9)
+
+Armazena as redes sociais e canais oficiais da marca utilizando o Padrão Strategy extensível, permitindo controle granular independente de exibição no cabeçalho da vitrine (`show_in_storefront`) e no perfil de bio links (`show_in_bio`).
+
+| Coluna               | Tipo           | Nulo | Padrão               | Descrição                                                                      |
+| :------------------- | :------------- | :--: | :------------------- | :----------------------------------------------------------------------------- |
+| `id`                 | `UUID`         | Não  | `uuid_generate_v4()` | Identificador único do link da rede social                                     |
+| `platform`           | `VARCHAR(50)`  | Não  | —                    | Identificador da plataforma no padrão strategy (`youtube`, `tiktok`, etc.)     |
+| `url`                | `TEXT`         | Não  | —                    | Endereço completo ou formatado com validação `CHECK (url ~* '^https?://')`      |
+| `show_in_storefront` | `BOOLEAN`      | Não  | `true`               | Se deve ser exibido nos ícones do cabeçalho da Vitrine pública                 |
+| `show_in_bio`        | `BOOLEAN`      | Não  | `true`               | Se deve ser exibido na seção de redes do perfil da página de Bio Links         |
+| `display_order`      | `INT`          | Não  | `0`                  | Ordem sequencial de exibição visual                                            |
+| `is_active`          | `BOOLEAN`      | Não  | `true`               | Status de ativação geral do link                                               |
+| `created_at`         | `TIMESTAMPTZ`  | Não  | `NOW()`              | Data e hora de inclusão                                                        |
+| `updated_at`         | `TIMESTAMPTZ`  | Não  | `NOW()`              | Data da última atualização (via trigger com search_path seguro)                |
+
+---
+
 ## 3. Políticas de Segurança (Row Level Security - RLS)
 
 Todas as tabelas possuem a opção `ROW LEVEL SECURITY` estritamente ativada:
@@ -357,10 +387,12 @@ Todas as tabelas possuem a opção `ROW LEVEL SECURITY` estritamente ativada:
     - Produtos e seus registros filhos em `product_links` só são listados para o público se estiverem atrelados a pelo menos um vídeo com `is_published = true`.
 5. **Leitura Pública de Bio Links:**
     - Apenas bio links com `is_active = true` podem ser lidos por conexões anônimas na vitrine pública.
-6. **Escrita Restrita:**
-    - Operações de `INSERT`, `UPDATE` e `DELETE` nas tabelas principais (`site_settings`, `categories`, `videos`, `products`, `product_links`, `video_products`, `bio_links`) são bloqueadas para o papel anônimo (`anon`).
+6. **Leitura Pública de Redes Sociais da Marca (`brand_social_links`):**
+    - Apenas redes com `is_active = true` podem ser lidas publicamente (`USING (is_active = true)`).
+7. **Escrita Restrita:**
+    - Operações de `INSERT`, `UPDATE` e `DELETE` nas tabelas principais (`site_settings`, `categories`, `videos`, `products`, `product_links`, `video_products`, `bio_links`, `brand_social_links`) são bloqueadas para o papel anônimo (`anon`).
     - Elas são realizadas pelas Server Actions autenticadas do Next.js via chave de serviço (`service_role`), após validação estrita da sessão de e-mail do administrador.
-7. **Registro de Métricas Anônimas Endurecido contra DoS:**
+8. **Registro de Métricas Anônimas Endurecido contra DoS:**
     - As tabelas `affiliate_clicks` e `bio_link_clicks` permitem a operação de `INSERT` pelo público (`anon` e `authenticated`) com validação defensiva estrita no `WITH CHECK`: o alvo deve existir ativamente na base e os comprimentos de `user_agent` (<= 512) e `referrer` (<= 1024) são rigorosamente limitados, eliminando riscos de esgotamento de disco (Storage DoS).
 8. **Sincronização Atômica de Contadores:**
     - O gatilho `trg_increment_bio_link_clicks` incrementa o contador `clicks_count` em `bio_links` sob o modelo `SECURITY DEFINER` de forma atômica no banco de dados.

@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { getSiteSettings } from "@/lib/settings";
 import { getCachedData, setCachedData } from "@/lib/cache/redis";
+import { getBioSocialLinks } from "@/lib/social/queries";
 import { BioLinksView } from "@/components/public/bio-links-view";
 import type { BioLink } from "@/types/database";
 
@@ -38,7 +39,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function LinksPage() {
-    const settings = await getSiteSettings();
+    const [settings, socialLinks] = await Promise.all([
+        getSiteSettings(),
+        getBioSocialLinks(),
+    ]);
 
     // Consulta prioritária ao cache em memória (Upstash Redis é opcional)
     let bioLinks = await getCachedData<BioLink[]>("promocuts:bio_links:all");
@@ -58,6 +62,12 @@ export default async function LinksPage() {
         await setCachedData("promocuts:bio_links:all", bioLinks, 300);
     }
 
-    return <BioLinksView settings={settings} bioLinks={bioLinks} />;
+    return (
+        <BioLinksView
+            settings={settings}
+            bioLinks={bioLinks}
+            socialLinks={socialLinks}
+        />
+    );
 }
 

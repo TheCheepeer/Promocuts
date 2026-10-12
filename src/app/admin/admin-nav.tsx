@@ -16,6 +16,7 @@ import {
     Shield,
     BarChart3,
     Link2,
+    Share2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -44,6 +45,11 @@ const navItems: NavItem[] = [
         label: "Bio Links",
         href: "/admin/bio-links",
         icon: Link2,
+    },
+    {
+        label: "Redes Sociais",
+        href: "/admin/social",
+        icon: Share2,
     },
     {
         label: "Vídeos",

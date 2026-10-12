@@ -1,6 +1,7 @@
 import React from "react";
 import { createClient } from "@/lib/supabase/server";
 import { getSiteSettings } from "@/lib/settings";
+import { getStorefrontSocialLinks } from "@/lib/social/queries";
 import { PublicHeader } from "@/components/public/header";
 import { Storefront } from "@/components/public/storefront";
 import { getCachedData, setCachedData } from "@/lib/cache/redis";
@@ -9,10 +10,10 @@ import type { Category } from "@/types/database";
 import type { VideoWithRelations } from "@/components/public/feed-mobile";
 
 export default async function HomePage() {
-    const settings = await getSiteSettings();
-
-    // Consulta paralela ao cache em memória do Upstash Redis
-    const [cachedCategories, cachedVideos] = await Promise.all([
+    // Consulta paralela com cache em memória
+    const [settings, socialLinks, cachedCategories, cachedVideos] = await Promise.all([
+        getSiteSettings(),
+        getStorefrontSocialLinks(),
         getCachedData<Category[]>("promocuts:categories:all"),
         getCachedData<VideoWithRelations[]>("promocuts:feed:all"),
     ]);
@@ -73,7 +74,7 @@ export default async function HomePage() {
 
     return (
         <div className="flex min-h-dvh flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50">
-            <PublicHeader settings={settings} />
+            <PublicHeader settings={settings} socialLinks={socialLinks} />
             <Storefront categories={categories} allVideos={rankedVideos} />
 
             {/* Rodape visivel exclusivamente em telas desktop */}

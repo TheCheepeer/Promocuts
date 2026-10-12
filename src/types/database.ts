@@ -270,6 +270,33 @@ export type BioLinkClickInsert = {
     referrer?: string | null;
 };
 
+export type BrandSocialLink = {
+    id: string;
+    platform: string;
+    url: string;
+    show_in_storefront: boolean;
+    show_in_bio: boolean;
+    display_order: number;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+};
+
+export type BrandSocialLinkInsert = Omit<
+    BrandSocialLink,
+    "id" | "created_at" | "updated_at"
+> & {
+    id?: string;
+    show_in_storefront?: boolean;
+    show_in_bio?: boolean;
+    display_order?: number;
+    is_active?: boolean;
+};
+
+export type BrandSocialLinkUpdate = Partial<
+    Omit<BrandSocialLink, "id" | "created_at" | "updated_at">
+>;
+
 export type Database = {
     public: {
         Tables: {
@@ -325,6 +352,12 @@ export type Database = {
                 Row: BioLinkClick;
                 Insert: BioLinkClickInsert;
                 Update: Partial<BioLinkClickInsert>;
+                Relationships: [];
+            };
+            brand_social_links: {
+                Row: BrandSocialLink;
+                Insert: BrandSocialLinkInsert;
+                Update: BrandSocialLinkUpdate;
                 Relationships: [];
             };
         };

@@ -17,14 +17,21 @@ import { BioLinkIcon } from "@/app/admin/bio-links/bio-link-icons";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { trackBioLinkClick } from "@/lib/telemetry";
 import { generateQrCodeSvg } from "@/lib/qrcode";
-import type { BioLink, SiteSettings } from "@/types/database";
+import { SocialIcon } from "@/components/public/social-icon";
+import { getSocialPlatform } from "@/lib/social/strategies";
+import type { BioLink, SiteSettings, BrandSocialLink } from "@/types/database";
 
 interface BioLinksViewProps {
     settings: SiteSettings;
     bioLinks: BioLink[];
+    socialLinks?: BrandSocialLink[];
 }
 
-export function BioLinksView({ settings, bioLinks }: BioLinksViewProps) {
+export function BioLinksView({
+    settings,
+    bioLinks,
+    socialLinks,
+}: BioLinksViewProps) {
     const [copied, setCopied] = useState(false);
     const [shareUrl, setShareUrl] = useState("");
     const canonicalBaseUrl = (
@@ -217,69 +224,79 @@ export function BioLinksView({ settings, bioLinks }: BioLinksViewProps) {
                         </p>
 
                         {/* Redes Sociais Oficiais */}
-                        <div className="flex items-center justify-center gap-2.5 pt-1">
-                            {settings.social_instagram && (
-                                <a
-                                    href={
-                                        settings.social_instagram.startsWith("http")
-                                            ? settings.social_instagram
-                                            : `https://instagram.com/${settings.social_instagram.replace("@", "")}`
-                                    }
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200/80 bg-zinc-50 text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-800/80 dark:bg-zinc-950 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 shadow-xs"
-                                    title="Instagram"
-                                    aria-label="Instagram Oficial"
-                                >
-                                    <svg
-                                        className="h-4 w-4 fill-none stroke-current stroke-2"
-                                        viewBox="0 0 24 24"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    >
-                                        <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
-                                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-                                        <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
-                                    </svg>
-                                </a>
-                            )}
+                        <div className="flex flex-wrap items-center justify-center gap-2.5 pt-1">
+                            {socialLinks && socialLinks.length > 0 ? (
+                                socialLinks
+                                    .filter((link) => link.is_active && link.show_in_bio)
+                                    .map((link) => {
+                                        const strategy = getSocialPlatform(link.platform);
+                                        return (
+                                            <a
+                                                key={link.id}
+                                                href={link.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200/80 bg-zinc-50 text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-800/80 dark:bg-zinc-950 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 shadow-xs"
+                                                title={strategy.name}
+                                                aria-label={strategy.name}
+                                            >
+                                                <SocialIcon platform={link.platform} className="h-4 w-4" />
+                                            </a>
+                                        );
+                                    })
+                            ) : (
+                                <>
+                                    {settings.social_instagram && (
+                                        <a
+                                            href={
+                                                settings.social_instagram.startsWith("http")
+                                                    ? settings.social_instagram
+                                                    : `https://instagram.com/${settings.social_instagram.replace("@", "")}`
+                                            }
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200/80 bg-zinc-50 text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-800/80 dark:bg-zinc-950 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 shadow-xs"
+                                            title="Instagram"
+                                            aria-label="Instagram Oficial"
+                                        >
+                                            <SocialIcon platform="instagram" className="h-4 w-4" />
+                                        </a>
+                                    )}
 
-                            {settings.social_tiktok && (
-                                <a
-                                    href={
-                                        settings.social_tiktok.startsWith("http")
-                                            ? settings.social_tiktok
-                                            : `https://tiktok.com/@${settings.social_tiktok.replace("@", "")}`
-                                    }
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200/80 bg-zinc-50 text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-800/80 dark:bg-zinc-950 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 shadow-xs"
-                                    title="TikTok"
-                                    aria-label="TikTok Oficial"
-                                >
-                                    <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24">
-                                        <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.29 0 .58.04.86.11V9.41a6.33 6.33 0 0 0-.86-.06 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V9.05a8.27 8.27 0 0 0 4.77 1.47V7.07a4.82 4.82 0 0 1-1-.38z" />
-                                    </svg>
-                                </a>
-                            )}
+                                    {settings.social_tiktok && (
+                                        <a
+                                            href={
+                                                settings.social_tiktok.startsWith("http")
+                                                    ? settings.social_tiktok
+                                                    : `https://tiktok.com/@${settings.social_tiktok.replace("@", "")}`
+                                            }
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200/80 bg-zinc-50 text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-800/80 dark:bg-zinc-950 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 shadow-xs"
+                                            title="TikTok"
+                                            aria-label="TikTok Oficial"
+                                        >
+                                            <SocialIcon platform="tiktok" className="h-4 w-4" />
+                                        </a>
+                                    )}
 
-                            {settings.social_youtube && (
-                                <a
-                                    href={
-                                        settings.social_youtube.startsWith("http")
-                                            ? settings.social_youtube
-                                            : `https://youtube.com/${settings.social_youtube.replace("@", "")}`
-                                    }
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200/80 bg-zinc-50 text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-800/80 dark:bg-zinc-950 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 shadow-xs"
-                                    title="YouTube"
-                                    aria-label="Canal no YouTube"
-                                >
-                                    <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24">
-                                        <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-                                    </svg>
-                                </a>
+                                    {settings.social_youtube && (
+                                        <a
+                                            href={
+                                                settings.social_youtube.startsWith("http")
+                                                    ? settings.social_youtube
+                                                    : `https://youtube.com/${settings.social_youtube.replace("@", "")}`
+                                            }
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200/80 bg-zinc-50 text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-800/80 dark:bg-zinc-950 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 shadow-xs"
+                                            title="YouTube"
+                                            aria-label="Canal no YouTube"
+                                        >
+                                            <SocialIcon platform="youtube" className="h-4 w-4" />
+                                        </a>
+                                    )}
+                                </>
                             )}
                         </div>
                     </div>

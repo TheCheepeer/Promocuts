@@ -35,9 +35,7 @@ export function BioLinksDesignForm({ settings }: BioLinksDesignFormProps) {
     const [avatarDark, setAvatarDark] = useState(
         settings.bio_avatar_url_dark || "",
     );
-    const [bioTitle, setBioTitle] = useState(
-        settings.bio_title || "",
-    );
+    const [bioTitle, setBioTitle] = useState(settings.bio_title || "");
     const [bioDescription, setBioDescription] = useState(
         settings.bio_description || "",
     );
@@ -54,13 +52,19 @@ export function BioLinksDesignForm({ settings }: BioLinksDesignFormProps) {
 
     // Cores Opcionais da Bio
     const [primaryLight, setPrimaryLight] = useState(
-        settings.bio_primary_color_light || settings.primary_color_light || "#10B981",
+        settings.bio_primary_color_light ||
+            settings.primary_color_light ||
+            "#10B981",
     );
     const [primaryDark, setPrimaryDark] = useState(
-        settings.bio_primary_color_dark || settings.primary_color_dark || "#10B981",
+        settings.bio_primary_color_dark ||
+            settings.primary_color_dark ||
+            "#10B981",
     );
     const [useCustomColors, setUseCustomColors] = useState(
-        Boolean(settings.bio_primary_color_light || settings.bio_primary_color_dark),
+        Boolean(
+            settings.bio_primary_color_light || settings.bio_primary_color_dark,
+        ),
     );
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -99,7 +103,8 @@ export function BioLinksDesignForm({ settings }: BioLinksDesignFormProps) {
                 setFeedback({
                     type: "error",
                     message:
-                        res.error || "Ocorreu um erro ao salvar as configurações.",
+                        res.error ||
+                        "Ocorreu um erro ao salvar as configurações.",
                 });
             }
         });
@@ -135,7 +140,8 @@ export function BioLinksDesignForm({ settings }: BioLinksDesignFormProps) {
                             Foto de Perfil & Textos da Bio
                         </h2>
                         <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                            Configure imagem dedicada e biografia para o topo da página agregadora de links.
+                            Configure imagem dedicada e biografia para o topo da
+                            página agregadora de links.
                         </p>
                     </div>
                 </div>
@@ -173,12 +179,16 @@ export function BioLinksDesignForm({ settings }: BioLinksDesignFormProps) {
                             type="text"
                             value={bioTitle}
                             onChange={(e) => setBioTitle(e.target.value)}
-                            placeholder={settings.site_name || "Ex: PromoCuts — Melhores Ofertas"}
+                            placeholder={
+                                settings.site_name ||
+                                "Ex: PromoCuts — Melhores Ofertas"
+                            }
                             maxLength={100}
                             className="w-full px-3.5 py-2.5 bg-neutral-50 dark:bg-neutral-950 border border-neutral-300 dark:border-neutral-700 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none dark:text-white"
                         />
                         <p className="text-[11px] text-neutral-500">
-                            Se vazio, exibirá o nome da vitrine: &ldquo;{settings.site_name}&rdquo;.
+                            Se vazio, exibirá o nome da vitrine: &ldquo;
+                            {settings.site_name}&rdquo;.
                         </p>
                     </div>
 
@@ -195,12 +205,16 @@ export function BioLinksDesignForm({ settings }: BioLinksDesignFormProps) {
                             rows={3}
                             value={bioDescription}
                             onChange={(e) => setBioDescription(e.target.value)}
-                            placeholder={settings.site_description || "Acompanhe nossos grupos e achados recomendados diariamente!"}
+                            placeholder={
+                                settings.site_description ||
+                                "Acompanhe nossos grupos e achados recomendados diariamente!"
+                            }
                             maxLength={500}
                             className="w-full px-3.5 py-2.5 bg-neutral-50 dark:bg-neutral-950 border border-neutral-300 dark:border-neutral-700 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none dark:text-white resize-none"
                         />
                         <p className="text-[11px] text-neutral-500">
-                            Texto exibido logo abaixo do avatar na visualização dos links.
+                            Texto exibido logo abaixo do avatar na visualização
+                            dos links.
                         </p>
                     </div>
                 </div>
@@ -217,7 +231,8 @@ export function BioLinksDesignForm({ settings }: BioLinksDesignFormProps) {
                             Cartaz da Vitrine de Cortes
                         </h2>
                         <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                            Escolha como apresentar o acesso aos vídeos de cortes no feed de Bio Links.
+                            Escolha como apresentar o acesso aos vídeos de
+                            cortes no feed de Bio Links.
                         </p>
                     </div>
                 </div>
@@ -242,7 +257,9 @@ export function BioLinksDesignForm({ settings }: BioLinksDesignFormProps) {
                             Banner Principal
                         </h3>
                         <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
-                            Cartaz visual expandido com gradiente, miniatura de vídeo em destaque e botão de ação rápida &ldquo;Assistir Vídeos&rdquo;.
+                            Cartaz visual expandido com gradiente, miniatura de
+                            vídeo em destaque e botão de ação rápida
+                            &ldquo;Assistir Vídeos&rdquo;.
                         </p>
                     </div>
 
@@ -265,7 +282,8 @@ export function BioLinksDesignForm({ settings }: BioLinksDesignFormProps) {
                             Card na Lista
                         </h3>
                         <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
-                            Apresentado com a mesma dimensão dos links normais, com ícone de reprodução e selo sutil de vitrine.
+                            Apresentado com a mesma dimensão dos links normais,
+                            com ícone de reprodução e selo sutil de vitrine.
                         </p>
                     </div>
 
@@ -288,7 +306,8 @@ export function BioLinksDesignForm({ settings }: BioLinksDesignFormProps) {
                             Ocultar Vitrine
                         </h3>
                         <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
-                            Remove o cartaz da vitrine de vídeos, exibindo estritamente a lista de links e redes do criador.
+                            Remove o cartaz da vitrine de vídeos, exibindo
+                            estritamente a lista de links e redes do criador.
                         </p>
                     </div>
                 </div>
@@ -305,7 +324,9 @@ export function BioLinksDesignForm({ settings }: BioLinksDesignFormProps) {
                             Widget Flutuante de QR Code no Desktop
                         </h2>
                         <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                            Permite aos visitantes em computadores lerem o código com o celular para abrir a página de links instantaneamente.
+                            Permite aos visitantes em computadores lerem o
+                            código com o celular para abrir a página de links
+                            instantaneamente.
                         </p>
                     </div>
                 </div>
@@ -319,7 +340,7 @@ export function BioLinksDesignForm({ settings }: BioLinksDesignFormProps) {
                             Exibir card de QR Code lateral no Desktop
                         </label>
                         <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                            Renderiza um QR Code em SVG puro (sem consumo de rede ou dependências) ao lado do feed centralizado.
+                            Cria um QR Code ao lado do feed centralizado.
                         </p>
                     </div>
                     <input
@@ -344,7 +365,9 @@ export function BioLinksDesignForm({ settings }: BioLinksDesignFormProps) {
                                 Cores do Bio Links
                             </h2>
                             <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                                Por padrão, utiliza as cores da vitrine ({settings.primary_color_light}). Ative para definir uma paleta exclusiva.
+                                Por padrão, utiliza as cores da vitrine (
+                                {settings.primary_color_light}). Ative para
+                                definir uma paleta exclusiva.
                             </p>
                         </div>
                     </div>
@@ -352,7 +375,9 @@ export function BioLinksDesignForm({ settings }: BioLinksDesignFormProps) {
                         <input
                             type="checkbox"
                             checked={useCustomColors}
-                            onChange={(e) => setUseCustomColors(e.target.checked)}
+                            onChange={(e) =>
+                                setUseCustomColors(e.target.checked)
+                            }
                             className="w-4 h-4 text-emerald-600 rounded-md border-neutral-300 dark:border-neutral-700 focus:ring-emerald-500 cursor-pointer"
                         />
                         Cor personalizada
@@ -369,13 +394,21 @@ export function BioLinksDesignForm({ settings }: BioLinksDesignFormProps) {
                                 <input
                                     type="color"
                                     value={primaryLight}
-                                    onChange={(e) => setPrimaryLight(e.target.value.toUpperCase())}
+                                    onChange={(e) =>
+                                        setPrimaryLight(
+                                            e.target.value.toUpperCase(),
+                                        )
+                                    }
                                     className="w-10 h-10 rounded-lg cursor-pointer border border-neutral-300 dark:border-neutral-700 p-0.5 bg-transparent"
                                 />
                                 <input
                                     type="text"
                                     value={primaryLight}
-                                    onChange={(e) => setPrimaryLight(e.target.value.toUpperCase())}
+                                    onChange={(e) =>
+                                        setPrimaryLight(
+                                            e.target.value.toUpperCase(),
+                                        )
+                                    }
                                     maxLength={7}
                                     className="w-28 px-3 py-1.5 text-xs font-mono uppercase bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white"
                                 />
@@ -390,13 +423,21 @@ export function BioLinksDesignForm({ settings }: BioLinksDesignFormProps) {
                                 <input
                                     type="color"
                                     value={primaryDark}
-                                    onChange={(e) => setPrimaryDark(e.target.value.toUpperCase())}
+                                    onChange={(e) =>
+                                        setPrimaryDark(
+                                            e.target.value.toUpperCase(),
+                                        )
+                                    }
                                     className="w-10 h-10 rounded-lg cursor-pointer border border-neutral-300 dark:border-neutral-700 p-0.5 bg-transparent"
                                 />
                                 <input
                                     type="text"
                                     value={primaryDark}
-                                    onChange={(e) => setPrimaryDark(e.target.value.toUpperCase())}
+                                    onChange={(e) =>
+                                        setPrimaryDark(
+                                            e.target.value.toUpperCase(),
+                                        )
+                                    }
                                     maxLength={7}
                                     className="w-28 px-3 py-1.5 text-xs font-mono uppercase bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white"
                                 />

@@ -159,6 +159,19 @@ CREATE TABLE IF NOT EXISTS public.bio_link_clicks (
     referrer VARCHAR(1024) CHECK (referrer IS NULL OR length(referrer) <= 1024)
 );
 
+-- 12. Tabela de Redes Sociais Oficiais da Marca (Fase 9)
+CREATE TABLE IF NOT EXISTS public.brand_social_links (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    platform VARCHAR(50) NOT NULL,
+    url TEXT NOT NULL CHECK (url ~* '^https?://'),
+    show_in_storefront BOOLEAN NOT NULL DEFAULT true,
+    show_in_bio BOOLEAN NOT NULL DEFAULT true,
+    display_order INT NOT NULL DEFAULT 0,
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- 12. Funcao e Triggers de Atualizacao de updated_at
 CREATE OR REPLACE FUNCTION public.handle_updated_at()
 RETURNS TRIGGER 
@@ -208,6 +221,12 @@ CREATE TRIGGER set_bio_links_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION public.handle_updated_at();
 
+DROP TRIGGER IF EXISTS set_brand_social_links_updated_at ON public.brand_social_links;
+CREATE TRIGGER set_brand_social_links_updated_at
+    BEFORE UPDATE ON public.brand_social_links
+    FOR EACH ROW
+    EXECUTE FUNCTION public.handle_updated_at();
+
 -- 13. Funcao e Trigger de Incremento de Cliques em Bio Links (Fase 9)
 CREATE OR REPLACE FUNCTION public.handle_bio_link_click_increment()
 RETURNS TRIGGER 
@@ -245,6 +264,8 @@ CREATE INDEX IF NOT EXISTS idx_affiliate_clicks_link_id ON public.affiliate_clic
 CREATE INDEX IF NOT EXISTS idx_bio_links_is_active ON public.bio_links(is_active, display_order ASC);
 CREATE INDEX IF NOT EXISTS idx_bio_link_clicks_bio_link_id ON public.bio_link_clicks(bio_link_id);
 CREATE INDEX IF NOT EXISTS idx_bio_link_clicks_created_at ON public.bio_link_clicks(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_brand_social_links_order ON public.brand_social_links(display_order ASC);
+CREATE INDEX IF NOT EXISTS idx_brand_social_links_active ON public.brand_social_links(is_active, show_in_storefront, show_in_bio);
 
 -- 15. Habilitacao Estrita de Row Level Security (RLS)
 ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
@@ -256,6 +277,7 @@ ALTER TABLE public.affiliate_clicks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.site_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.bio_links ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.bio_link_clicks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.brand_social_links ENABLE ROW LEVEL SECURITY;
 
 -- 16. Politicas de Acesso Publico
 DROP POLICY IF EXISTS "Public read access for site_settings" ON public.site_settings;
@@ -343,6 +365,12 @@ CREATE POLICY "Public insert access for bio link click tracking"
         AND (user_agent IS NULL OR length(user_agent) <= 512)
         AND (referrer IS NULL OR length(referrer) <= 1024)
     );
+
+DROP POLICY IF EXISTS "Allow public read on active brand_social_links" ON public.brand_social_links;
+CREATE POLICY "Allow public read on active brand_social_links"
+    ON public.brand_social_links FOR SELECT
+    TO anon, authenticated
+    USING (is_active = true);
 
 -- 17. Carga Inicial Singleton de Configuracoes de Marca
 INSERT INTO public.site_settings (id)

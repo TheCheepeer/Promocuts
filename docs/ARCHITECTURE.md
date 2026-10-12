@@ -523,5 +523,23 @@ Para consolidar o PromoCuts como um agregador soberano e superior ao Linktree tr
     - **Custo Operacional Zero e Zero Dependências:** Gera strings SVG vetoriais puras (`<svg><path d="..." /></svg>`) de alta nitidez sem necessidade de pacotes npm pesados de terceiros, sem dependências de compilação C++ (canvas) e sem requisições a APIs externas.
     - Renderizado na visualização desktop do Bio Links em um card lateral ("Escanear no celular") que permite a visitantes em computadores abrirem a página de links instantaneamente em seus smartphones.
 
+### 10.6 Padrão Strategy para Redes Sociais da Marca e Rota Administrativa Dedicada (`/admin/social`)
 
+Para resolver a rigidez arquitetural dos campos estáticos prévios em `site_settings` (restritos a Instagram, TikTok e YouTube) e garantir suporte ilimitado a novos canais e plataformas de streaming sem alterações de esquema de banco de dados, o PromoCuts implementou uma arquitetura orientada ao **Padrão Strategy**:
 
+- **Módulo de Estratégias (`src/lib/social/strategies.ts`):**
+    - Cada plataforma suportada é encapsulada em um objeto de estratégia (`SocialPlatformStrategy`) contendo metadados essenciais: identificador único, nome amigável, categoria (`video`, `streaming`, `social`, `community`, `audio`, `monetization`, `other`), cor oficial de marca, texto de exemplo (*placeholder*), prefixo de URL base, função formatadora de URL (`formatUrl`) e avaliador de correspondência de domínios (`matchesUrl`).
+    - **Catálogo Expandido (30+ Plataformas):** Cobre todas as redes populares de criadores, incluindo YouTube, TikTok, Twitch, Kick, Instagram, Reddit, X (Twitter), Threads, Bluesky, Facebook, Pinterest, LinkedIn, Kwai, Discord, Telegram, WhatsApp, Spotify, Apple Music, Deezer, SoundCloud, Steam, PIX, Apoia-se, Patreon, Ko-fi, Buy Me a Coffee, Snapchat, Substack, Amazon Store, GitHub e Links Externos genéricos.
+- **Autodetecção Inteligente de URLs:**
+    - Ao colar ou digitar qualquer link no formulário, a função `detectPlatformFromUrl` inspeciona a URL por expressões regulares e identifica automaticamente a plataforma correspondente (ex: `https://reddit.com/...` seleciona imediatamente o Reddit), sugerindo o nome e configurando o ícone sem necessidade de seleção manual.
+- **Seletor Memoizado de Ícones de Alta Performance (`BioLinkIconSelector`):**
+    - Componente isolado envolto em `React.memo` que elimina completamente as re-renderizações desnecessárias do DOM durante a digitação de títulos e URLs no modal, mantendo estabilidade a 60 FPS mesmo com catálogo amplo de botões e SVGs.
+    - Inclui campo de busca instantânea e abas de filtros por categoria temática.
+- **Controle Granular e Independente de Exibição:**
+    - Cada rede social cadastrada em `brand_social_links` possui dois sinalizadores booleanos independentes:
+        - `show_in_storefront`: define se o ícone da rede social aparece no cabeçalho compacto da Vitrine (`PublicHeader`);
+        - `show_in_bio`: define se a rede social aparece na seção superior de perfis da página de Bio Links (`BioLinksView`).
+    - Permite que o criador, por exemplo, exiba seus canais de streaming na página de bio links enquanto mantém a vitrine com um visual limpo e focado em conversão.
+- **Nova Rota Administrativa `/admin/social`:**
+    - Interface dedicada com listagem reordenável, botões diretos de alternância de visibilidade (*toggles* com atualização otimista em um clique), modal completo de edição e remoção segura.
+    - O formulário geral de configurações (`/admin/settings`) foi desacoplado, substituindo os três campos legados por um cartão de integração que direciona ao novo gerenciador.

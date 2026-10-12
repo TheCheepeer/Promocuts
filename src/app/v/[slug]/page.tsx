@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getSiteSettings } from "@/lib/settings";
+import { getStorefrontSocialLinks } from "@/lib/social/queries";
 import { PublicHeader } from "@/components/public/header";
 import { VideoPlayer } from "@/components/public/video-player";
 import { ProductCard } from "@/components/public/product-card";
@@ -56,7 +57,10 @@ export async function generateMetadata({
 
 export default async function VideoPage({ params }: VideoPageProps) {
     const { slug } = await params;
-    const settings = await getSiteSettings();
+    const [settings, socialLinks] = await Promise.all([
+        getSiteSettings(),
+        getStorefrontSocialLinks(),
+    ]);
     const supabase = await createClient();
 
     // Consulta o corte com categoria e produtos vinculados
@@ -92,7 +96,7 @@ export default async function VideoPage({ params }: VideoPageProps) {
 
     return (
         <div className="flex min-h-dvh flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50">
-            <PublicHeader settings={settings} />
+            <PublicHeader settings={settings} socialLinks={socialLinks} />
 
             <main className="flex-1 py-6 sm:py-10">
                 <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">

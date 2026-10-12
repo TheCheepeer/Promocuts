@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
+import Link from "next/link";
 import {
     Save,
     Loader2,
@@ -9,6 +10,7 @@ import {
     Sparkles,
     Globe,
     Share2,
+    ExternalLink,
 } from "lucide-react";
 import { AssetInput } from "./asset-input";
 import { updateSiteSettingsAction } from "./actions";
@@ -68,12 +70,6 @@ export function SettingsForm({ settings }: SettingsFormProps) {
     const [faviconDark, setFaviconDark] = useState(
         settings.favicon_url_dark || "",
     );
-
-    // Redes Sociais
-    const [instagram, setInstagram] = useState(settings.social_instagram || "");
-    const [tiktok, setTiktok] = useState(settings.social_tiktok || "");
-    const [youtube, setYoutube] = useState(settings.social_youtube || "");
-
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setFeedback(null);
@@ -96,9 +92,9 @@ export function SettingsForm({ settings }: SettingsFormProps) {
         formData.set("favicon_url_light", faviconLight);
         formData.set("favicon_url_dark", faviconDark);
 
-        formData.set("social_instagram", instagram);
-        formData.set("social_tiktok", tiktok);
-        formData.set("social_youtube", youtube);
+        formData.set("social_instagram", settings.social_instagram || "");
+        formData.set("social_tiktok", settings.social_tiktok || "");
+        formData.set("social_youtube", settings.social_youtube || "");
 
         startTransition(async () => {
             const res = await updateSiteSettingsAction(
@@ -509,73 +505,39 @@ export function SettingsForm({ settings }: SettingsFormProps) {
                 </div>
             </div>
 
-            {/* Secao 4: Redes Sociais */}
+            {/* Secao 4: Redes Sociais da Marca */}
             <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-4">
-                <div className="flex items-center gap-2.5 pb-3 border-b border-zinc-100 dark:border-zinc-800">
-                    <div className="p-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200">
-                        <Share2 className="h-4 w-4" />
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-zinc-100 dark:border-zinc-800">
+                    <div className="flex items-center gap-2.5">
+                        <div className="p-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200">
+                            <Share2 className="h-4 w-4" />
+                        </div>
+                        <div>
+                            <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                                Presença nas Redes Sociais da Marca
+                            </h2>
+                            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                                Gerencie seus perfis oficiais com controle independente de exibição para a vitrine e bio links.
+                            </p>
+                        </div>
                     </div>
-                    <div>
-                        <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
-                            Presenca nas Redes Sociais
-                        </h2>
-                        <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                            Links opcionais para os perfis oficiais da marca.
-                        </p>
-                    </div>
+
+                    <Link
+                        href="/admin/social"
+                        className="inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-4 py-2 text-xs font-bold text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 transition-colors shadow-xs shrink-0"
+                    >
+                        <span>Gerenciar Redes Sociais</span>
+                        <ExternalLink className="h-3.5 w-3.5" />
+                    </Link>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                        <label
-                            htmlFor="social-instagram"
-                            className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1"
-                        >
-                            Instagram
-                        </label>
-                        <input
-                            id="social-instagram"
-                            type="url"
-                            value={instagram}
-                            onChange={(e) => setInstagram(e.target.value)}
-                            placeholder="https://instagram.com/..."
-                            className="w-full text-xs font-mono px-3 py-2 rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100"
-                        />
-                    </div>
-
-                    <div>
-                        <label
-                            htmlFor="social-tiktok"
-                            className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1"
-                        >
-                            TikTok
-                        </label>
-                        <input
-                            id="social-tiktok"
-                            type="url"
-                            value={tiktok}
-                            onChange={(e) => setTiktok(e.target.value)}
-                            placeholder="https://tiktok.com/@..."
-                            className="w-full text-xs font-mono px-3 py-2 rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100"
-                        />
-                    </div>
-
-                    <div>
-                        <label
-                            htmlFor="social-youtube"
-                            className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1"
-                        >
-                            Canal no YouTube
-                        </label>
-                        <input
-                            id="social-youtube"
-                            type="url"
-                            value={youtube}
-                            onChange={(e) => setYoutube(e.target.value)}
-                            placeholder="https://youtube.com/@..."
-                            className="w-full text-xs font-mono px-3 py-2 rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100"
-                        />
-                    </div>
+                <div className="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200/80 dark:border-zinc-800/80 text-xs text-zinc-600 dark:text-zinc-400 space-y-2">
+                    <p>
+                        A gestão de canais oficiais (Instagram, TikTok, YouTube, Twitch, Kick, Discord, Reddit, X, etc.) agora é centralizada na aba dedicada <strong>Redes Sociais</strong>.
+                    </p>
+                    <p className="text-[11px] text-zinc-500 dark:text-zinc-500">
+                        Lá você pode adicionar qualquer plataforma, reordenar a exibição e alternar em um clique onde cada ícone deve aparecer (no cabeçalho da Vitrine de Vídeos ou no perfil do Bio Links).
+                    </p>
                 </div>
             </div>
 

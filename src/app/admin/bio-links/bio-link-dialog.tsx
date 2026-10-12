@@ -12,6 +12,8 @@ import {
     BioLinkIcon,
     BIO_LINK_AVAILABLE_ICONS,
 } from "./bio-link-icons";
+import { BioLinkIconSelector } from "./bio-link-icon-selector";
+import { detectPlatformFromUrl } from "@/lib/social/strategies";
 import { createBioLinkAction, updateBioLinkAction } from "./actions";
 import type { BioLink } from "@/types/database";
 
@@ -188,43 +190,27 @@ export function BioLinkDialog({
                             type="url"
                             required
                             value={url}
-                            onChange={(e) => setUrl(e.target.value)}
+                            onChange={(e) => {
+                                const newUrl = e.target.value;
+                                setUrl(newUrl);
+                                const detected = detectPlatformFromUrl(newUrl);
+                                if (detected) {
+                                    setIcon(detected.id);
+                                    if (!title) {
+                                        setTitle(detected.name);
+                                    }
+                                }
+                            }}
                             placeholder="https://..."
                             className="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2 text-sm text-zinc-900 focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:focus:border-zinc-100 dark:focus:ring-zinc-100 font-mono text-xs"
                         />
                     </div>
 
-                    {/* Seletor de Ícones */}
-                    <div>
-                        <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-300">
-                            Plataforma / Ícone
-                        </label>
-                        <div className="mt-2 grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-36 overflow-y-auto p-1.5 rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950/40">
-                            {BIO_LINK_AVAILABLE_ICONS.map((opt) => {
-                                const isSelected = icon === opt.id;
-                                return (
-                                    <button
-                                        key={opt.id}
-                                        type="button"
-                                        onClick={() => setIcon(opt.id)}
-                                        className={`flex items-center gap-2 p-2 rounded-lg text-left text-xs transition-all ${
-                                            isSelected
-                                                ? "bg-white shadow-xs border border-zinc-300 font-semibold text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
-                                                : "text-zinc-600 hover:bg-zinc-200/50 dark:text-zinc-400 dark:hover:bg-zinc-800/50"
-                                        }`}
-                                    >
-                                        <div
-                                            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-white"
-                                            style={{ backgroundColor: opt.brandColor }}
-                                        >
-                                            <BioLinkIcon name={opt.id} className="h-3.5 w-3.5" />
-                                        </div>
-                                        <span className="truncate">{opt.label}</span>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
+                    {/* Seletor de Ícones Otimizado com Memoização e Categorias */}
+                    <BioLinkIconSelector
+                        selectedIcon={icon}
+                        onSelectIcon={setIcon}
+                    />
 
                     {/* Crachá de Destaque */}
                     <div>
