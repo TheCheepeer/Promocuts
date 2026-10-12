@@ -39,3 +39,4 @@ CREATE POLICY "Deny public select access on page_views"
     ON public.page_views FOR SELECT
     TO anon, authenticated
     USING (false);
+
