@@ -518,38 +518,86 @@ export function MetricsDashboard({
                             />
                         )}
 
-                        {/* Pontos Interativos com Tooltip Nativo SVG */}
-                        {points.map((p, idx) => (
-                            <g key={idx}>
-                                <title>{`${p.label}: ${p.totalClicks} cliques (${p.affiliateClicks} em produtos, ${p.bioLinkClicks} em bio links)`}</title>
-                                {p.affiliateClicks > 0 && (
-                                    <circle
-                                        cx={p.x}
-                                        cy={p.yAffiliate}
-                                        r="3.5"
-                                        fill="#10B981"
-                                        className="transition-transform hover:scale-150"
+                        {/* Colunas Interativas com Área de Captura Estável (Zero Tremor) */}
+                        {points.map((p, idx) => {
+                            const colWidth = Math.max(innerW / Math.max(points.length, 1), 20);
+                            return (
+                                <g key={idx} className="group cursor-pointer">
+                                    <title>{`${p.label}: ${p.totalClicks} cliques (${p.affiliateClicks} em produtos, ${p.bioLinkClicks} em bio links)`}</title>
+
+                                    {/* Linha Guia Vertical Sutil no Hover */}
+                                    <line
+                                        x1={p.x}
+                                        y1={paddingTop}
+                                        x2={p.x}
+                                        y2={paddingTop + innerH}
+                                        stroke="currentColor"
+                                        className="text-zinc-300 dark:text-zinc-700 opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none"
+                                        strokeDasharray="2 2"
                                     />
-                                )}
-                                {p.bioLinkClicks > 0 && (
-                                    <circle
-                                        cx={p.x}
-                                        cy={p.yBio}
-                                        r="3.5"
-                                        fill="#6366F1"
-                                        className="transition-transform hover:scale-150"
+
+                                    {/* Ponto de Produtos */}
+                                    {p.affiliateClicks > 0 && (
+                                        <g className="pointer-events-none [transform-box:fill-box] [transform-origin:center] transition-transform duration-150 group-hover:scale-125">
+                                            <circle
+                                                cx={p.x}
+                                                cy={p.yAffiliate}
+                                                r="5.5"
+                                                fill="#10B981"
+                                                className="opacity-20 group-hover:opacity-40 transition-opacity"
+                                            />
+                                            <circle
+                                                cx={p.x}
+                                                cy={p.yAffiliate}
+                                                r="3.5"
+                                                fill="#10B981"
+                                                className="stroke-white dark:stroke-zinc-900 stroke-1"
+                                            />
+                                        </g>
+                                    )}
+
+                                    {/* Ponto de Bio Links */}
+                                    {p.bioLinkClicks > 0 && (
+                                        <g className="pointer-events-none [transform-box:fill-box] [transform-origin:center] transition-transform duration-150 group-hover:scale-125">
+                                            <circle
+                                                cx={p.x}
+                                                cy={p.yBio}
+                                                r="5.5"
+                                                fill="#6366F1"
+                                                className="opacity-20 group-hover:opacity-40 transition-opacity"
+                                            />
+                                            <circle
+                                                cx={p.x}
+                                                cy={p.yBio}
+                                                r="3.5"
+                                                fill="#6366F1"
+                                                className="stroke-white dark:stroke-zinc-900 stroke-1"
+                                            />
+                                        </g>
+                                    )}
+
+                                    {/* Rótulo de Data no Eixo X com Destaque no Hover */}
+                                    <text
+                                        x={p.x}
+                                        y={svgHeight - 6}
+                                        textAnchor="middle"
+                                        className="text-[10px] fill-zinc-400 group-hover:fill-zinc-900 dark:group-hover:fill-zinc-100 font-sans select-none transition-colors"
+                                    >
+                                        {p.label}
+                                    </text>
+
+                                    {/* Área Invisível de Captura de Mouse (Garante Alvo Estável Sem Tremer) */}
+                                    <rect
+                                        x={p.x - colWidth / 2}
+                                        y={paddingTop}
+                                        width={colWidth}
+                                        height={innerH}
+                                        fill="transparent"
+                                        className="cursor-pointer"
                                     />
-                                )}
-                                <text
-                                    x={p.x}
-                                    y={svgHeight - 6}
-                                    textAnchor="middle"
-                                    className="text-[10px] fill-zinc-400 font-sans select-none"
-                                >
-                                    {p.label}
-                                </text>
-                            </g>
-                        ))}
+                                </g>
+                            );
+                        })}
                     </svg>
                 </div>
             </div>
