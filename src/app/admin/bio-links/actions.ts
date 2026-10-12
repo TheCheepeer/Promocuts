@@ -392,3 +392,132 @@ export async function reorderBioLinksAction(
     }
 }
 
+const HEX_COLOR_REGEX = /^#[0-9A-Fa-f]{6}$/;
+
+function validateOptionalColor(
+    val: FormDataEntryValue | null,
+    fieldName: string,
+): string | null {
+    if (!val || typeof val !== "string" || val.trim() === "") {
+        return null;
+    }
+    const clean = val.trim();
+    if (!HEX_COLOR_REGEX.test(clean)) {
+        throw new Error(
+            `A cor informada para "${fieldName}" (${clean}) é inválida. Utilize o formato hexadecimal estrito (ex: #10B981).`,
+        );
+    }
+    return clean.toUpperCase();
+}
+
+function validateOptionalUrl(
+    val: FormDataEntryValue | null,
+    fieldName: string,
+): string | null {
+    if (!val || typeof val !== "string" || val.trim() === "") {
+        return null;
+    }
+    const clean = val.trim();
+    if (!/^(https?:\/\/|\/|data:image\/)/i.test(clean)) {
+        throw new Error(
+            `O endereço informado para "${fieldName}" deve ser uma URL válida ou caminho de upload.`,
+        );
+    }
+    return clean;
+}
+
+/**
+ * Atualiza as configurações de personalização visual da página pública de Bio Links.
+ */
+export async function updateBioLinksDesignAction(
+    _prevState: BioLinkActionState,
+    formData: FormData,
+): Promise<BioLinkActionState> {
+    try {
+        const { adminDb } = await requireAdminAuth();
+
+        const rawAvatarLight = formData.get("bio_avatar_url_light");
+        const rawAvatarDark = formData.get("bio_avatar_url_dark");
+        const rawStorefrontBanner = formData.get("bio_show_storefront_banner");
+        const rawShowQrCode = formData.get("bio_show_qrcode");
+        const rawTitle = formData.get("bio_title");
+        const rawDescription = formData.get("bio_description");
+        const rawPrimaryLight = formData.get("bio_primary_color_light");
+        const rawPrimaryDark = formData.get("bio_primary_color_dark");
+
+        const bioAvatarUrlLight = validateOptionalUrl(rawAvatarLight, "Foto de Perfil (Modo Claro)");
+        const bioAvatarUrlDark = validateOptionalUrl(rawAvatarDark, "Foto de Perfil (Modo Escuro)");
+
+        const bannerStyle =
+            typeof rawStorefrontBanner === "string" &&
+            ["banner", "compact", "hidden"].includes(rawStorefrontBanner)
+                ? (rawStorefrontBanner as "banner" | "compact" | "hidden")
+                : "banner";
+
+        const bioShowQrCode = rawShowQrCode === "true" || rawShowQrCode === "on";
+
+        const bioTitle =
+            typeof rawTitle === "string" && rawTitle.trim() !== ""
+                ? rawTitle.trim().slice(0, 100)
+                : null;
+
+        const bioDescription =
+            typeof rawDescription === "string" && rawDescription.trim() !== ""
+                ? rawDescription.trim().slice(0, 500)
+                : null;
+
+        const bioPrimaryColorLight = validateOptionalColor(
+            rawPrimaryLight,
+            "Cor Primária no Bio Links (Modo Claro)",
+        );
+        const bioPrimaryColorDark = validateOptionalColor(
+            rawPrimaryDark,
+            "Cor Primária no Bio Links (Modo Escuro)",
+        );
+
+        const { error } = await adminDb
+            .from("site_settings")
+            .update({
+                bio_avatar_url_light: bioAvatarUrlLight,
+                bio_avatar_url_dark: bioAvatarUrlDark,
+                bio_show_storefront_banner: bannerStyle,
+                bio_show_qrcode: bioShowQrCode,
+                bio_title: bioTitle,
+                bio_description: bioDescription,
+                bio_primary_color_light: bioPrimaryColorLight,
+                bio_primary_color_dark: bioPrimaryColorDark,
+            })
+            .eq("id", 1);
+
+        if (error) {
+            logger.error("Erro ao atualizar design do Bio Links no Supabase", { erro: error.message });
+            return {
+                success: false,
+                error: `Erro ao salvar personalização: ${error.message}`,
+            };
+        }
+
+        await invalidateFeedCache();
+        revalidatePath("/admin/bio-links");
+        revalidatePath("/links");
+        revalidatePath("/bio");
+        revalidatePath("/");
+
+        return {
+            success: true,
+            message: "Personalização e design do Bio Links atualizados com sucesso.",
+        };
+    } catch (err) {
+        logger.error("Exceção ao atualizar personalização de Bio Links", {
+            erro: err instanceof Error ? err.message : String(err),
+        });
+        return {
+            success: false,
+            error:
+                err instanceof Error
+                    ? err.message
+                    : "Erro inesperado ao salvar a personalização visual.",
+        };
+    }
+}
+

@@ -8,6 +8,8 @@ export type Json =
 
 export type VideoPlatform = "tiktok" | "reels" | "shorts";
 
+export type BioStorefrontBannerStyle = "banner" | "compact" | "hidden";
+
 export type SiteSettings = {
     id: number;
     site_name: string;
@@ -23,6 +25,14 @@ export type SiteSettings = {
     logo_icon_url_dark: string | null;
     favicon_url_light: string | null;
     favicon_url_dark: string | null;
+    bio_avatar_url_light: string | null;
+    bio_avatar_url_dark: string | null;
+    bio_show_storefront_banner: BioStorefrontBannerStyle;
+    bio_show_qrcode: boolean;
+    bio_title: string | null;
+    bio_description: string | null;
+    bio_primary_color_light: string | null;
+    bio_primary_color_dark: string | null;
     social_instagram: string | null;
     social_tiktok: string | null;
     social_youtube: string | null;

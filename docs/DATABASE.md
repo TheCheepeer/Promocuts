@@ -55,6 +55,14 @@ erDiagram
         text logo_icon_url_dark
         text favicon_url_light
         text favicon_url_dark
+        text bio_avatar_url_light
+        text bio_avatar_url_dark
+        varchar bio_show_storefront_banner
+        boolean bio_show_qrcode
+        varchar bio_title
+        text bio_description
+        varchar bio_primary_color_light
+        varchar bio_primary_color_dark
         varchar social_instagram
         varchar social_tiktok
         varchar social_youtube
@@ -282,9 +290,17 @@ Armazena os parâmetros globais de customização de marca, cores, logotipos e m
 | `logo_url_dark`         | `TEXT`         | Sim  | `NULL`                                                              | Referência a PNG ou SVG para logo escura (fallback automático para `logo_url_light`)           |
 | `logo_icon_url_light`   | `TEXT`         | Sim  | `NULL`                                                              | Referência a PNG ou SVG para ícone mobile no modo claro                                        |
 | `logo_icon_url_dark`    | `TEXT`         | Sim  | `NULL`                                                              | Referência a PNG ou SVG para ícone mobile no modo escuro (fallback para `logo_icon_url_light`) |
-| `favicon_url_light`     | `TEXT`         | Sim  | `NULL`                                                              | Referência a PNG ou SVG para favicon tema claro (`media="(prefers-color-scheme: light)"`)      |
-| `favicon_url_dark`      | `TEXT`         | Sim  | `NULL`                                                              | Referência a PNG ou SVG para favicon tema escuro (`media="(prefers-color-scheme: dark)"`)      |
-| `social_instagram`      | `VARCHAR(255)` | Sim  | `NULL`                                                              | Link opcional para o perfil da marca no Instagram                                              |
+| `favicon_url_light`           | `TEXT`         | Sim  | `NULL`                                                              | Referência a PNG ou SVG para favicon tema claro (`media="(prefers-color-scheme: light)"`)      |
+| `favicon_url_dark`            | `TEXT`         | Sim  | `NULL`                                                              | Referência a PNG ou SVG para favicon tema escuro (`media="(prefers-color-scheme: dark)"`)      |
+| `bio_avatar_url_light`        | `TEXT`         | Sim  | `NULL`                                                              | Foto de perfil dedicada para o Bio Links no modo claro (URL HTTPS ou `/uploads/...`)            |
+| `bio_avatar_url_dark`         | `TEXT`         | Sim  | `NULL`                                                              | Foto de perfil dedicada para o Bio Links no modo escuro (fallback para tema claro ou logos)     |
+| `bio_show_storefront_banner`  | `VARCHAR(20)`  | Não  | `'banner'`                                                          | Exibição do cartaz da vitrine no Bio Links (`'banner'`, `'compact'`, `'hidden'`)               |
+| `bio_show_qrcode`             | `BOOLEAN`      | Não  | `true`                                                              | Habilita widget lateral desktop de QR Code gerado em SVG puro para leitura no celular           |
+| `bio_title`                   | `VARCHAR(100)` | Sim  | `NULL`                                                              | Título opcional da página de links (fallback para `site_name`)                                  |
+| `bio_description`             | `TEXT`         | Sim  | `NULL`                                                              | Biografia curta exibida no Bio Links (fallback para `site_tagline`)                             |
+| `bio_primary_color_light`     | `VARCHAR(20)`  | Sim  | `NULL`                                                              | Cor primária opcional da página de links no modo claro (formato `#RRGGBB`)                      |
+| `bio_primary_color_dark`      | `VARCHAR(20)`  | Sim  | `NULL`                                                              | Cor primária opcional da página de links no modo escuro (formato `#RRGGBB`)                     |
+| `social_instagram`            | `VARCHAR(255)` | Sim  | `NULL`                                                              | Link opcional para o perfil da marca no Instagram                                              |
 | `social_tiktok`         | `VARCHAR(255)` | Sim  | `NULL`                                                              | Link opcional para o perfil da marca no TikTok                                                 |
 | `social_youtube`        | `VARCHAR(255)` | Sim  | `NULL`                                                              | Link opcional para o canal no YouTube                                                          |
 | `footer_text`           | `TEXT`         | Sim  | `'PromoCuts — Todos os direitos reservados.'`                       | Mensagem de rodapé e direitos autorais                                                         |

@@ -34,6 +34,20 @@ export function CreatorProfile({ settings, bioLinks }: CreatorProfileProps) {
 
     const firstLetter = (settings.site_name || "P").charAt(0).toUpperCase();
 
+    const avatarLight =
+        settings.bio_avatar_url_light ||
+        settings.logo_icon_url_light ||
+        settings.logo_url_light ||
+        settings.favicon_url_light ||
+        null;
+
+    const avatarDark =
+        settings.bio_avatar_url_dark ||
+        settings.logo_icon_url_dark ||
+        settings.logo_url_dark ||
+        settings.favicon_url_dark ||
+        avatarLight;
+
     const handleLinkClick = (linkId: string) => {
         trackBioLinkClick(linkId);
     };
@@ -50,18 +64,17 @@ export function CreatorProfile({ settings, bioLinks }: CreatorProfileProps) {
                     <div className="flex items-center gap-3 min-w-0">
                         {/* Avatar */}
                         <div className="relative shrink-0">
-                            {settings.logo_icon_url_light ? (
+                            {avatarLight ? (
                                 <>
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
                                     <img
-                                        src={settings.logo_icon_url_light}
+                                        src={avatarLight}
                                         alt={settings.site_name}
                                         className="h-9 w-9 rounded-full object-cover ring-2 ring-brand-primary/30 dark:hidden"
                                     />
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
                                     <img
-                                        src={
-                                            settings.logo_icon_url_dark ||
-                                            settings.logo_icon_url_light
-                                        }
+                                        src={avatarDark || avatarLight}
                                         alt={settings.site_name}
                                         className="hidden h-9 w-9 rounded-full object-cover ring-2 ring-brand-primary/30 dark:block"
                                     />

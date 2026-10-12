@@ -505,5 +505,22 @@ Para consolidar o PromoCuts como um agregador soberano e superior ao Linktree tr
 - **Botão Direto no Cabeçalho Superior (`PublicHeader`):** Um botão de alto contraste *"Bio Links"* posicionado estrategicamente no cabeçalho público da vitrine, garantindo que os canais do criador estejam permanentemente visíveis em smartphones e computadores.
 - **Resiliência e Cache Opcional:** Consulta prioritária via Upstash Redis (`promocuts:bio_links:all`) com fallback transparente para o Supabase caso as variáveis de cache não estejam configuradas, preservando o funcionamento contínuo do sistema.
 
+### 10.5 Personalização Visual, Cascata Inteligente de Avatar e Gerador de QR Code em SVG Puro
+
+- **Aba "Personalização & Design" no Painel (`/admin/bio-links`):**
+    - Permite ao criador customizar fotos de perfil independentes para o tema claro (`bio_avatar_url_light`) e escuro (`bio_avatar_url_dark`), com suporte a upload direto de imagens (`PNG`, `JPEG`, `WebP`, `SVG`) via `AssetInput`.
+    - Configurações dedicadas de título alternativo, biografia curta e paleta de cores primárias para o tema claro e escuro.
+    - **Cartaz da Vitrine Configurável:** O criador pode selecionar entre três modos de exibição:
+        - `banner` (Destaque amplo com gradiente e chamada para ação);
+        - `compact` (Card integrado no fluxo da lista de links);
+        - `hidden` (Ocultação total da vitrine de vídeos, exibindo estritamente os links e redes).
+- **Cascata Inteligente de Fallback do Avatar:**
+    - Para prevenir fallbacks incorretos na letra inicial quando o criador configurou apenas o logo da vitrine ou favicon, os componentes `BioLinksView` e `CreatorProfile` aplicam uma cascata de 5 níveis de resolução:
+      $$\text{Avatar Resolvido} = \text{Foto Bio} \longrightarrow \text{Ícone Mobile} \longrightarrow \text{Logo Principal} \longrightarrow \text{Favicon} \longrightarrow \text{Inicial do Nome}$$
+- **Gerador Determinístico de QR Code em SVG Puro (`src/lib/qrcode.ts`):**
+    - Desenvolvido em conformidade estrita com a especificação ISO/IEC 18004 (Nível M de correção de erro de Reed-Solomon sobre $GF(2^8)$ e máscaras 0 a 7 com avaliação de penalidade).
+    - **Custo Operacional Zero e Zero Dependências:** Gera strings SVG vetoriais puras (`<svg><path d="..." /></svg>`) de alta nitidez sem necessidade de pacotes npm pesados de terceiros, sem dependências de compilação C++ (canvas) e sem requisições a APIs externas.
+    - Renderizado na visualização desktop do Bio Links em um card lateral ("Escanear no celular") que permite a visitantes em computadores abrirem a página de links instantaneamente em seus smartphones.
+
 
 

@@ -183,6 +183,14 @@ Objetivo: Transformar o PromoCuts no hub central soberano e descentralizado do c
     - [x] Página pública dedicada de Bio Links (`/links` e `/bio`) no formato de agregador open-source com metadados Open Graph e cartão de conversão para a vitrine.
     - [x] Botão de acesso rápido a Bio Links no cabeçalho superior (`PublicHeader`), visível em smartphones e computadores.
     - [x] Garantia de resiliência com Upstash Redis estritamente opcional (fallback transparente para Supabase).
+- [x] Personalização Visual e Design Avançado de Bio Links (`/admin/bio-links`):
+    - [x] Aba dedicada "Personalização & Design" com gestão de fotos de perfil para Modo Claro e Modo Escuro via upload direto e URL.
+    - [x] Cascata inteligente e universal de avatar (`Foto Bio -> Ícone Mobile -> Logo Principal -> Favicon -> Letra Inicial`).
+    - [x] Cartaz da Vitrine de Cortes configurável em 3 modos: Destaque Amplo (`banner`), Compacto na Lista (`compact`) ou Oculto (`hidden`).
+    - [x] Widget flutuante de QR Code no desktop em SVG puro determinístico (`src/lib/qrcode.ts`, zero dependências npm).
+    - [x] Botão nativo de compartilhamento (Web Share API com fallback para cópia rápida no clipboard com feedback visual).
+    - [x] Layout vertical centralizado no desktop inspirado no Linktree, com rodapé direcionando ao repositório GitHub open-source.
+    - [x] Migração versionada `supabase/migrations/006_bio_links_customization.sql` e atualização de `site_settings`.
 - [x] Dashboard Visual de Métricas no Painel Administrativo (`/admin/metrics`):
     - [x] Cartões de indicadores-chave de desempenho (KPIs): total de cliques em produtos, total de cliques em bio links e taxa de engajamento diária/semanal.
     - [x] Gráficos visuais responsivos e leves (sem introduzir custos ou bibliotecas pesadas de terceiros):

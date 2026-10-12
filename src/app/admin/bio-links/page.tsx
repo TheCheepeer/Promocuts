@@ -6,9 +6,11 @@ import {
     CheckCircle2,
     Sparkles,
     TrendingUp,
+    ExternalLink,
 } from "lucide-react";
 import { requireAdminAuth } from "@/lib/security/admin-guard";
-import { BioLinksTable } from "./bio-links-table";
+import { getSiteSettings } from "@/lib/settings";
+import { BioLinksTabs } from "./bio-links-tabs";
 import type { BioLink } from "@/types/database";
 
 export const metadata = {
@@ -17,6 +19,7 @@ export const metadata = {
 
 export default async function AdminBioLinksPage() {
     const { adminDb } = await requireAdminAuth();
+    const settings = await getSiteSettings();
 
     const { data: linksData } = await adminDb
         .from("bio_links")
@@ -73,6 +76,15 @@ export default async function AdminBioLinksPage() {
 
                 <div className="flex items-center gap-2">
                     <Link
+                        href="/links"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-300 text-xs font-semibold hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-colors shadow-xs"
+                    >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                        Ver Página Pública
+                    </Link>
+                    <Link
                         href="/admin/metrics"
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 bg-white text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 text-xs font-semibold hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors shadow-xs"
                     >
@@ -110,8 +122,8 @@ export default async function AdminBioLinksPage() {
                 })}
             </div>
 
-            {/* Tabela Interativa de Bio Links */}
-            <BioLinksTable initialLinks={links} />
+            {/* Abas: Links & Comunidades e Personalização & Design */}
+            <BioLinksTabs links={links} settings={settings} />
         </div>
     );
 }
