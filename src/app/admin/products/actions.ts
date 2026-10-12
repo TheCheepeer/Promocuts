@@ -17,6 +17,7 @@ export interface InputStoreLink {
     id?: string;
     store_name: string;
     affiliate_url: string;
+    price?: number | string | null;
     regular_price?: number | string | null;
     discount_price?: number | string | null;
     coupon_code?: string | null;
@@ -118,8 +119,10 @@ export async function createProductAction(
         if (parsedLinks.length === 0) {
             const rawStoreName = formData.get("store_name");
             const rawAffiliateUrl = formData.get("affiliate_url");
-            const rawRegularPrice = formData.get("regular_price");
-            const rawDiscountPrice = formData.get("discount_price");
+            const rawPrice =
+                formData.get("price") ??
+                formData.get("discount_price") ??
+                formData.get("regular_price");
             const rawCouponCode = formData.get("coupon_code");
 
             const storeName = typeof rawStoreName === "string" ? rawStoreName.trim() : "";
@@ -132,11 +135,14 @@ export async function createProductAction(
                 };
             }
 
+            const parsedSinglePrice = parsePrice(rawPrice);
+
             parsedLinks.push({
                 store_name: storeName,
                 affiliate_url: affiliateUrl,
-                regular_price: parsePrice(rawRegularPrice),
-                discount_price: parsePrice(rawDiscountPrice),
+                price: parsedSinglePrice,
+                regular_price: null,
+                discount_price: parsedSinglePrice,
                 coupon_code:
                     typeof rawCouponCode === "string" && rawCouponCode.trim() !== ""
                         ? rawCouponCode.trim().toUpperCase()
@@ -162,8 +168,9 @@ export async function createProductAction(
 
         // A primeira loja é gravada nos campos diretos de public.products como padrão
         const primaryLink = parsedLinks[0];
-        const primaryRegularPrice = parsePrice(primaryLink.regular_price);
-        const primaryDiscountPrice = parsePrice(primaryLink.discount_price);
+        const primaryPrice = parsePrice(
+            primaryLink.price ?? primaryLink.discount_price ?? primaryLink.regular_price,
+        );
         const primaryCouponCode =
             primaryLink.coupon_code && typeof primaryLink.coupon_code === "string"
                 ? primaryLink.coupon_code.trim().toUpperCase()
@@ -178,8 +185,8 @@ export async function createProductAction(
                 category_id: categoryId,
                 affiliate_url: primaryLink.affiliate_url.trim(),
                 image_url: imageUrl,
-                regular_price: primaryRegularPrice,
-                discount_price: primaryDiscountPrice,
+                regular_price: null,
+                discount_price: primaryPrice,
                 currency: "BRL",
                 coupon_code: primaryCouponCode,
                 description,
@@ -202,8 +209,8 @@ export async function createProductAction(
             product_id: insertedProduct.id,
             store_name: l.store_name.trim(),
             affiliate_url: l.affiliate_url.trim(),
-            regular_price: parsePrice(l.regular_price),
-            discount_price: parsePrice(l.discount_price),
+            regular_price: null,
+            discount_price: parsePrice(l.price ?? l.discount_price ?? l.regular_price),
             coupon_code:
                 l.coupon_code && typeof l.coupon_code === "string"
                     ? l.coupon_code.trim().toUpperCase()
@@ -306,8 +313,10 @@ export async function updateProductAction(
         if (parsedLinks.length === 0) {
             const rawStoreName = formData.get("store_name");
             const rawAffiliateUrl = formData.get("affiliate_url");
-            const rawRegularPrice = formData.get("regular_price");
-            const rawDiscountPrice = formData.get("discount_price");
+            const rawPrice =
+                formData.get("price") ??
+                formData.get("discount_price") ??
+                formData.get("regular_price");
             const rawCouponCode = formData.get("coupon_code");
 
             const storeName = typeof rawStoreName === "string" ? rawStoreName.trim() : "";
@@ -320,11 +329,14 @@ export async function updateProductAction(
                 };
             }
 
+            const parsedSinglePrice = parsePrice(rawPrice);
+
             parsedLinks.push({
                 store_name: storeName,
                 affiliate_url: affiliateUrl,
-                regular_price: parsePrice(rawRegularPrice),
-                discount_price: parsePrice(rawDiscountPrice),
+                price: parsedSinglePrice,
+                regular_price: null,
+                discount_price: parsedSinglePrice,
                 coupon_code:
                     typeof rawCouponCode === "string" && rawCouponCode.trim() !== ""
                         ? rawCouponCode.trim().toUpperCase()
@@ -349,8 +361,9 @@ export async function updateProductAction(
         }
 
         const primaryLink = parsedLinks[0];
-        const primaryRegularPrice = parsePrice(primaryLink.regular_price);
-        const primaryDiscountPrice = parsePrice(primaryLink.discount_price);
+        const primaryPrice = parsePrice(
+            primaryLink.price ?? primaryLink.discount_price ?? primaryLink.regular_price,
+        );
         const primaryCouponCode =
             primaryLink.coupon_code && typeof primaryLink.coupon_code === "string"
                 ? primaryLink.coupon_code.trim().toUpperCase()
@@ -365,8 +378,8 @@ export async function updateProductAction(
                 category_id: categoryId,
                 affiliate_url: primaryLink.affiliate_url.trim(),
                 image_url: imageUrl,
-                regular_price: primaryRegularPrice,
-                discount_price: primaryDiscountPrice,
+                regular_price: null,
+                discount_price: primaryPrice,
                 coupon_code: primaryCouponCode,
                 description,
             })
@@ -389,8 +402,8 @@ export async function updateProductAction(
             product_id: id,
             store_name: l.store_name.trim(),
             affiliate_url: l.affiliate_url.trim(),
-            regular_price: parsePrice(l.regular_price),
-            discount_price: parsePrice(l.discount_price),
+            regular_price: null,
+            discount_price: parsePrice(l.price ?? l.discount_price ?? l.regular_price),
             coupon_code:
                 l.coupon_code && typeof l.coupon_code === "string"
                     ? l.coupon_code.trim().toUpperCase()

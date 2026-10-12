@@ -305,6 +305,19 @@ export function extractLdJsonProduct(html: string): {
  * Tenta extrair o preço promocional ou valor corrente a partir de microdados HTML e marcações de e-commerce.
  */
 export function extractPriceFromHtml(html: string): number | null {
+    // 0. Preço à vista / Pix no e-commerce brasileiro (prioritário por refletir o menor valor corrente padrão)
+    const pixPatterns = [
+        /(?:no\s+pix|via\s+pix|à\s+vista\s+no\s+pix|pague\s+com\s+pix)[^<]{0,35}R\$\s*([\d.,]+)/i,
+        /R\$\s*([\d.,]+)[^<]{0,35}(?:no\s+pix|via\s+pix|à\s+vista\s+no\s+pix|pague\s+com\s+pix)/i,
+    ];
+    for (const pat of pixPatterns) {
+        const match = html.match(pat);
+        if (match && match[1]) {
+            const parsed = parsePriceNumber(match[1]);
+            if (parsed) return parsed;
+        }
+    }
+
     // 1. Meta tags semânticas de preço de venda / oferta corrente
     const priceMetaRegex =
         /<meta[^>]+(?:property|name|itemprop)=["'](?:product:sale_price:amount|og:price:amount|product:price:amount|price)["'][^>]+content=["']([^"']+)["']/i;
@@ -442,8 +455,9 @@ export function parseHtmlMetadata(html: string, baseUrl: string): ExtractedMetad
 
     // Tentativa de extração de preço em metadados de e-commerce, JSON-LD e microdados
     let price: number | null = ldData.price;
-    if (price == null || price <= 0) {
-        price = extractPriceFromHtml(html);
+    const htmlPrice = extractPriceFromHtml(html);
+    if (htmlPrice != null && (price == null || price <= 0 || htmlPrice < price)) {
+        price = htmlPrice;
     }
 
     let regularPrice: number | null = ldData.regularPrice;

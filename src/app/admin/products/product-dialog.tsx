@@ -6,7 +6,6 @@ import {
     Loader2,
     Image as ImageIcon,
     Tag,
-    Percent,
     Sparkles,
     Plus,
     Trash2,
@@ -14,10 +13,6 @@ import {
     ExternalLink,
 } from "lucide-react";
 import { createProductAction, updateProductAction } from "./actions";
-import {
-    formatDiscountPercentage,
-    formatDiscountBadge,
-} from "@/lib/formatters";
 import type { Product, Category, ProductLink } from "@/types/database";
 
 interface ProductDialogProps {
@@ -31,8 +26,7 @@ interface StoreOfferItem {
     id?: string;
     store_name: string;
     affiliate_url: string;
-    regular_price: string;
-    discount_price: string;
+    price: string;
     coupon_code: string;
 }
 
@@ -47,21 +41,6 @@ const COMMON_STORES = [
 
 function formatPriceInput(val: number): string {
     return val.toFixed(2).replace(".", ",");
-}
-
-function parseNumericInput(val: string): number {
-    if (!val || typeof val !== "string") return NaN;
-    let clean = val.replace(/R\$\s*/gi, "").replace(/BRL\s*/gi, "").trim();
-    if (clean.includes(".") && clean.includes(",")) {
-        if (clean.lastIndexOf(",") > clean.lastIndexOf(".")) {
-            clean = clean.replace(/\./g, "").replace(",", ".");
-        } else {
-            clean = clean.replace(/,/g, "");
-        }
-    } else if (clean.includes(",")) {
-        clean = clean.replace(",", ".");
-    }
-    return parseFloat(clean);
 }
 
 export function ProductDialog({
@@ -90,8 +69,7 @@ export function ProductDialog({
         {
             store_name: "Amazon",
             affiliate_url: "",
-            regular_price: "",
-            discount_price: "",
+            price: "",
             coupon_code: "",
         },
     ]);
@@ -109,34 +87,36 @@ export function ProductDialog({
             // Inicialização das ofertas multi-loja
             if (product.product_links && product.product_links.length > 0) {
                 setStores(
-                    product.product_links.map((link) => ({
-                        id: link.id,
-                        store_name: link.store_name,
-                        affiliate_url: link.affiliate_url,
-                        regular_price:
-                            link.regular_price != null
-                                ? String(link.regular_price)
-                                : "",
-                        discount_price:
+                    product.product_links.map((link) => {
+                        const effectivePrice =
                             link.discount_price != null
-                                ? String(link.discount_price)
-                                : "",
-                        coupon_code: link.coupon_code || "",
-                    })),
+                                ? formatPriceInput(link.discount_price)
+                                : link.regular_price != null
+                                ? formatPriceInput(link.regular_price)
+                                : "";
+
+                        return {
+                            id: link.id,
+                            store_name: link.store_name,
+                            affiliate_url: link.affiliate_url,
+                            price: effectivePrice,
+                            coupon_code: link.coupon_code || "",
+                        };
+                    }),
                 );
             } else {
+                const effectivePrice =
+                    product.discount_price != null
+                        ? formatPriceInput(product.discount_price)
+                        : product.regular_price != null
+                        ? formatPriceInput(product.regular_price)
+                        : "";
+
                 setStores([
                     {
                         store_name: product.store_name || "Amazon",
                         affiliate_url: product.affiliate_url || "",
-                        regular_price:
-                            product.regular_price != null
-                                ? String(product.regular_price)
-                                : "",
-                        discount_price:
-                            product.discount_price != null
-                                ? String(product.discount_price)
-                                : "",
+                        price: effectivePrice,
                         coupon_code: product.coupon_code || "",
                     },
                 ]);
@@ -151,8 +131,7 @@ export function ProductDialog({
                 {
                     store_name: "Amazon",
                     affiliate_url: "",
-                    regular_price: "",
-                    discount_price: "",
+                    price: "",
                     coupon_code: "",
                 },
             ]);
@@ -262,18 +241,15 @@ export function ProductDialog({
             }
 
             const data = json.data;
+            const extractedPrice = data.price ?? data.regularPrice;
 
-            if (data.price != null) {
+            if (extractedPrice != null) {
                 setStores((prev) => {
                     const next = [...prev];
                     if (next[idx]) {
                         next[idx] = {
                             ...next[idx],
-                            discount_price: formatPriceInput(data.price),
-                            regular_price:
-                                data.regularPrice != null
-                                    ? formatPriceInput(data.regularPrice)
-                                    : next[idx].regular_price,
+                            price: formatPriceInput(extractedPrice),
                             store_name:
                                 !next[idx].store_name ||
                                 next[idx].store_name === "Amazon"
@@ -288,7 +264,7 @@ export function ProductDialog({
                 );
             } else {
                 setErrorMessage(
-                    "O preço não pôde ser identificado automaticamente neste link. Informe os valores manualmente.",
+                    "O preço não pôde ser identificado automaticamente neste link. Informe o valor manualmente.",
                 );
             }
         } catch {
@@ -307,8 +283,7 @@ export function ProductDialog({
             {
                 store_name: "Shopee",
                 affiliate_url: "",
-                regular_price: "",
-                discount_price: "",
+                price: "",
                 coupon_code: "",
             },
         ]);
@@ -359,12 +334,12 @@ export function ProductDialog({
         formData.set("description", description);
         formData.set("store_links", JSON.stringify(stores));
 
-        // Campos legados mapeados a partir da loja principal (primeira da lista)
+        // Campos mapeados a partir da loja principal (primeira da lista)
         if (stores.length > 0) {
             formData.set("store_name", stores[0].store_name);
             formData.set("affiliate_url", stores[0].affiliate_url);
-            formData.set("regular_price", stores[0].regular_price);
-            formData.set("discount_price", stores[0].discount_price);
+            formData.set("price", stores[0].price);
+            formData.set("discount_price", stores[0].price);
             formData.set("coupon_code", stores[0].coupon_code);
         }
 
@@ -597,26 +572,11 @@ export function ProductDialog({
                         </div>
 
                         <div className="space-y-3">
-                            {stores.map((store, idx) => {
-                                const regNum = parseNumericInput(
-                                    store.regular_price,
-                                );
-                                const discNum = parseNumericInput(
-                                    store.discount_price,
-                                );
-                                const discountPct =
-                                    !isNaN(regNum) && !isNaN(discNum)
-                                        ? formatDiscountPercentage(
-                                              regNum,
-                                              discNum,
-                                          )
-                                        : 0;
-
-                                return (
-                                    <div
-                                        key={idx}
-                                        className="p-3.5 rounded-xl border border-zinc-200 bg-zinc-50/70 dark:border-zinc-800 dark:bg-zinc-800/40 relative space-y-3"
-                                    >
+                            {stores.map((store, idx) => (
+                                <div
+                                    key={idx}
+                                    className="p-3.5 rounded-xl border border-zinc-200 bg-zinc-50/70 dark:border-zinc-800 dark:bg-zinc-800/40 relative space-y-3"
+                                >
                                         <div className="flex items-center justify-between gap-2">
                                             <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
                                                 {idx === 0
@@ -748,49 +708,19 @@ export function ProductDialog({
                                             </div>
                                         </div>
 
-                                        {/* Preços e Cupom */}
-                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                                        {/* Preço e Cupom */}
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                                             <div>
                                                 <label className="block text-[11px] font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                                                    Preço Original (R$)
+                                                    Preço (R$)
                                                 </label>
                                                 <input
                                                     type="text"
-                                                    value={store.regular_price}
+                                                    value={store.price}
                                                     onChange={(e) =>
                                                         handleStoreChange(
                                                             idx,
-                                                            "regular_price",
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    placeholder="199,90"
-                                                    className="w-full font-mono text-xs px-2.5 py-1.5 rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100"
-                                                />
-                                            </div>
-
-                                            <div>
-                                                <div className="flex items-center justify-between mb-1">
-                                                    <label className="block text-[11px] font-medium text-zinc-700 dark:text-zinc-300">
-                                                        Preço Promocional (R$)
-                                                    </label>
-                                                    {discountPct > 0 && (
-                                                        <span className="inline-flex items-center gap-0.5 text-[10px] font-bold px-1 py-0.2 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                                                            <Percent className="h-2 w-2" />
-                                                            {formatDiscountBadge(
-                                                                regNum,
-                                                                discNum,
-                                                            )}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <input
-                                                    type="text"
-                                                    value={store.discount_price}
-                                                    onChange={(e) =>
-                                                        handleStoreChange(
-                                                            idx,
-                                                            "discount_price",
+                                                            "price",
                                                             e.target.value,
                                                         )
                                                     }
@@ -825,8 +755,7 @@ export function ProductDialog({
                                             </div>
                                         </div>
                                     </div>
-                                );
-                            })}
+                                ))}
                         </div>
                     </div>
 
