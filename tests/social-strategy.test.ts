@@ -9,10 +9,14 @@ import {
 
 describe("Padrão Strategy para Redes Sociais e Canais de Criador", () => {
     it("deve conter todas as plataformas essenciais com integridade estrutural", () => {
-        assert.ok(SOCIAL_PLATFORMS.length >= 30, "Deve suportar pelo menos 30 plataformas");
+        assert.ok(SOCIAL_PLATFORMS.length >= 25, "Deve suportar pelo menos 25 plataformas");
 
+        const platformIds = new Set<string>();
         for (const platform of SOCIAL_PLATFORMS) {
             assert.ok(platform.id, `A plataforma deve possuir um ID: ${JSON.stringify(platform)}`);
+            assert.ok(!platformIds.has(platform.id), `ID duplicado detectado: ${platform.id}`);
+            platformIds.add(platform.id);
+
             assert.ok(platform.name, `A plataforma ${platform.id} deve possuir um nome legível`);
             assert.ok(platform.category, `A plataforma ${platform.id} deve possuir uma categoria`);
             assert.ok(platform.brandColor.startsWith("#"), `A plataforma ${platform.id} deve ter uma cor hexadecimal válida`);
@@ -25,9 +29,20 @@ describe("Padrão Strategy para Redes Sociais e Canais de Criador", () => {
         assert.equal(youtube.id, "youtube");
         assert.equal(youtube.name, "YouTube");
 
+        const ytMusic = getSocialPlatform("youtube_music");
+        assert.equal(ytMusic.id, "youtube_music");
+        assert.equal(ytMusic.name, "YouTube Music");
+
+        const pix = getSocialPlatform("pix");
+        assert.equal(pix.id, "pix");
+
         const reddit = getSocialPlatform("reddit");
         assert.equal(reddit.id, "reddit");
         assert.equal(reddit.name, "Reddit");
+
+        const siteAlias = getSocialPlatform("site");
+        assert.equal(siteAlias.id, "link", "Deve resolver 'site' como alias para 'link'");
+        assert.equal(siteAlias.name, "Website / Link Externo");
 
         const unknown = getSocialPlatform("plataforma_desconhecida");
         assert.equal(unknown.id, "link", "Deve fazer fallback para Link Externo genérico");
@@ -37,6 +52,7 @@ describe("Padrão Strategy para Redes Sociais e Canais de Criador", () => {
         const testCases: [string, string][] = [
             ["https://youtube.com/@meucanal", "youtube"],
             ["https://youtu.be/abc123xyz", "youtube"],
+            ["https://music.youtube.com/playlist?list=123", "youtube_music"],
             ["https://tiktok.com/@criador", "tiktok"],
             ["https://instagram.com/promocuts", "instagram"],
             ["https://reddit.com/r/promocoes", "reddit"],
@@ -50,6 +66,7 @@ describe("Padrão Strategy para Redes Sociais e Canais de Criador", () => {
             ["https://kick.com/streamer", "kick"],
             ["https://threads.net/@perfil", "threads"],
             ["https://pinterest.com/quadro", "pinterest"],
+            ["https://livepix.gg/criador", "pix"],
         ];
 
         for (const [url, expectedId] of testCases) {

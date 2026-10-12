@@ -81,7 +81,10 @@ export const SOCIAL_PLATFORMS: SocialPlatformStrategy[] = [
         placeholder: "https://youtube.com/@seu_canal",
         urlPrefix: "https://youtube.com/@",
         formatUrl: createUrlFormatter("https://youtube.com/@"),
-        matchesUrl: createDomainMatcher(["youtube.com", "youtu.be"]),
+        matchesUrl: (url: string) => {
+            if (/music\.youtube\.com/i.test(url)) return false;
+            return createDomainMatcher(["youtube.com", "youtu.be"])(url);
+        },
     },
     {
         id: "tiktok",
@@ -245,6 +248,16 @@ export const SOCIAL_PLATFORMS: SocialPlatformStrategy[] = [
     // -------------------------------------------------------------------------
     // Música, Áudio & Podcasts
     // -------------------------------------------------------------------------
+    {
+        id: "youtube_music",
+        name: "YouTube Music",
+        category: "audio",
+        brandColor: "#FF0000",
+        placeholder: "https://music.youtube.com/playlist?list=...",
+        urlPrefix: "https://music.youtube.com/",
+        formatUrl: createUrlFormatter("https://music.youtube.com/"),
+        matchesUrl: createDomainMatcher(["music.youtube.com"]),
+    },
     {
         id: "spotify",
         name: "Spotify",
@@ -410,25 +423,11 @@ export const SOCIAL_PLATFORMS: SocialPlatformStrategy[] = [
         matchesUrl: createDomainMatcher(["github.com"]),
     },
     {
-        id: "site",
-        name: "Website / Blog",
+        id: "link",
+        name: "Website / Link Externo",
         category: "other",
         brandColor: "#4B5563",
         placeholder: "https://seusite.com.br",
-        urlPrefix: "https://",
-        formatUrl: (input: string) => {
-            const trimmed = input.trim();
-            if (/^https?:\/\//i.test(trimmed)) return trimmed;
-            return `https://${trimmed}`;
-        },
-        matchesUrl: () => false,
-    },
-    {
-        id: "link",
-        name: "Link Externo",
-        category: "other",
-        brandColor: "#6B7280",
-        placeholder: "https://link-externo.com",
         urlPrefix: "https://",
         formatUrl: (input: string) => {
             const trimmed = input.trim();
@@ -443,7 +442,8 @@ export const SOCIAL_PLATFORMS: SocialPlatformStrategy[] = [
  * Recupera a estratégia correspondente pelo ID da plataforma.
  */
 export function getSocialPlatform(id: string | null | undefined): SocialPlatformStrategy {
-    const cleanId = (id || "link").toLowerCase().trim();
+    let cleanId = (id || "link").toLowerCase().trim();
+    if (cleanId === "site") cleanId = "link";
     const found = SOCIAL_PLATFORMS.find((p) => p.id === cleanId);
     return (
         found ||
