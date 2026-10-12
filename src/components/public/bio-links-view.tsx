@@ -7,7 +7,6 @@ import {
     Sparkles,
     ExternalLink,
     Play,
-    CheckCircle2,
     ArrowLeft,
 } from "lucide-react";
 import { BioLinkIcon } from "@/app/admin/bio-links/bio-link-icons";
@@ -92,17 +91,11 @@ export function BioLinksView({ settings, bioLinks }: BioLinksViewProps) {
                         )}
                     </div>
 
-                    {/* Nome, Verificado e Badge de Destaque */}
+                    {/* Nome e Badge de Destaque */}
                     <div className="space-y-1">
-                        <div className="inline-flex items-center gap-1.5">
-                            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-zinc-950 dark:text-zinc-50">
-                                {settings.site_name}
-                            </h1>
-                            <CheckCircle2
-                                className="h-5 w-5 text-brand-primary shrink-0"
-                                aria-label="Canal oficial verificado"
-                            />
-                        </div>
+                        <h1 className="text-xl sm:text-2xl font-black tracking-tight text-zinc-950 dark:text-zinc-50">
+                            {settings.site_name}
+                        </h1>
 
                         {liveBadge?.badge_text && (
                             <div className="flex justify-center pt-0.5">
