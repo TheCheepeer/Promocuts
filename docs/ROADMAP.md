@@ -6,19 +6,20 @@ Este documento define o roteiro de implementacao do **PromoCuts**, organizado em
 
 ## 1. Visao Geral de Progresso
 
-| Fase       | Descricao                                   |   Status    |
-| :--------- | :------------------------------------------ | :---------: |
-| **Fase 1** | Fundacao do Projeto e Tooling               | `Concluido` |
-| **Fase 2** | Motor de Embeds e Utilitarios de Dominio    | `Concluido` |
-| **Fase 3** | Autenticacao, Middleware e Seguranca        | `Concluido` |
-| **Fase 4** | Painel Administrativo e White-Label         | `Concluido` |
-| **Fase 5** | Vitrine Publica Mobile-First e Desktop Grid | `Concluido` |
-| **Fase 6** | Telemetria de Afiliados e Conversao         | `Concluido` |
-| **Fase 7** | Cache Serverless, Cabecalhos Defensivos e Verificacao Final | `Concluido` |
-| **Fase 8** | Automacao de Ofertas, Suporte Multi-Loja e Monitoramento     | `Concluido` |
-| **Fase 9** | Hub Central do Criador (Bio Links, Streamers e Métricas)    | `Concluido` |
-| **Fase 10**| Segurança Avançada e Redes Privadas (Tailscale e Backups)   | `Pendente`  |
-| **Fase 11**| Internacionalização (i18n), Multi-Idiomas (next-intl) e Localização Global | `Pendente`  |
+| Fase        | Descricao                                                                  |   Status    |
+| :---------- | :------------------------------------------------------------------------- | :---------: |
+| **Fase 1**  | Fundacao do Projeto e Tooling                                              | `Concluido` |
+| **Fase 2**  | Motor de Embeds e Utilitarios de Dominio                                   | `Concluido` |
+| **Fase 3**  | Autenticacao, Middleware e Seguranca                                       | `Concluido` |
+| **Fase 4**  | Painel Administrativo e White-Label                                        | `Concluido` |
+| **Fase 5**  | Vitrine Publica Mobile-First e Desktop Grid                                | `Concluido` |
+| **Fase 6**  | Telemetria de Afiliados e Conversao                                        | `Concluido` |
+| **Fase 7**  | Cache Serverless, Cabecalhos Defensivos e Verificacao Final                | `Concluido` |
+| **Fase 8**  | Automacao de Ofertas, Suporte Multi-Loja e Monitoramento                   | `Concluido` |
+| **Fase 9**  | Hub Central do Criador (Bio Links, Streamers e Métricas)                   | `Concluido` |
+| **Fase 10** | Segurança Avançada e Redes Privadas (Tailscale e Backups)                  | `Pendente`  |
+| **Fase 11** | Internacionalização (i18n), Multi-Idiomas (next-intl) e Localização Global | `Pendente`  |
+| **Fase 12** | PromoCuts 100% Self-Hosted (Docker Compose, Supabase Local e Redis)        | `Pendente`  |
 
 ---
 
@@ -194,15 +195,6 @@ Objetivo: Transformar o PromoCuts no hub central soberano e descentralizado do c
 
 ---
 
-### Visão Futura: PromoCuts 100% Self-Hosted (Docker Compose, Supabase Local e Redis Autônomo)
-
-Planejada como uma vertente de implantação posterior para permitir hospedar o PromoCuts com total soberania em VPS ou servidor doméstico (homelab):
-
-- Arquivo `docker-compose.yml` pré-configurado com contêineres do Supabase Studio/PostgreSQL 17, Redis e runtime do Next.js.
-- Scripts de inicialização automática e migrações autônomas sem qualquer dependência de nuvens públicas.
-
----
-
 ### Fase 10: Segurança Avançada e Redes Privadas (Tailscale Guard e Backups)
 
 Objetivo: Elevar a postura defensiva do PromoCuts a padrões corporativos de infraestrutura, permitindo restringir o acesso ao painel administrativo exclusivamente através de VPNs privadas (Tailscale Exit Nodes, WireGuard, OPNsense/pfSense) com gestão visual e backups autônomos.
@@ -212,7 +204,7 @@ Objetivo: Elevar a postura defensiva do PromoCuts a padrões corporativos de inf
     - [ ] Detecção de IP em tempo real: botão "Vincular meu IP / Exit Node atual" que captura o endereço público da conexão ativa e o salva na lista de autorizados.
     - [ ] Suporte a múltiplos IPs e blocos CIDR para administradores com mais de um nó de saída ou rede residencial/escritório.
     - [ ] Armazenamento defensivo das faixas autorizadas no banco de dados com leitura em cache na borda (Edge / Redis / memória).
-- [ ] Mecanismo de Recuperação de Emergência (*Emergency Bypass Token*):
+- [ ] Mecanismo de Recuperação de Emergência (_Emergency Bypass Token_):
     - [ ] Geração de token criptográfico temporário de uso único (One-Time Token) exibido no terminal ou configurado via variável para desbloqueio caso o administrador perca o acesso ao nó de saída da VPN.
 - [ ] Exportação e Backups Periódicos Automatizados:
     - [ ] Endpoint seguro ou Cron Job para gerar backups em arquivo JSON/SQL com envio para e-mail ou download manual no painel.
@@ -243,5 +235,23 @@ Objetivo: Tornar o PromoCuts uma plataforma globalmente acessível e internacion
 - [ ] Documentação Técnica Bilingue:
     - [ ] Criação do `README.en.md` com apresentação, guia de início rápido e instruções de deploy para a comunidade global do GitHub.
 
+---
 
+### Fase 12: PromoCuts 100% Self-Hosted (Docker Compose, Supabase Local e Redis Autônomo)
+
+Objetivo: Permitir a implantação e execução do PromoCuts com total soberania e custo zero em servidores próprios (VPS, homelab ou servidores dedicados), eliminando qualquer dependência de plataformas gerenciadas em nuvem através de uma orquestração unificada com Docker Compose.
+
+- [ ] Orquestração Completa via Docker Compose (`docker-compose.yml`):
+    - [ ] Configuração do serviço PostgreSQL 17 oficial com extensões necessárias (`pgcrypto`, `uuid-ossp`).
+    - [ ] Configuração do serviço Supabase Studio e PostgREST local para gestão autônoma de dados e autenticação sem provedor externo.
+    - [ ] Configuração do serviço Redis 8 autônomo para cache em memória local.
+    - [ ] Configuração do contêiner da aplicação PromoCuts com `Dockerfile` otimizado em múltiplos estágios para Next.js App Router (modo standalone).
+- [ ] Automação de Inicialização e Migrações Locais:
+    - [ ] Scripts de inicialização autônoma (`scripts/selfhost-init.sh` e `scripts/selfhost-init.ps1`) para gerar segredos de ambiente, inicializar os contêineres e aplicar migrações sequenciais automaticamente.
+    - [ ] Configuração de volumes persistentes para dados do banco (`postgres_data`), uploads locais e cache.
+- [ ] Proxy Reverso e Certificados TLS/SSL Automáticos:
+    - [ ] Template integrado de Caddy ou Nginx com HTTPS automático (Let's Encrypt) para exposição segura da aplicação em VPS.
+    - [ ] Arquivo universal de configuração de ambiente `.env.selfhost.example`.
+- [ ] Documentação de Implantação Soberana:
+    - [ ] Guia passo a passo `docs/SELF_HOSTING.md` para execução em distribuições Linux (Ubuntu, Debian), Raspberry Pi, Unraid e Synology.
 
