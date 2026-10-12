@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import {
     ChevronDown,
     ChevronUp,
@@ -195,6 +196,16 @@ export function CreatorProfile({ settings, bioLinks }: CreatorProfileProps) {
                                     </a>
                                 );
                             })}
+                        </div>
+
+                        <div className="flex justify-end pt-1">
+                            <Link
+                                href="/links"
+                                className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-primary hover:underline transition-all"
+                            >
+                                <span>Abrir página dedicada de Bio Links</span>
+                                <ExternalLink className="h-3 w-3" />
+                            </Link>
                         </div>
                     </div>
                 )}

@@ -495,4 +495,15 @@ Na Fase 9, o PromoCuts expandiu sua arquitetura para consolidar a vitrine públi
   - Tabela dos vídeos com maior taxa de conversão vinculada.
   - Tabela de bio links com contadores consolidados no período selecionado.
 
+### 10.4 Página Pública Dedicada de Bio Links (`/links` e `/bio`) e Acesso Rápido
+
+Para consolidar o PromoCuts como um agregador soberano e superior ao Linktree tradicional, a plataforma oferece uma rota pública dedicada de página cheia para os canais do criador:
+
+- **Rotas Públicas Dedicadas (`/links` e `/bio`):** Permitem ao criador utilizar URLs diretas e limpas na biografia de redes sociais (Instagram, TikTok, Twitter e YouTube) sem depender de serviços externos pagos ou limitados.
+- **Experiência Visual Mobile-First (`BioLinksView`):** Renderiza o avatar ampliado do criador com anel estilizado da marca, nome oficial verificado, biografia rica, redes sociais oficiais e a lista vertical de cards de canais e comunidades com ícones SVG nativos.
+- **Ponte de Conversão com a Vitrine:** Diferente de agregadores convencionais, exibe um card de destaque promocional com chamada para ação (*"Vitrine de Cortes & Ofertas"*), canalizando os visitantes das redes sociais diretamente para o feed de vídeos verticais e cupons de desconto afiliados.
+- **Botão Direto no Cabeçalho Superior (`PublicHeader`):** Um botão de alto contraste *"Bio Links"* posicionado estrategicamente no cabeçalho público da vitrine, garantindo que os canais do criador estejam permanentemente visíveis em smartphones e computadores.
+- **Resiliência e Cache Opcional:** Consulta prioritária via Upstash Redis (`promocuts:bio_links:all`) com fallback transparente para o Supabase caso as variáveis de cache não estejam configuradas, preservando o funcionamento contínuo do sistema.
+
+
 

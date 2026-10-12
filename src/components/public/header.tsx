@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import { Sparkles } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import type { SiteSettings } from "@/types/database";
 
@@ -86,8 +87,17 @@ export function PublicHeader({ settings }: PublicHeaderProps) {
                     </div>
                 </Link>
 
-                {/* Acoes: Redes sociais opcionais e alternador de tema */}
-                <div className="flex items-center gap-2 sm:gap-3">
+                {/* Acoes: Botao Bio Links, Redes sociais opcionais e alternador de tema */}
+                <div className="flex items-center gap-2 sm:gap-2.5">
+                    {/* Botão Direto para a Página de Bio Links */}
+                    <Link
+                        href="/links"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-zinc-200/90 bg-zinc-100/90 text-xs font-bold text-zinc-800 hover:border-brand-primary/50 hover:bg-white hover:text-brand-primary dark:border-zinc-800/90 dark:bg-zinc-900/90 dark:text-zinc-200 dark:hover:border-brand-primary/50 dark:hover:bg-zinc-800 dark:hover:text-brand-primary shadow-xs transition-all"
+                        title="Ver canais oficiais e links da bio"
+                    >
+                        <Sparkles className="h-3.5 w-3.5 text-brand-primary shrink-0" />
+                        <span>Bio Links</span>
+                    </Link>
                     {/* Link para Instagram */}
                     {settings.social_instagram && (
                         <a

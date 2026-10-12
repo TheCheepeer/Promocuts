@@ -179,6 +179,9 @@ Objetivo: Transformar o PromoCuts no hub central soberano e descentralizado do c
     - [x] Componente superior retrátil de perfil com avatar, biografia do criador e gaveta de Bio Links com animação suave e crachás pulsantes.
     - [x] Coexistência fluida entre a seção de Bio Links e o feed vertical de cortes com produtos afiliados.
     - [x] Rastreamento de telemetria anônima nos cliques de bio links (`/api/track-click`) com suporte a contagem individual.
+    - [x] Página pública dedicada de Bio Links (`/links` e `/bio`) no formato de agregador open-source com metadados Open Graph e cartão de conversão para a vitrine.
+    - [x] Botão de acesso rápido a Bio Links no cabeçalho superior (`PublicHeader`), visível em smartphones e computadores.
+    - [x] Garantia de resiliência com Upstash Redis estritamente opcional (fallback transparente para Supabase).
 - [x] Dashboard Visual de Métricas no Painel Administrativo (`/admin/metrics`):
     - [x] Cartões de indicadores-chave de desempenho (KPIs): total de cliques em produtos, total de cliques em bio links e taxa de engajamento diária/semanal.
     - [x] Gráficos visuais responsivos e leves (sem introduzir custos ou bibliotecas pesadas de terceiros):
@@ -188,6 +191,15 @@ Objetivo: Transformar o PromoCuts no hub central soberano e descentralizado do c
         - [x] Ranking de cliques por rede social de origem (Instagram, TikTok, YouTube, tráfego direto).
         - [x] Ranking de cliques por Bio Link (Twitch, Discord, Telegram, etc.).
     - [x] Filtro temporal flexível (Hoje, Últimos 7 dias, Últimos 30 dias e Período completo).
+
+---
+
+### Visão Futura: PromoCuts 100% Self-Hosted (Docker Compose, Supabase Local e Redis Autônomo)
+
+Planejada como uma vertente de implantação posterior para permitir hospedar o PromoCuts com total soberania em VPS ou servidor doméstico (homelab):
+
+- Arquivo `docker-compose.yml` pré-configurado com contêineres do Supabase Studio/PostgreSQL 17, Redis e runtime do Next.js.
+- Scripts de inicialização automática e migrações autônomas sem qualquer dependência de nuvens públicas.
 
 ---
 
