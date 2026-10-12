@@ -5,6 +5,7 @@ import { PublicHeader } from "@/components/public/header";
 import { CreatorProfile } from "@/components/public/creator-profile";
 import { Storefront } from "@/components/public/storefront";
 import { getCachedData, setCachedData } from "@/lib/cache/redis";
+import { rankVideosByFreshness } from "@/lib/feed/ranking";
 import type { Category, BioLink } from "@/types/database";
 import type { VideoWithRelations } from "@/components/public/feed-mobile";
 
@@ -53,7 +54,6 @@ export default async function HomePage() {
                     `,
                       )
                       .eq("is_published", true)
-                      .order("order_weight", { ascending: false })
                       .order("created_at", { ascending: false }),
             bioLinks
                 ? Promise.resolve({ data: bioLinks })
@@ -85,11 +85,14 @@ export default async function HomePage() {
     videos = videos || [];
     bioLinks = bioLinks || [];
 
+    // Ranqueamento dinâmico: recência temporal combinada com dispersão controlada
+    const rankedVideos = rankVideosByFreshness(videos);
+
     return (
         <div className="flex min-h-dvh flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50">
             <PublicHeader settings={settings} />
             <CreatorProfile settings={settings} bioLinks={bioLinks} />
-            <Storefront categories={categories} allVideos={videos} />
+            <Storefront categories={categories} allVideos={rankedVideos} />
 
             {/* Rodape visivel exclusivamente em telas desktop */}
             <footer className="hidden border-t border-zinc-200/80 bg-white py-6 text-center text-xs text-zinc-500 dark:border-zinc-800/80 dark:bg-zinc-950 dark:text-zinc-400 md:block">

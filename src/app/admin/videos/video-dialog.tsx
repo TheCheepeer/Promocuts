@@ -10,7 +10,6 @@ import {
     Trash2,
     ArrowUp,
     ArrowDown,
-    Image as ImageIcon,
     ShoppingBag,
     Sparkles,
 } from "lucide-react";
@@ -66,8 +65,6 @@ export function VideoDialog({
     const [description, setDescription] = useState("");
     const [thumbnailUrl, setThumbnailUrl] = useState("");
     const [isPublished, setIsPublished] = useState(true);
-    const [isFeatured, setIsFeatured] = useState(false);
-    const [orderWeight, setOrderWeight] = useState(0);
 
     const [linkedProducts, setLinkedProducts] = useState<LinkedProductItem[]>(
         [],
@@ -92,8 +89,6 @@ export function VideoDialog({
             setDescription(video.description || "");
             setThumbnailUrl(video.thumbnail_url || "");
             setIsPublished(video.is_published ?? true);
-            setIsFeatured(video.is_featured ?? false);
-            setOrderWeight(video.order_weight ?? 0);
             setIsSlugManuallyEdited(true);
 
             // Popula os produtos vinculados
@@ -123,8 +118,6 @@ export function VideoDialog({
             setDescription("");
             setThumbnailUrl("");
             setIsPublished(true);
-            setIsFeatured(false);
-            setOrderWeight(0);
             setLinkedProducts([]);
             setIsSlugManuallyEdited(false);
         }
@@ -292,8 +285,8 @@ export function VideoDialog({
         formData.set("description", description);
         formData.set("thumbnail_url", thumbnailUrl);
         formData.set("is_published", isPublished ? "true" : "false");
-        formData.set("is_featured", isFeatured ? "true" : "false");
-        formData.set("order_weight", String(orderWeight));
+        formData.set("is_featured", "false");
+        formData.set("order_weight", "0");
 
         const productsPayload = linkedProducts.map((lp, idx) => ({
             productId: lp.productId,
@@ -496,52 +489,27 @@ export function VideoDialog({
                         </div>
                     </div>
 
-                    {/* Categoria e Peso de Ordenacao */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label
-                                htmlFor="vid-category"
-                                className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1"
-                            >
-                                Categoria Tematica
-                            </label>
-                            <select
-                                id="vid-category"
-                                value={categoryId}
-                                onChange={(e) => setCategoryId(e.target.value)}
-                                className="w-full px-3 py-2 text-xs rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100"
-                            >
-                                <option value="">Sem categoria definida</option>
-                                {categories.map((c) => (
-                                    <option key={c.id} value={c.id}>
-                                        {c.name}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div>
-                            <label
-                                htmlFor="vid-order"
-                                className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1"
-                            >
-                                Peso de Ordenacao Manual
-                            </label>
-                            <input
-                                id="vid-order"
-                                type="number"
-                                value={orderWeight}
-                                onChange={(e) =>
-                                    setOrderWeight(
-                                        parseInt(e.target.value, 10) || 0,
-                                    )
-                                }
-                                className="w-full px-3 py-2 text-xs rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100"
-                            />
-                            <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-1">
-                                Maior peso = aparece mais perto do topo do feed.
-                            </p>
-                        </div>
+                    {/* Categoria Tematica */}
+                    <div>
+                        <label
+                            htmlFor="vid-category"
+                            className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1"
+                        >
+                            Categoria Temática
+                        </label>
+                        <select
+                            id="vid-category"
+                            value={categoryId}
+                            onChange={(e) => setCategoryId(e.target.value)}
+                            className="w-full px-3 py-2 text-xs rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100"
+                        >
+                            <option value="">Sem categoria definida</option>
+                            {categories.map((c) => (
+                                <option key={c.id} value={c.id}>
+                                    {c.name}
+                                </option>
+                            ))}
+                        </select>
                     </div>
 
                     {/* Miniatura Alternativa com Suporte a Upload Direto */}
@@ -574,8 +542,8 @@ export function VideoDialog({
                         />
                     </div>
 
-                    {/* Controles de Publicacao e Destaque */}
-                    <div className="flex flex-wrap items-center gap-6 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/80 dark:border-zinc-800">
+                    {/* Controle de Publicacao */}
+                    <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/80 dark:border-zinc-800">
                         <label className="flex items-center gap-2 text-xs font-medium text-zinc-800 dark:text-zinc-200 cursor-pointer">
                             <input
                                 type="checkbox"
@@ -585,19 +553,7 @@ export function VideoDialog({
                                 }
                                 className="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 dark:border-zinc-600 dark:bg-zinc-700"
                             />
-                            <span>Publicado (visivel na vitrine publica)</span>
-                        </label>
-
-                        <label className="flex items-center gap-2 text-xs font-medium text-zinc-800 dark:text-zinc-200 cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={isFeatured}
-                                onChange={(e) =>
-                                    setIsFeatured(e.target.checked)
-                                }
-                                className="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 dark:border-zinc-600 dark:bg-zinc-700"
-                            />
-                            <span>Destaque prioritario no feed</span>
+                            <span>Publicado (visível na vitrine pública)</span>
                         </label>
                     </div>
 

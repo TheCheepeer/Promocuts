@@ -25,7 +25,6 @@ export default async function AdminVideosPage() {
                 )
             `,
             )
-            .order("order_weight", { ascending: false })
             .order("created_at", { ascending: false }),
         adminDb
             .from("categories")

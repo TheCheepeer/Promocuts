@@ -221,6 +221,28 @@ A vitrine pública é organizada nos seguintes componentes em `src/components/pu
 | `Storefront`          | `src/components/public/storefront.tsx`     | Orquestrador da vitrine com filtragem de categorias em memória (0ms), resposta tátil e sincronização de histórico.    |
 | `CreatorProfile`      | `src/components/public/creator-profile.tsx`| Perfil retrátil do criador com bio links, crachás dinâmicos de transmissão ("AO VIVO") e telemetria de cliques.        |
 
+### 5.2 Algoritmo de Ranqueamento Autônomo do Feed (Recência e Dispersão Estocástica)
+
+Para eliminar gargalos operacionais decorrentes da atribuição manual de pesos (`order_weight`) e flags estáticas de destaque (`is_featured`), o PromoCuts emprega um mecanismo autônomo de ranqueamento (`src/lib/feed/ranking.ts`). O algoritmo prioriza sistematicamente cortes recém-publicados, adicionando uma dispersão pseudo-aleatória controlada (*jitter*) para garantir dinamismo e evitar que conteúdos novos fiquem retidos no limbo da vitrine:
+
+1. **Curva de Decaimento Temporal Suave:**
+    - A pontuação base por recência adota uma função com meia-vida de 24 horas e decaimento sublinear:
+      $$\text{recencyScore} = \frac{100}{1 + \left(\frac{\text{ageInHours}}{24}\right)^{0.75}}$$
+    - Um vídeo recém-publicado (0 hora) recebe pontuação base máxima de 100 pontos.
+    - Após 24 horas, sua pontuação base decai para 50 pontos.
+    - Após 72 horas, sua pontuação atinge aproximadamente 29,8 pontos.
+
+2. **Dispersão Estocástica Controlada (*Jitter*):**
+    - Uma perturbação aleatória entre 0 e 25 pontos é adicionada à pontuação temporal:
+      $$\text{jitter} \sim \mathcal{U}(0, 25)$$
+      $$\text{totalScore} = \text{recencyScore} + \text{jitter}$$
+    - A amplitude do *jitter* foi calibrada para permitir variações e descobertas entre conteúdos com idades próximas sem nunca permitir que vídeos antigos superem publicações frescas (um vídeo de 2 horas supera um vídeo de 7 dias mesmo sob condições extremas de *jitter*).
+
+3. **Execução Segura no Server Component:**
+    - O banco de dados (ou cache de borda Upstash Redis) fornece a listagem canônica dos vídeos ordenada por `created_at DESC`.
+    - No Server Component (`src/app/page.tsx` e `src/app/c/[slug]/page.tsx`), a função `rankVideosByFreshness` pré-computa os escores de cada vídeo exatamente uma vez (aplicando *Schwartzian transform* para preservar a consistência e transitividade matemática da ordenação).
+    - O resultado ordenado é entregue de forma determinística à árvore de componentes do cliente, prevenindo disparidades de hidratação (*hydration mismatch*) no navegador.
+
 ---
 
 ## 6. Motor de Customização Visual e White-Label (Theming Dinâmico e Branding)

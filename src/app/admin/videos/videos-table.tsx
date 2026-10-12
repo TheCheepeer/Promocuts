@@ -9,14 +9,12 @@ import {
     Video as VideoIcon,
     ExternalLink,
     ShoppingBag,
-    Star,
     Eye,
     Loader2,
 } from "lucide-react";
 import { VideoDialog } from "./video-dialog";
 import {
     toggleVideoPublishedAction,
-    toggleVideoFeaturedAction,
     deleteVideoAction,
 } from "./actions";
 import { formatCompactNumber } from "@/lib/formatters";
@@ -113,14 +111,6 @@ export function VideosTable({
         setActiveActionId(id);
         startTransition(async () => {
             await toggleVideoPublishedAction(id, !current);
-            setActiveActionId(null);
-        });
-    };
-
-    const handleToggleFeatured = (id: string, current: boolean) => {
-        setActiveActionId(id);
-        startTransition(async () => {
-            await toggleVideoFeaturedAction(id, !current);
             setActiveActionId(null);
         });
     };
@@ -233,12 +223,6 @@ export function VideosTable({
                                         Status
                                     </th>
                                     <th className="py-3 px-4 text-center">
-                                        Destaque
-                                    </th>
-                                    <th className="py-3 px-4 text-center">
-                                        Peso
-                                    </th>
-                                    <th className="py-3 px-4 text-center">
                                         Views
                                     </th>
                                     <th className="py-3 px-4">Produtos</th>
@@ -345,46 +329,6 @@ export function VideosTable({
                                                         ? "Publicado"
                                                         : "Rascunho"}
                                                 </button>
-                                            </td>
-
-                                            <td className="py-3 px-4 text-center">
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        handleToggleFeatured(
-                                                            vid.id,
-                                                            vid.is_featured,
-                                                        )
-                                                    }
-                                                    disabled={isRowLoading}
-                                                    title={
-                                                        vid.is_featured
-                                                            ? "Remover destaque"
-                                                            : "Marcar como destaque"
-                                                    }
-                                                    aria-label={
-                                                        vid.is_featured
-                                                            ? "Remover destaque"
-                                                            : "Marcar como destaque"
-                                                    }
-                                                    className={`p-1 rounded-md transition-colors cursor-pointer ${
-                                                        vid.is_featured
-                                                            ? "text-amber-500 hover:text-amber-600"
-                                                            : "text-zinc-300 hover:text-zinc-400 dark:text-zinc-600 dark:hover:text-zinc-500"
-                                                    }`}
-                                                >
-                                                    <Star
-                                                        className={`h-4 w-4 ${
-                                                            vid.is_featured
-                                                                ? "fill-amber-500"
-                                                                : ""
-                                                        }`}
-                                                    />
-                                                </button>
-                                            </td>
-
-                                            <td className="py-3 px-4 text-center font-mono text-xs">
-                                                {vid.order_weight}
                                             </td>
 
                                             <td className="py-3 px-4 text-center">

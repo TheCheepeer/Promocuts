@@ -323,11 +323,6 @@ export default async function AdminDashboardPage() {
                                     </div>
 
                                     <div className="flex items-center gap-2 shrink-0">
-                                        {video.is_featured && (
-                                            <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-900">
-                                                Destaque
-                                            </span>
-                                        )}
                                         <span
                                             className={`text-[11px] font-medium px-2 py-0.5 rounded-full border ${
                                                 video.is_published
