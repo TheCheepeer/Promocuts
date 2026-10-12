@@ -188,15 +188,15 @@ export function VideosTable({
                     <div className="p-8 text-center">
                         <VideoIcon className="h-8 w-8 mx-auto text-zinc-400 mb-2" />
                         <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                            Nenhum corte de video encontrado.
+                            Nenhum corte de vídeo encontrado.
                         </p>
                         <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">
                             {search ||
                             platformFilter ||
                             categoryFilter ||
                             publishedFilter
-                                ? "Nenhum video atende aos criterios de filtragem."
-                                : "Adicione seu primeiro corte colando uma URL do TikTok, Reels ou Shorts."}
+                                ? "Nenhum vídeo atende aos critérios de filtragem."
+                                : "Adicione seu primeiro vídeo colando o link da publicação."}
                         </p>
                     </div>
                 ) : (

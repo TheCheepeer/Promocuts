@@ -86,7 +86,7 @@ Objetivo: Entregar a interface de gestao de conteudo e personalizacao visual do 
 - [x] Criar o modulo de catalogo de produtos em `src/app/admin/products/`:
     - [x] Listagem de produtos com precos, cupons e lojas parceiras.
     - [x] Formulario de cadastro com validacao defensiva de URLs de afiliado.
-- [x] Criar o modulo de curadoria de videos em `src/app/admin/videos/`:
+- [x] Criar o modulo de gestão de vídeos em `src/app/admin/videos/`:
     - [x] Cadastro por colagem de URL publica com deteccao automatica de plataforma.
     - [x] Vinculacao de multiplos produtos recomendados com ordenacao manual.
     - [x] Controles de publicacao (`is_published`) e destaque (`is_featured`).

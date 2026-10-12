@@ -192,7 +192,7 @@ export function SocialLinkDialog({
                                             autoFocus
                                             value={searchQuery}
                                             onChange={(e) => setSearchQuery(e.target.value)}
-                                            placeholder="Buscar plataforma (ex: YouTube, TikTok, Reddit, Pix)..."
+                                            placeholder="Filtrar por nome da plataforma..."
                                             className="w-full rounded-xl border border-zinc-200 bg-zinc-50 pl-8 pr-3 py-1.5 text-xs text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-zinc-100 dark:focus:ring-zinc-100"
                                         />
                                     </div>

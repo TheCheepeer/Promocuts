@@ -188,7 +188,7 @@ export function SocialLinksManager({ initialLinks }: SocialLinksManagerProps) {
                         Nenhuma rede social configurada
                     </h3>
                     <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 max-w-sm">
-                        Adicione seus canais no Instagram, TikTok, YouTube, Twitch ou comunidades para dar visibilidade à sua marca.
+                        Adicione canais de comunicação, perfis oficiais ou comunidades para dar visibilidade à sua marca.
                     </p>
                     <button
                         type="button"

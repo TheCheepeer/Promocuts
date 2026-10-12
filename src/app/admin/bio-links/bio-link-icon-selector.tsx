@@ -62,7 +62,7 @@ export const BioLinkIconSelector = memo(function BioLinkIconSelector({
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Buscar plataforma (ex: Reddit, Spotify, Twitch...)"
+                    placeholder="Filtrar ícone por nome..."
                     className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-100"
                 />
             </div>

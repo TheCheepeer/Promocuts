@@ -272,7 +272,7 @@ export function VideoDialog({
 
         if (!detectedPlatform || !platformVideoId) {
             setErrorMessage(
-                "Informe uma URL valida do TikTok, Instagram Reels ou YouTube Shorts.",
+                "Informe a URL válida de uma publicação compatível.",
             );
             return;
         }
@@ -367,7 +367,7 @@ export function VideoDialog({
                             required
                             value={originalUrl}
                             onChange={(e) => handleUrlChange(e.target.value)}
-                            placeholder="Cole a URL de um corte (TikTok, Reels, Shorts, Bilibili, Pinterest, Twitch ou Vimeo)..."
+                            placeholder="Cole a URL pública da publicação de vídeo..."
                             className="w-full font-mono text-xs px-3 py-2 rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100"
                         />
 
@@ -430,9 +430,8 @@ export function VideoDialog({
                             <div className="flex items-center gap-2 mt-2 p-2 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 text-xs text-amber-800 dark:text-amber-300">
                                 <AlertCircle className="h-4 w-4 shrink-0 text-amber-600" />
                                 <span>
-                                    URL nao reconhecida. Cole um link valido de
-                                    post do TikTok, Instagram Reels ou YouTube
-                                    Shorts.
+                                    URL não reconhecida. Verifique se o endereço
+                                    pertence a uma das plataformas suportadas.
                                 </span>
                             </div>
                         )}

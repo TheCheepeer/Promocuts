@@ -70,7 +70,7 @@ export default async function AdminBioLinksPage() {
                         Bio Links e Comunidades
                     </h1>
                     <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-                        Gerencie os links de redes sociais, canais de streaming (Twitch e Kick), grupos fechados e formas de apoio do criador.
+                        Gerencie canais de transmissão, comunidades, redes e formas de apoio para exibição na página de links.
                     </p>
                 </div>
 

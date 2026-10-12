@@ -172,7 +172,7 @@ export function BioLinkDialog({
                             maxLength={100}
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
-                            placeholder="Ex: Canal na Twitch, Grupo VIP no Telegram, Lives diárias..."
+                            placeholder="Ex: Canal Oficial, Grupo da Comunidade, Transmissões ao Vivo..."
                             className="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2 text-sm text-zinc-900 focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:focus:border-zinc-100 dark:focus:ring-zinc-100"
                         />
                     </div>

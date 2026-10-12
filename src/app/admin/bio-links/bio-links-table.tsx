@@ -166,7 +166,7 @@ export function BioLinksTable({ initialLinks }: BioLinksTableProps) {
                         Nenhum bio link cadastrado
                     </h3>
                     <p className="mt-1 max-w-sm text-xs text-zinc-500 dark:text-zinc-400">
-                        Cadastre seus links de redes sociais, lives da Twitch/Kick, servidor no Discord ou PIX para exibir na vitrine.
+                        Cadastre canais de transmissão, comunidades oficiais, redes sociais ou formas de apoio para exibição na página.
                     </p>
                     <button
                         type="button"

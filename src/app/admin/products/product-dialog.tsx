@@ -340,7 +340,7 @@ export function ProductDialog({
                             type="url"
                             value={autoFillUrl}
                             onChange={(e) => setAutoFillUrl(e.target.value)}
-                            placeholder="https://www.amazon.com.br/dp/... ou link de parceiro"
+                            placeholder="Cole a URL do produto ou link de parceiro..."
                             className="flex-1 font-mono text-xs px-3 py-2 rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100"
                         />
                         <button
@@ -535,7 +535,7 @@ export function ProductDialog({
                                                             e.target.value,
                                                         )
                                                     }
-                                                    placeholder="Ex: Amazon"
+                                                    placeholder="Ex: Nome da Loja"
                                                     className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100"
                                                 />
                                                 {/* Sugestões rápidas */}
@@ -573,9 +573,9 @@ export function ProductDialog({
                                                                 idx,
                                                                 "affiliate_url",
                                                                 e.target.value,
-                                                            )
+                                                             )
                                                         }
-                                                        placeholder="https://amzn.to/... ou https://shope.ee/..."
+                                                        placeholder="Cole o link de afiliado ou parceiro..."
                                                         className="w-full font-mono text-xs px-2.5 py-1.5 pr-7 rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100"
                                                     />
                                                     {store.affiliate_url && (

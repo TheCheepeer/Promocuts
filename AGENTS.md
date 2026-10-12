@@ -75,6 +75,10 @@ Ao atuar neste projeto, o agente deve seguir rigorosamente as instrucoes abaixo:
     - A branch `main` é reservada estritamente para versões estáveis em produção.
     - O desenvolvimento ativo e a homologação de novas fases ocorrem na branch `develop` (vinculada ao ambiente de Preview da Vercel e à base Supabase Dev).
     - É proibido realizar commits diretos na `main` durante o desenvolvimento de novas fases; a mesclagem para a `main` deve ocorrer somente após a conclusão, verificação e documentação completas da fase.
+11. **Desacoplamento Textual de Plataformas e Lojas Externas na Interface:**
+    - É estritamente proibido citar nomes de plataformas de vídeo (como TikTok, Reels, Shorts, etc.) ou lojas e marketplaces externos (como Amazon, Shopee, etc.) em títulos de páginas, descrições funcionais gerais, subtítulos, caixas de diálogo, textos de orientação ou estados vazios (*empty states*).
+    - A interface deve descrever exclusivamente a função e o fluxo operacional do sistema (ex.: "Gestão de Vídeos", "Gerencie publicações de vídeo e vincule produtos recomendados aos cortes", "Adicione seu primeiro vídeo colando o link da publicação").
+    - Plataformas e lojas são tratadas estritamente como adaptadores desacoplados ao ecossistema; seus nomes e identificadores só podem ser apresentados dentro de seus respectivos adaptadores, seletores/filtros de opções suportadas, recipientes informativos dedicados ou badges identificadoras de itens já cadastrados.
 
 ---
 

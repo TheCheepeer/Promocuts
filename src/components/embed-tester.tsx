@@ -42,11 +42,10 @@ export function EmbedTester() {
                     </div>
                     <div>
                         <h3 className="font-bold text-base sm:text-lg text-zinc-900 dark:text-zinc-100">
-                            Pre-visualizacao de Videos
+                            Pré-visualização de Vídeos
                         </h3>
                         <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                            Cole qualquer link do TikTok, Instagram Reels ou
-                            YouTube Shorts para visualizar a incorporacao
+                            Cole o link da publicação para visualizar a incorporação oficial
                         </p>
                     </div>
                 </div>
@@ -75,7 +74,7 @@ export function EmbedTester() {
                         htmlFor="video-url-input"
                         className="block text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-2"
                     >
-                        URL do Video Original
+                        URL do Vídeo Original
                     </label>
                     <div className="relative flex items-center">
                         <input
@@ -83,7 +82,7 @@ export function EmbedTester() {
                             type="text"
                             value={url}
                             onChange={(e) => setUrl(e.target.value)}
-                            placeholder="Ex: https://www.youtube.com/shorts/..."
+                            placeholder="Cole a URL pública da publicação de vídeo..."
                             className="w-full h-12 pl-4 pr-12 rounded-2xl border border-zinc-200 dark:border-zinc-700/80 bg-zinc-50/50 dark:bg-zinc-950/50 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent transition-all"
                         />
                         <div className="absolute right-3 text-zinc-400">
@@ -182,8 +181,7 @@ export function EmbedTester() {
                     </div>
                 ) : (
                     <div className="rounded-2xl border border-rose-500/20 bg-rose-500/5 dark:bg-rose-500/10 p-4 text-xs text-rose-600 dark:text-rose-400">
-                        URL invalida ou nao reconhecida. Forneca um link valido
-                        do TikTok, Instagram Reels ou YouTube Shorts.
+                        URL inválida ou não reconhecida. Forneça o link de uma publicação compatível.
                     </div>
                 )}
             </div>
