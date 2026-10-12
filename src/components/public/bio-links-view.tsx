@@ -26,6 +26,7 @@ interface BioLinksViewProps {
 
 export function BioLinksView({ settings, bioLinks }: BioLinksViewProps) {
     const [copied, setCopied] = useState(false);
+    const [shareUrl, setShareUrl] = useState("");
     const canonicalBaseUrl = (
         process.env.NEXT_PUBLIC_APP_URL ||
         process.env.NEXT_PUBLIC_SITE_URL ||
