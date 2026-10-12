@@ -120,12 +120,12 @@ export function BioLinksView({ settings, bioLinks }: BioLinksViewProps) {
         }
     };
 
-    // QR Code em SVG Puro (Gerado deterministamente sem requisição externa)
+    // QR Code em SVG Puro (Módulos pretos sobre fundo branco para leitura óptica garantida em smartphones)
     const qrSvg = showQrCode && shareUrl ? generateQrCodeSvg(shareUrl, {
         size: 160,
-        padding: 1,
-        fgColor: "currentColor",
-        bgColor: "transparent",
+        margin: 2,
+        darkColor: "#000000",
+        lightColor: "#ffffff",
     }) : "";
 
     return (
@@ -419,12 +419,12 @@ export function BioLinksView({ settings, bioLinks }: BioLinksViewProps) {
                             </h2>
                         </div>
 
-                        {/* Contêiner de Renderização do SVG */}
-                        <div className="p-3 bg-zinc-50 dark:bg-zinc-950 rounded-2xl border border-zinc-200/80 dark:border-zinc-800/80 text-zinc-900 dark:text-white flex items-center justify-center">
+                        {/* Contêiner de Renderização do SVG (Fundo branco para leitura de câmera) */}
+                        <div className="p-3 bg-white rounded-2xl border border-zinc-200/80 shadow-xs flex items-center justify-center">
                             {qrSvg ? (
                                 <div
                                     dangerouslySetInnerHTML={{ __html: qrSvg }}
-                                    className="w-36 h-36"
+                                    className="w-36 h-36 flex items-center justify-center overflow-hidden"
                                 />
                             ) : (
                                 <div className="w-36 h-36 flex items-center justify-center text-zinc-400">
