@@ -529,9 +529,19 @@ Para resolver a rigidez arquitetural dos campos estáticos prévios em `site_set
 
 - **Módulo de Estratégias (`src/lib/social/strategies.ts`):**
     - Cada plataforma suportada é encapsulada em um objeto de estratégia (`SocialPlatformStrategy`) contendo metadados essenciais: identificador único, nome amigável, categoria (`video`, `streaming`, `social`, `community`, `audio`, `monetization`, `other`), cor oficial de marca, texto de exemplo (*placeholder*), prefixo de URL base, função formatadora de URL (`formatUrl`) e avaliador de correspondência de domínios (`matchesUrl`).
-    - **Catálogo Expandido (30+ Plataformas):** Cobre todas as redes populares de criadores, incluindo YouTube, TikTok, Twitch, Kick, Instagram, Reddit, X (Twitter), Threads, Bluesky, Facebook, Pinterest, LinkedIn, Kwai, Discord, Telegram, WhatsApp, Spotify, Apple Music, Deezer, SoundCloud, Steam, PIX, Apoia-se, Patreon, Ko-fi, Buy Me a Coffee, Snapchat, Substack, Amazon Store, GitHub e Links Externos genéricos.
-- **Autodetecção Inteligente de URLs:**
-    - Ao colar ou digitar qualquer link no formulário, a função `detectPlatformFromUrl` inspeciona a URL por expressões regulares e identifica automaticamente a plataforma correspondente (ex: `https://reddit.com/...` seleciona imediatamente o Reddit), sugerindo o nome e configurando o ícone sem necessidade de seleção manual.
+    - **Catálogo Expandido (30+ Plataformas):** Cobre todas as redes populares de criadores, incluindo YouTube, TikTok, Twitch, Kick, Instagram, Reddit, X (Twitter), Threads, Bluesky, Facebook, Pinterest, LinkedIn, Kwai, Discord, Telegram, WhatsApp, YouTube Music, Spotify, Apple Music, Deezer, SoundCloud, Steam, PIX, Apoia-se, Patreon, Ko-fi, Buy Me a Coffee, Snapchat, Substack, Amazon Store, GitHub e Links Externos.
+    - **Unificação Conceitual de Website e Link Externo:** Eliminação de redundâncias duplicadas, consolidando em um único item canônico *"Website / Link Externo"* (`id: "link"`). A função `getSocialPlatform` preserva retrocompatibilidade transparente mapeando automaticamente o identificador legado `"site"` para `"link"`.
+- **Autodetecção Inteligente de URLs e Combobox com Autocompletar:**
+    - Ao colar ou digitar qualquer link no formulário, a função `detectPlatformFromUrl` inspeciona a URL por expressões regulares e identifica automaticamente a plataforma correspondente (ex: `https://music.youtube.com/...` seleciona imediatamente o YouTube Music; `https://livepix.gg/...` seleciona o PIX), sugerindo o nome e configurando o ícone sem necessidade de seleção manual.
+    - O diálogo de cadastro e edição (`SocialLinkDialog`) incorpora um combobox pesquisável com autocompletar instantâneo, permitindo encontrar qualquer serviço via digitação rápida sem exigir rolagem exaustiva.
+- **Logotipos Canônicos Oficiais da Indústria (Padrão Simple Icons 24x24 px):**
+    - Para assegurar conformidade visual rigorosa com as marcas sem recorrer a pacotes externos pesados (preservando o tamanho mínimo do pacote de JavaScript), o componente `SocialIcon` incorpora diretamente os vetores canônicos oficiais em SVG puro:
+        - **PIX:** Geometria oficial do Banco Central do Brasil com quatro elos entrelaçados em losango;
+        - **YouTube Music:** Círculos concêntricos oficiais com triângulo interno de reprodução;
+        - **WhatsApp e Telegram:** Logotipos canônicos oficiais das marcas, substituindo ícones genéricos de mensageria;
+        - **Patreon, Ko-fi e Buy Me a Coffee:** Vetores canônicos das plataformas de financiamento e apoio;
+        - **Snapchat, Apple Music, Deezer e SoundCloud:** Vetores oficiais refinados;
+        - **Favicons Dinâmicos em Links Externos:** Consulta automática de *favicons* do domínio de destino via Google Favicon Service, com fallback visual vetorial nativo em caso de indisponibilidade.
 - **Seletor Memoizado de Ícones de Alta Performance (`BioLinkIconSelector`):**
     - Componente isolado envolto em `React.memo` que elimina completamente as re-renderizações desnecessárias do DOM durante a digitação de títulos e URLs no modal, mantendo estabilidade a 60 FPS mesmo com catálogo amplo de botões e SVGs.
     - Inclui campo de busca instantânea e abas de filtros por categoria temática.

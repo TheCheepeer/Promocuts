@@ -202,8 +202,10 @@ Objetivo: Transformar o PromoCuts no hub central soberano e descentralizado do c
     - [x] Filtro temporal flexível (Hoje, Últimos 7 dias, Últimos 30 dias e Período completo).
 - [x] Padrão Strategy de Redes Sociais e Rota Administrativa Dedicada (`/admin/social`):
     - [x] Migração incremental `supabase/migrations/007_brand_social_links.sql` criando a tabela `brand_social_links` com carga automática dos dados pré-existentes de `site_settings`.
-    - [x] Catálogo amplo com 30+ plataformas populares do mercado (Linktree, Reddit, Bluesky, Spotify, Steam, Apoia-se, Buy Me a Coffee, Amazon Store, etc.) no Padrão Strategy (`src/lib/social/strategies.ts`).
-    - [x] Autodetecção inteligente de plataformas e preenchimento ágil ao colar URLs.
+    - [x] Catálogo amplo com 30+ plataformas populares do mercado (YouTube, TikTok, Twitch, Kick, Instagram, Reddit, Bluesky, Spotify, YouTube Music, Steam, Apoia-se, Buy Me a Coffee, Amazon Store, etc.) no Padrão Strategy (`src/lib/social/strategies.ts`).
+    - [x] Unificação conceitual de "Website / Blog" e "Link Externo" sob a estratégia única `"link"`, preservando retrocompatibilidade para o identificador legado `"site"`.
+    - [x] Autodetecção inteligente de plataformas ao colar URLs e combobox pesquisável com autocompletar instantâneo no modal de cadastro e edição (`SocialLinkDialog`).
+    - [x] Vetores canônicos oficiais da indústria (Padrão Simple Icons 24x24 px em SVG puro) para PIX (geometria do Banco Central), YouTube Music, WhatsApp, Telegram, Patreon, Ko-fi e redes complementares, com suporte a favicons dinâmicos para links web externos via Google Favicon Service.
     - [x] Otimização de performance com seletor memoizado (`BioLinkIconSelector`) mantendo 60 FPS estáveis na digitação de títulos e URLs no modal.
     - [x] Controle granular e independente de exibição: sinalizadores `show_in_storefront` (cabeçalho da vitrine) e `show_in_bio` (perfil da página de bio links).
     - [x] Nova rota `/admin/social` com reordenação sequencial, toggles diretos de visibilidade e diálogo de cadastro/edição.
