@@ -68,6 +68,28 @@ export function BioLinksView({ settings, bioLinks }: BioLinksViewProps) {
     const bannerStyle = settings.bio_show_storefront_banner || "banner";
     const showQrCode = settings.bio_show_qrcode !== false;
 
+    // Resolução de cores: herda automaticamente as cores da vitrine,
+    // a menos que o criador tenha definido uma cor dedicada para a bio.
+    const activePrimaryLight =
+        settings.bio_primary_color_light ||
+        settings.primary_color_light ||
+        "#10B981";
+
+    const activePrimaryDark =
+        settings.bio_primary_color_dark ||
+        settings.primary_color_dark ||
+        activePrimaryLight;
+
+    const customBioCss = `
+        .bio-links-container {
+            --brand-primary: ${activePrimaryLight};
+        }
+        .dark .bio-links-container,
+        :root.dark .bio-links-container {
+            --brand-primary: ${activePrimaryDark};
+        }
+    `;
+
     const handleLinkClick = (linkId: string) => {
         trackBioLinkClick(linkId);
     };
@@ -107,7 +129,10 @@ export function BioLinksView({ settings, bioLinks }: BioLinksViewProps) {
     }) : "";
 
     return (
-        <div className="flex min-h-dvh flex-col justify-between bg-zinc-100/70 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 transition-colors">
+        <div className="bio-links-container flex min-h-dvh flex-col justify-between bg-zinc-100/70 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 transition-colors">
+            {/* Injeção de estilo dinâmico para garantir que a cor primária herde da vitrine ou do bio links */}
+            <style dangerouslySetInnerHTML={{ __html: customBioCss }} />
+
             {/* Barra Superior Flutuante */}
             <header className="sticky top-0 z-20 w-full border-b border-zinc-200/60 bg-white/80 backdrop-blur-md dark:border-zinc-800/60 dark:bg-zinc-950/80">
                 <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-4 sm:px-6">
@@ -128,8 +153,8 @@ export function BioLinksView({ settings, bioLinks }: BioLinksViewProps) {
                         >
                             {copied ? (
                                 <>
-                                    <Check className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                                    <span className="text-emerald-600 dark:text-emerald-400">Copiado!</span>
+                                    <Check className="h-3.5 w-3.5 text-brand-primary" />
+                                    <span className="text-brand-primary">Copiado!</span>
                                 </>
                             ) : (
                                 <>
@@ -157,17 +182,17 @@ export function BioLinksView({ settings, bioLinks }: BioLinksViewProps) {
                                     <img
                                         src={avatarLight}
                                         alt={settings.site_name}
-                                        className="h-24 w-24 rounded-full object-cover ring-4 ring-emerald-500/30 shadow-md dark:hidden"
+                                        className="h-24 w-24 rounded-full object-cover ring-4 ring-brand-primary/30 shadow-md dark:hidden"
                                     />
                                     {/* eslint-disable-next-line @next/next/no-img-element */}
                                     <img
                                         src={avatarDark || avatarLight}
                                         alt={settings.site_name}
-                                        className="hidden h-24 w-24 rounded-full object-cover ring-4 ring-emerald-500/30 shadow-md dark:block"
+                                        className="hidden h-24 w-24 rounded-full object-cover ring-4 ring-brand-primary/30 shadow-md dark:block"
                                     />
                                 </>
                             ) : (
-                                <div className="flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-tr from-emerald-500 to-indigo-600 text-2xl font-black text-white shadow-md ring-4 ring-emerald-500/20">
+                                <div className="flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-tr from-brand-primary to-indigo-600 text-2xl font-black text-white shadow-md ring-4 ring-brand-primary/20">
                                     {firstLetter}
                                 </div>
                             )}
@@ -271,10 +296,10 @@ export function BioLinksView({ settings, bioLinks }: BioLinksViewProps) {
 
                     {/* Cartaz da Vitrine de Cortes (Conforme Configuração) */}
                     {bannerStyle === "banner" && (
-                        <div className="overflow-hidden rounded-2xl border-2 border-emerald-500/40 bg-gradient-to-br from-emerald-500/10 via-white to-indigo-50/20 p-5 shadow-xs transition-all hover:border-emerald-500/60 dark:from-emerald-500/15 dark:via-zinc-950 dark:to-indigo-950/20">
+                        <div className="overflow-hidden rounded-2xl border-2 border-brand-primary/40 bg-gradient-to-br from-brand-primary/10 via-white to-brand-primary/5 p-5 shadow-xs transition-all hover:border-brand-primary/60 dark:from-brand-primary/15 dark:via-zinc-950 dark:to-brand-primary/5">
                             <div className="flex flex-col gap-3">
                                 <div className="space-y-1">
-                                    <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+                                    <div className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-primary uppercase tracking-wider">
                                         <Sparkles className="h-3.5 w-3.5" />
                                         <span>Vitrine de Cortes</span>
                                     </div>
@@ -288,7 +313,7 @@ export function BioLinksView({ settings, bioLinks }: BioLinksViewProps) {
 
                                 <Link
                                     href="/"
-                                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white shadow-xs transition-all hover:bg-emerald-500 active:scale-98"
+                                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-primary px-4 py-2.5 text-xs font-bold text-white shadow-xs transition-all hover:opacity-90 active:scale-98"
                                 >
                                     <Play className="h-3.5 w-3.5 fill-current" />
                                     <span>Abrir Vitrine de Vídeos</span>
@@ -300,14 +325,14 @@ export function BioLinksView({ settings, bioLinks }: BioLinksViewProps) {
                     {bannerStyle === "compact" && (
                         <Link
                             href="/"
-                            className="group flex items-center justify-between gap-3.5 rounded-2xl border border-emerald-500/40 bg-emerald-50/40 dark:bg-emerald-950/20 p-3.5 sm:p-4 shadow-xs transition-all hover:border-emerald-500 hover:shadow-md"
+                            className="group flex items-center justify-between gap-3.5 rounded-2xl border border-brand-primary/40 bg-brand-primary/10 dark:bg-brand-primary/20 p-3.5 sm:p-4 shadow-xs transition-all hover:border-brand-primary hover:shadow-md"
                         >
                             <div className="flex items-center gap-3.5 min-w-0">
-                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-white shadow-xs">
+                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-primary text-white shadow-xs">
                                     <Play className="h-5 w-5 fill-current" />
                                 </div>
                                 <div className="min-w-0">
-                                    <p className="truncate text-sm font-bold text-zinc-900 dark:text-zinc-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                                    <p className="truncate text-sm font-bold text-zinc-900 dark:text-zinc-100 group-hover:text-brand-primary transition-colors">
                                         Vitrine de Vídeos & Ofertas
                                     </p>
                                     <p className="truncate text-[11px] text-zinc-500 dark:text-zinc-400">
@@ -315,7 +340,7 @@ export function BioLinksView({ settings, bioLinks }: BioLinksViewProps) {
                                     </p>
                                 </div>
                             </div>
-                            <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-white shrink-0">
+                            <span className="rounded-full bg-brand-primary px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-white shrink-0">
                                 Vitrine
                             </span>
                         </Link>
@@ -340,10 +365,10 @@ export function BioLinksView({ settings, bioLinks }: BioLinksViewProps) {
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     onClick={() => handleLinkClick(link.id)}
-                                    className="group relative flex items-center justify-between gap-3.5 rounded-2xl border border-zinc-200/90 bg-zinc-50/50 p-3.5 sm:p-4 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-500 hover:bg-white dark:border-zinc-800/90 dark:bg-zinc-950/60 dark:hover:border-emerald-500 dark:hover:bg-zinc-950 hover:shadow-md"
+                                    className="group relative flex items-center justify-between gap-3.5 rounded-2xl border border-zinc-200/90 bg-zinc-50/50 p-3.5 sm:p-4 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-primary hover:bg-white dark:border-zinc-800/90 dark:bg-zinc-950/60 dark:hover:border-brand-primary dark:hover:bg-zinc-950 hover:shadow-md"
                                 >
                                     <div className="flex items-center gap-3.5 min-w-0">
-                                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-zinc-800 shadow-2xs transition-colors group-hover:bg-emerald-500/10 group-hover:text-emerald-600 dark:bg-zinc-800 dark:text-zinc-200 dark:group-hover:bg-emerald-500/20 dark:group-hover:text-emerald-400">
+                                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-zinc-800 shadow-2xs transition-colors group-hover:bg-brand-primary/10 group-hover:text-brand-primary dark:bg-zinc-800 dark:text-zinc-200 dark:group-hover:bg-brand-primary/20 dark:group-hover:text-brand-primary">
                                             <BioLinkIcon
                                                 name={link.icon}
                                                 className="h-5 w-5"
@@ -351,7 +376,7 @@ export function BioLinksView({ settings, bioLinks }: BioLinksViewProps) {
                                         </div>
 
                                         <div className="min-w-0">
-                                            <p className="truncate text-sm font-bold text-zinc-900 dark:text-zinc-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                                            <p className="truncate text-sm font-bold text-zinc-900 dark:text-zinc-100 group-hover:text-brand-primary transition-colors">
                                                 {link.title}
                                             </p>
                                             <p className="truncate text-[11px] text-zinc-400 dark:text-zinc-500 font-mono">
@@ -366,14 +391,14 @@ export function BioLinksView({ settings, bioLinks }: BioLinksViewProps) {
                                                 className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide ${
                                                     link.is_highlighted
                                                         ? "bg-red-600 text-white animate-pulse"
-                                                        : "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
+                                                        : "bg-brand-primary/10 text-brand-primary dark:bg-brand-primary/20"
                                                 }`}
                                             >
                                                 {link.badge_text}
                                             </span>
                                         )}
 
-                                        <ExternalLink className="h-4 w-4 text-zinc-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors" />
+                                        <ExternalLink className="h-4 w-4 text-zinc-400 group-hover:text-brand-primary transition-colors" />
                                     </div>
                                 </a>
                             ))
@@ -388,7 +413,7 @@ export function BioLinksView({ settings, bioLinks }: BioLinksViewProps) {
                         className="hidden lg:flex flex-col items-center w-64 bg-white dark:bg-zinc-900/90 border border-zinc-200/80 dark:border-zinc-800/80 rounded-3xl p-6 shadow-sm sticky top-20 text-center space-y-4"
                     >
                         <div className="flex items-center gap-2 text-zinc-800 dark:text-zinc-200">
-                            <Smartphone className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                            <Smartphone className="w-4 h-4 text-brand-primary" />
                             <h2 className="text-xs font-bold uppercase tracking-wider">
                                 Abrir no Celular
                             </h2>
