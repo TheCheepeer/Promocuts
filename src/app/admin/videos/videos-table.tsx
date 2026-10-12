@@ -18,6 +18,7 @@ import {
     deleteVideoAction,
 } from "./actions";
 import { formatCompactNumber } from "@/lib/formatters";
+import { VIDEO_PLATFORMS, getVideoStrategy } from "@/lib/embeds/parser";
 import type { Video, Category, Product } from "@/types/database";
 
 export interface VideoWithRelations extends Video {
@@ -34,21 +35,6 @@ interface VideosTableProps {
     categories: Category[];
     availableProducts: Product[];
 }
-
-const PLATFORM_CONFIG: Record<string, { label: string; badgeClass: string }> = {
-    tiktok: {
-        label: "TikTok",
-        badgeClass: "bg-black text-white dark:bg-zinc-800",
-    },
-    reels: {
-        label: "Reels",
-        badgeClass: "bg-pink-600 text-white",
-    },
-    shorts: {
-        label: "Shorts",
-        badgeClass: "bg-red-600 text-white",
-    },
-};
 
 export function VideosTable({
     videos,
@@ -153,9 +139,11 @@ export function VideosTable({
                         className="px-3 py-2 text-xs rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-zinc-900 dark:focus:ring-zinc-100"
                     >
                         <option value="">Todas as plataformas</option>
-                        <option value="tiktok">TikTok</option>
-                        <option value="reels">Instagram Reels</option>
-                        <option value="shorts">YouTube Shorts</option>
+                        {VIDEO_PLATFORMS.map((p) => (
+                            <option key={p.id} value={p.id}>
+                                {p.name}
+                            </option>
+                        ))}
                     </select>
 
                     {/* Filtro Categoria */}
@@ -233,12 +221,11 @@ export function VideosTable({
                             </thead>
                             <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800 text-zinc-700 dark:text-zinc-300">
                                 {filteredVideos.map((vid) => {
-                                    const plat = PLATFORM_CONFIG[
-                                        vid.platform
-                                    ] || {
-                                        label: vid.platform,
-                                        badgeClass: "bg-zinc-700 text-white",
-                                    };
+                                    const strategy = getVideoStrategy(vid.platform);
+                                    const label = strategy?.name || vid.platform;
+                                    const badgeClass = strategy
+                                        ? `${strategy.badgeColor.bg} ${strategy.badgeColor.text} ${strategy.badgeColor.darkBg || ""}`
+                                        : "bg-zinc-700 text-white";
 
                                     const isRowLoading =
                                         isPending && activeActionId === vid.id;
@@ -253,9 +240,9 @@ export function VideosTable({
                                         >
                                             <td className="py-3 px-4">
                                                 <span
-                                                    className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-md ${plat.badgeClass}`}
+                                                    className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-md ${badgeClass}`}
                                                 >
-                                                    {plat.label}
+                                                    {label}
                                                 </span>
                                             </td>
 

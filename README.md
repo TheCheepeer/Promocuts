@@ -13,7 +13,7 @@
 
 ## Sobre o Projeto
 
-O **PromoCuts** é uma plataforma que conecta vídeos curtos virais (**TikTok, Instagram Reels e YouTube Shorts**) diretamente a produtos recomendados em programas de afiliados (Amazon, Shopee, Mercado Livre, AliExpress e outros).
+O **PromoCuts** é uma plataforma que conecta vídeos curtos virais (**TikTok, Instagram Reels, YouTube Shorts, Bilibili, Pinterest, Twitch Clips e Vimeo**) diretamente a produtos recomendados em programas de afiliados (Amazon, Shopee, Mercado Livre, AliExpress e outros).
 
 Foi concebido como uma solução completa de **renda passiva** e um **projeto estruturado de portfólio**, priorizando engenharia de software limpa, segurança rigorosa e despesa zero de infraestrutura.
 
@@ -23,11 +23,11 @@ Foi concebido como uma solução completa de **renda passiva** e um **projeto es
 
 - **Vitrine Pública Mobile-First:** Feed de alta conversão otimizado para navegação rápida por toque, com rolagem fluida (_scroll-snap_) em smartphones e modo de catálogo responsivo no desktop.
 - **Feed Geral e Categorização Temática:** Descoberta rápida de reviews por meio de barra de navegação com pílulas ("Todos", "Tecnologia", "Casa & Cozinha", etc.), com alternância imediata de nichos e rotas amigáveis.
-- **Embeds Nativos (Zero Custo de Tráfego e Armazenamento):** Nenhum arquivo `.mp4` é armazenado no servidor. Os reprodutores utilizam iframes oficiais do TikTok, Instagram e YouTube, eliminando custos de CDN e armazenamento de vídeo.
+- **Embeds Nativos no Padrão Strategy (Zero Custo de Tráfego e Armazenamento):** Nenhum arquivo `.mp4` é armazenado no servidor. O sistema utiliza iframes oficiais e seguros (TikTok, Instagram Reels, YouTube Shorts, Bilibili, Pinterest, Twitch Clips e Vimeo), eliminando custos de CDN e armazenamento de vídeo.
 - **Cards de Produtos Acoplados & Suporte Multi-Loja:** Cada corte exibe os produtos recomendados com comparador de lojas parceiras (Amazon, Shopee, Mercado Livre, AliExpress, etc.), permitindo que o visitante compare preços e cupons em tempo real antes de comprar.
 - **Hub Central do Criador (Bio Links & Streamers):** Perfil retrátil e página pública dedicada (`/links` e `/bio`) inspirada no Linktree com cartaz de conversão para a vitrine, QR Code determinístico em SVG puro, crachás dinâmicos ("AO VIVO", "VIP", "DESCONTO") com efeito pulsante e ordenação instantânea.
 - **Gerenciador de Redes Sociais no Padrão Strategy (`/admin/social`):** Gestão visual com mais de 30 plataformas populares (YouTube, TikTok, Twitch, Kick, Instagram, Reddit, Bluesky, Spotify, YouTube Music, PIX, etc.), autodetecção inteligente de URLs, combobox com autocompletar em tempo real, vetores canônicos oficiais (Simple Icons 24x24 px) e controle granular e independente de exibição no cabeçalho da vitrine e no perfil de bio links.
-- **Autopreenchimento Inteligente de Produtos e Cortes:** Extração instantânea de metadados para produtos (título, foto, loja e preço sugerido) e para cortes de vídeo (captura automática de título e miniatura a partir do TikTok, YouTube Shorts e Instagram Reels), com opção de upload direto de miniaturas personalizadas (PNG, JPG, WebP) e proteção ativa contra ataques de SSRF.
+- **Autopreenchimento Inteligente de Produtos e Cortes:** Extração instantânea de metadados para produtos (título, foto, loja e preço sugerido) e para cortes de vídeo em múltiplas plataformas, com opção de upload direto de miniaturas personalizadas (PNG, JPG, WebP) e proteção ativa contra ataques de SSRF.
 - **Monitoramento Automatizado de Ofertas (Vercel Cron Job):** Auditoria diária de integridade em segundo plano que identifica links quebrados ou produtos esgotados (códigos 404/410) e sinaliza alertas no painel para revisão proativa do administrador.
 - **Cópia Instantânea de Cupom:** Botão com um toque para copiar códigos promocionais para a área de transferência, acompanhado de feedback tátil e visual.
 - **Customização Total de Marca (White-Label) & Modo Claro/Escuro:** Suporte nativo a modo claro e escuro (baseado no sistema com botão de alternância manual e persistência em cache), paleta de cores primária e secundária independentes para cada modo de visualização, controle completo de logotipo, favicon, slogan e metadados de SEO pelo painel `/admin/settings`, tudo refletido dinamicamente na vitrine pública sem necessidade de novo deploy.

@@ -6,7 +6,15 @@ export type Json =
     | { [key: string]: Json | undefined }
     | Json[];
 
-export type VideoPlatform = "tiktok" | "reels" | "shorts";
+export type VideoPlatform =
+    | "tiktok"
+    | "reels"
+    | "shorts"
+    | "bilibili"
+    | "pinterest"
+    | "twitch"
+    | "vimeo"
+    | (string & {});
 
 export type BioStorefrontBannerStyle = "banner" | "compact" | "hidden";
 

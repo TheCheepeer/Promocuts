@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Play, Loader2 } from "lucide-react";
-import { getEmbedIframeConfig } from "@/lib/embeds/parser";
+import { getEmbedIframeConfig, getVideoStrategy } from "@/lib/embeds/parser";
 import type { VideoPlatform } from "@/types/database";
 
 interface VideoPlayerProps {
@@ -14,12 +14,6 @@ interface VideoPlayerProps {
     isActive?: boolean;
     className?: string;
 }
-
-const PLATFORM_LABELS: Record<VideoPlatform, string> = {
-    tiktok: "TikTok",
-    reels: "Instagram Reels",
-    shorts: "YouTube Shorts",
-};
 
 export function VideoPlayer({
     platform,
@@ -103,7 +97,7 @@ export function VideoPlayer({
 
                         <div className="mt-4 max-w-[85%]">
                             <span className="inline-block rounded-full bg-black/60 px-2.5 py-0.5 text-[11px] font-semibold text-white/90 backdrop-blur-md">
-                                {PLATFORM_LABELS[platform]}
+                                {getVideoStrategy(platform)?.name || platform}
                             </span>
                             <p className="mt-2 line-clamp-2 text-xs font-medium text-white/90 drop-shadow-sm">
                                 {title}

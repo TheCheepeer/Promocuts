@@ -78,23 +78,28 @@ flowchart TD
 
 Armazenar vídeos `.mp4` em buckets de nuvem (como AWS S3 ou Cloudflare R2) e transmiti-los gera custos contínuos de CDN e processamento de transcodificação. Em projetos com tráfego viral, esse modelo inviabiliza o plano gratuito.
 
-### A Solução por Embeds
+### A Solução por Embeds e o Padrão Strategy
 
-O PromoCuts delega o armazenamento, transcodificação e distribuição de vídeo diretamente aos servidores das plataformas de origem (TikTok, Meta e Google):
+O PromoCuts delega o armazenamento, transcodificação e distribuição de vídeo diretamente aos servidores das plataformas de origem via **Padrão Strategy** (`src/lib/embeds/strategies.ts`). Cada serviço é encapsulado em uma estratégia desacoplada contendo identificação de domínios, regras de extração de IDs, formatação de embed e políticas de segurança de iframe:
 
-| Plataforma          | Padrão de URL de Entrada                | Mecanismo de Renderização                                           | Otimização Aplicada                                        |
-| :------------------ | :-------------------------------------- | :------------------------------------------------------------------ | :--------------------------------------------------------- |
-| **TikTok**          | `tiktok.com/@autor/video/7123456789...` | Iframe oficial v2 (`tiktok.com/embed/v2/{id}`)                      | `loading="lazy"`, sandbox com permissões mínimas           |
-| **Instagram Reels** | `instagram.com/reel/C7xyz123...`        | Iframe embed oficial (`instagram.com/reel/{id}/embed`)              | Dimensões verticais dinâmicas, script assíncrono isolado   |
-| **YouTube Shorts**  | `youtube.com/shorts/dQw4w9WgXcQ`        | Iframe oficial Privacy-Enhanced (`youtube-nocookie.com/embed/{id}`) | `rel=0`, controles simplificados, sem cookies de terceiros |
+| Plataforma              | Padrão de URL de Entrada                    | Mecanismo de Renderização                                           | Otimização / Políticas Aplicadas                           |
+| :---------------------- | :------------------------------------------ | :------------------------------------------------------------------ | :--------------------------------------------------------- |
+| **TikTok**              | `tiktok.com/@autor/video/7123456789...`     | Iframe oficial v2 (`tiktok.com/embed/v2/{id}`)                      | `loading="lazy"`, sandbox com permissões mínimas           |
+| **Instagram Reels**     | `instagram.com/reel/C7xyz123...`            | Iframe embed oficial (`instagram.com/reel/{id}/embed`)              | Dimensões verticais dinâmicas, script isolado              |
+| **YouTube Shorts**      | `youtube.com/shorts/dQw4w9WgXcQ`            | Iframe oficial Privacy-Enhanced (`youtube-nocookie.com/embed/{id}`) | `rel=0`, controles simplificados, sem cookies de terceiros |
+| **Bilibili**            | `bilibili.com/video/BV1xx411c7m9`           | Iframe oficial (`player.bilibili.com/player.html?bvid={id}`)        | `danmaku=0`, `high_quality=1`, reprodutor de alta definição |
+| **Pinterest**           | `pinterest.com/pin/123456789...`            | Iframe embed oficial (`assets.pinterest.com/ext/embed.html?id={id}`)| Suporte nativo a Idea Pins e vídeos verticais              |
+| **Twitch Clips**        | `clips.twitch.tv/ClipSlug`                  | Iframe oficial Twitch (`clips.twitch.tv/embed?clip={id}&parent=...`)| Resolução dinâmica do domínio parent via navegador/host   |
+| **Vimeo**               | `vimeo.com/123456789`                       | Iframe oficial Vimeo (`player.vimeo.com/video/{id}?portrait=1`)     | Formato vertical portrait sem anúncios, oEmbed oficial     |
 
-### Ciclo de Parsing de URLs
+### Ciclo de Parsing de URLs via Strategy
 
-No painel `/admin`, o administrador precisa apenas colar a URL original da postagem. O módulo `src/lib/embeds/parser.ts` executa expressões regulares puras para:
+No painel `/admin`, o administrador precisa apenas colar a URL original da postagem. O motor de estratégias em `src/lib/embeds/strategies.ts` e `src/lib/embeds/parser.ts`:
 
-1. Detectar automaticamente a plataforma de origem (`tiktok`, `reels` ou `shorts`).
-2. Extrair o identificador único do corte (`platform_video_id`).
-3. Construir a URL padronizada de incorporação (_embed URL_).
+1. Detecta dinamicamente a estratégia correspondente através de `detectVideoStrategy(url)`.
+2. Extrai o identificador único do corte (`platformVideoId`) com expressões regulares especializadas.
+3. Constrói a URL padronizada de incorporação e as diretivas de sandbox do iframe sob demanda.
+4. Permite a extensão para quaisquer novas plataformas sem necessidade de alterações no banco de dados ou recompilações.
 
 ### 3.1 Extração Automática de Metadados de Vídeo e Miniaturas Híbridas
 

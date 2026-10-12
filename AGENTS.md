@@ -177,5 +177,8 @@ O gerenciamento de esquema e migrações do banco de dados opera sob três opç�
    - `supabase/migrations/003_add_site_settings.sql` (configurações de marca, cores e personalização).
    - `supabase/migrations/004_multi_store_and_link_monitoring.sql` (tabela de links multi-loja, histórico de preços e monitoramento).
    - `supabase/migrations/005_bio_links_and_analytics.sql` (tabelas de bio links, eventos de cliques, gatilho atômico de incremento e RLS).
+   - `supabase/migrations/006_bio_links_customization.sql` (personalização avançada de bio links, fotos de perfil claro/escuro, cartaz da vitrine e widget QR Code).
+   - `supabase/migrations/007_brand_social_links.sql` (redes sociais da marca no padrão strategy com controle independente de vitrine e bio).
+   - `supabase/migrations/008_flexible_video_platforms.sql` (flexibilização da coluna platform na tabela videos para o padrão strategy de reprodutores de vídeo).
 
 

@@ -52,7 +52,7 @@ export async function createVideoAction(
         if (!embedConfig) {
             return {
                 success: false,
-                error: "URL nao reconhecida. Informe um link valido do TikTok, Instagram Reels ou YouTube Shorts.",
+                error: "URL não reconhecida. Informe um link válido de uma das plataformas de vídeo suportadas.",
             };
         }
 
@@ -214,7 +214,7 @@ export async function updateVideoAction(
         if (!embedConfig) {
             return {
                 success: false,
-                error: "URL nao reconhecida como TikTok, Instagram Reels ou YouTube Shorts.",
+                error: "URL não reconhecida como uma das plataformas de vídeo suportadas.",
             };
         }
 

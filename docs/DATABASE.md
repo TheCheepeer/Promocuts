@@ -99,7 +99,7 @@ erDiagram
         varchar title
         varchar slug UK
         text description
-        video_platform platform
+        varchar platform
         text original_url
         varchar platform_video_id
         text thumbnail_url
@@ -194,7 +194,7 @@ Armazena as informações dos cortes de vídeo e os dados de incorporação.
 | `title`             | `VARCHAR(255)`   | Não  | —                    | Título amigável do corte para SEO e acessibilidade        |
 | `slug`              | `VARCHAR(255)`   | Não  | —                    | Identificador amigável na URL (`/v/corte-slug`)           |
 | `description`       | `TEXT`           | Sim  | `NULL`               | Descrição opcional ou resumo do conteúdo                  |
-| `platform`          | `video_platform` | Não  | —                    | Enum restrito: `'tiktok'`, `'reels'` ou `'shorts'`        |
+| `platform`          | `VARCHAR(50)`    | Não  | —                    | Identificador da plataforma no Padrão Strategy (`tiktok`, `reels`, `shorts`, `bilibili`, `pinterest`, `twitch`, `vimeo`) |
 | `original_url`      | `TEXT`           | Não  | —                    | URL original informada no momento do cadastro             |
 | `platform_video_id` | `VARCHAR(100)`   | Não  | —                    | ID extraído do vídeo na plataforma de origem              |
 | `thumbnail_url`     | `TEXT`           | Sim  | `NULL`               | Miniatura alternativa para carregamento antecipado        |

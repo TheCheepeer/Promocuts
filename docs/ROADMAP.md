@@ -50,6 +50,10 @@ Objetivo: Implementar o algoritmo central de parsing de URLs e geracao de embeds
     - [x] Reconhecimento e extracao de IDs do Instagram Reels (URLs diretas de post e reel).
     - [x] Reconhecimento e extracao de IDs do YouTube Shorts (URLs de shorts, links com watch e URLs encurtadas).
     - [x] Geracao segura de markup e URLs de embed sem cookies desnecessarios (youtube-nocookie).
+- [x] Refatorar o motor de reprodutores de vídeo para o Padrão Strategy (`src/lib/embeds/strategies.ts`):
+    - [x] Suporte unificado e desacoplado a TikTok, Instagram Reels, YouTube Shorts, Bilibili, Pinterest, Twitch Clips e Vimeo.
+    - [x] Criação da migração incremental `supabase/migrations/008_flexible_video_platforms.sql` flexibilizando a coluna `platform` para `VARCHAR(50)`.
+    - [x] Autodetecção inteligente de URLs e resolução dinâmica de badges nos componentes e telas administrativas.
 - [x] Criar utilitarios de formatacao numerica e de moeda em Real brasileiro (`src/lib/formatters.ts`).
 - [x] Criar rotina de testes unitarios para garantir que URLs invalidas ou manipuladas sejam rejeitadas com seguranca.
 

@@ -170,7 +170,7 @@ describe("Painel Administrativo - Curadoria de Videos e Embeds", () => {
     });
 
     it("deve rejeitar links que nao pertencem a plataformas verticais suportadas", () => {
-        assert.strictEqual(parseVideoUrl("https://vimeo.com/123456"), null);
+        assert.strictEqual(parseVideoUrl("https://dailymotion.com/video/x123456"), null);
         assert.strictEqual(
             parseVideoUrl("https://facebook.com/watch?v=123"),
             null,

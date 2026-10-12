@@ -13,7 +13,7 @@ import {
     ShoppingBag,
     Sparkles,
 } from "lucide-react";
-import { parseVideoUrl } from "@/lib/embeds/parser";
+import { parseVideoUrl, getVideoStrategy } from "@/lib/embeds/parser";
 import { slugify } from "@/lib/formatters";
 import { createVideoAction, updateVideoAction } from "./actions";
 import { AssetInput } from "@/components/ui/asset-input";
@@ -316,11 +316,9 @@ export function VideoDialog({
         });
     };
 
-    const platformLabels: Record<string, { name: string; color: string }> = {
-        tiktok: { name: "TikTok", color: "bg-black text-white" },
-        reels: { name: "Instagram Reels", color: "bg-pink-600 text-white" },
-        shorts: { name: "YouTube Shorts", color: "bg-red-600 text-white" },
-    };
+    const detectedStrategy = detectedPlatform
+        ? getVideoStrategy(detectedPlatform)
+        : null;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/60 backdrop-blur-xs">
@@ -369,26 +367,22 @@ export function VideoDialog({
                             required
                             value={originalUrl}
                             onChange={(e) => handleUrlChange(e.target.value)}
-                            placeholder="https://www.tiktok.com/@... ou https://www.instagram.com/reel/... ou https://youtube.com/shorts/..."
+                            placeholder="Cole a URL de um corte (TikTok, Reels, Shorts, Bilibili, Pinterest, Twitch ou Vimeo)..."
                             className="w-full font-mono text-xs px-3 py-2 rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100"
                         />
 
                         {/* Feedback Visual da Deteccao de Plataforma e Botao de Captura */}
-                        {detectedPlatform &&
-                            platformLabels[detectedPlatform] && (
-                                <div className="mt-2 space-y-2">
-                                    <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 text-xs text-emerald-800 dark:text-emerald-300">
-                                        <div className="flex items-center gap-2">
-                                            <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
-                                            <span>
-                                                Plataforma detectada:{" "}
-                                                <strong className="font-semibold">
-                                                    {
-                                                        platformLabels[
-                                                            detectedPlatform
-                                                        ].name
-                                                    }
-                                                </strong>{" "}
+                        {detectedPlatform && (
+                            <div className="mt-2 space-y-2">
+                                <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 text-xs text-emerald-800 dark:text-emerald-300">
+                                    <div className="flex items-center gap-2">
+                                        <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+                                        <span>
+                                            Plataforma detectada:{" "}
+                                            <strong className="font-semibold">
+                                                {detectedStrategy?.name ||
+                                                    detectedPlatform}
+                                            </strong>{" "}
                                                 (ID:{" "}
                                                 <span className="font-mono">
                                                     {platformVideoId}

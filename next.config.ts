@@ -24,7 +24,7 @@ const nextConfig: NextConfig = {
                     },
                     {
                         key: "Content-Security-Policy",
-                        value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; frame-src 'self' https://www.tiktok.com https://www.instagram.com https://www.youtube.com https://www.youtube-nocookie.com; connect-src 'self' https:;",
+                        value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; frame-src 'self' https://www.tiktok.com https://www.instagram.com https://www.youtube.com https://www.youtube-nocookie.com https://player.bilibili.com https://assets.pinterest.com https://clips.twitch.tv https://player.twitch.tv https://player.vimeo.com; connect-src 'self' https:;",
                     },
                 ],
             },
@@ -79,6 +79,26 @@ const nextConfig: NextConfig = {
             {
                 protocol: "https",
                 hostname: "images.unsplash.com",
+            },
+            {
+                protocol: "https",
+                hostname: "**.hdslb.com",
+            },
+            {
+                protocol: "https",
+                hostname: "**.pinimg.com",
+            },
+            {
+                protocol: "https",
+                hostname: "clips-media-assets2.twitch.tv",
+            },
+            {
+                protocol: "https",
+                hostname: "static-cdn.jtvnw.net",
+            },
+            {
+                protocol: "https",
+                hostname: "i.vimeocdn.com",
             },
         ],
     },

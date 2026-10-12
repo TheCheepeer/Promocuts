@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { requireAdminAuth } from "@/lib/security/admin-guard";
 import { formatCompactNumber } from "@/lib/formatters";
+import { getVideoStrategy } from "@/lib/embeds/parser";
 
 export const metadata = {
     title: "Visão Geral",
@@ -93,15 +94,6 @@ export default async function AdminDashboardPage() {
             href: "/admin/metrics",
         },
     ];
-
-    const platformLabels: Record<string, { name: string; color: string }> = {
-        tiktok: {
-            name: "TikTok",
-            color: "bg-black text-white dark:bg-zinc-800",
-        },
-        reels: { name: "Instagram", color: "bg-pink-600 text-white" },
-        shorts: { name: "Shorts", color: "bg-red-600 text-white" },
-    };
 
     return (
         <div className="space-y-8">
@@ -266,26 +258,24 @@ export default async function AdminDashboardPage() {
                             Nenhum corte de video cadastrado ate o momento.
                         </p>
                         <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">
-                            Adicione o primeiro video colando uma URL do TikTok,
-                            Reels ou Shorts.
+                            Adicione o primeiro vídeo colando uma URL pública de corte.
                         </p>
                         <Link
                             href="/admin/videos"
                             className="inline-flex items-center gap-1.5 mt-4 px-3 py-1.5 rounded-lg bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 text-xs font-medium"
                         >
                             <PlusCircle className="h-3.5 w-3.5" />
-                            Cadastrar Primeiro Video
+                            Cadastrar Primeiro Vídeo
                         </Link>
                     </div>
                 ) : (
                     <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
                         {recentVideos.map((video) => {
-                            const platformInfo = platformLabels[
-                                video.platform
-                            ] || {
-                                name: video.platform,
-                                color: "bg-zinc-700 text-white",
-                            };
+                            const strategy = getVideoStrategy(video.platform);
+                            const platformName = strategy?.name || video.platform;
+                            const platformColor = strategy
+                                ? `${strategy.badgeColor.bg} ${strategy.badgeColor.text} ${strategy.badgeColor.darkBg || ""}`
+                                : "bg-zinc-700 text-white";
 
                             return (
                                 <div
@@ -294,9 +284,9 @@ export default async function AdminDashboardPage() {
                                 >
                                     <div className="flex items-center gap-3 min-w-0">
                                         <span
-                                            className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${platformInfo.color}`}
+                                            className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${platformColor}`}
                                         >
-                                            {platformInfo.name}
+                                            {platformName}
                                         </span>
                                         <div className="min-w-0">
                                             <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">

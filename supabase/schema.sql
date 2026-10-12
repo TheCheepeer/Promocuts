@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS public.videos (
     title VARCHAR(255) NOT NULL,
     slug VARCHAR(255) NOT NULL UNIQUE,
     description TEXT,
-    platform public.video_platform NOT NULL,
+    platform VARCHAR(50) NOT NULL CHECK (platform ~* '^[a-z0-9_-]+$'),
     original_url TEXT NOT NULL CHECK (original_url ~* '^https?://'),
     platform_video_id VARCHAR(100) NOT NULL,
     thumbnail_url TEXT CHECK (thumbnail_url IS NULL OR thumbnail_url ~* '^https?://'),

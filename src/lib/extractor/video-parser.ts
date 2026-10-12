@@ -12,7 +12,8 @@ export interface ExtractedVideoMetadata {
 }
 
 /**
- * Extrai metadados públicos (título, miniatura e autor) de um vídeo do TikTok, YouTube Shorts ou Instagram Reels.
+ * Extrai metadados públicos (título, miniatura e autor) de um vídeo utilizando
+ * o Padrão Strategy com provedores oficiais e fallback determinístico via Open Graph.
  * Implementa validação estrita contra SSRF, timeouts seguros e fallbacks resilientes.
  */
 export async function extractVideoMetadata(
@@ -32,7 +33,7 @@ export async function extractVideoMetadata(
     const parsed = parseVideoUrl(trimmedUrl);
     if (!parsed) {
         throw new Error(
-            "URL não reconhecida. Insira um link válido do TikTok, Instagram Reels ou YouTube Shorts.",
+            "URL não reconhecida. Insira um link válido de uma das plataformas de vídeo suportadas.",
         );
     }
 
@@ -40,7 +41,7 @@ export async function extractVideoMetadata(
     let thumbnailUrl: string | null = parsed.thumbnailUrl || null;
     let authorName: string | null = null;
 
-    // 1. YouTube Shorts (e YouTube) via oEmbed oficial
+    // 1. YouTube Shorts (e vídeos do YouTube) via oEmbed oficial
     if (parsed.platform === "shorts") {
         const canonicalUrl = `https://www.youtube.com/watch?v=${parsed.platformVideoId}`;
         const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(canonicalUrl)}&format=json`;
@@ -92,7 +93,7 @@ export async function extractVideoMetadata(
     }
 
     // 2. TikTok via oEmbed oficial com cabeçalhos simulados
-    if (parsed.platform === "tiktok") {
+    else if (parsed.platform === "tiktok") {
         const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(parsed.originalUrl)}`;
 
         try {
@@ -135,35 +136,68 @@ export async function extractVideoMetadata(
                 erro: err instanceof Error ? err.message : String(err),
             });
         }
+    }
 
-        // Fallback: tenta extrair via Open Graph caso o oEmbed falhe
-        if (!title || !thumbnailUrl) {
-            try {
-                const og = await extractOpenGraphMetadata(parsed.originalUrl);
-                if (!title && og.title) {
-                    title = og.title;
+    // 3. Vimeo via oEmbed oficial
+    else if (parsed.platform === "vimeo") {
+        const oembedUrl = `https://vimeo.com/api/oembed.json?url=${encodeURIComponent(parsed.originalUrl)}`;
+
+        try {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 5000);
+
+            const res = await fetch(oembedUrl, {
+                method: "GET",
+                headers: {
+                    Accept: "application/json",
+                    "User-Agent": "PromoCuts/1.0",
+                },
+                signal: controller.signal,
+            });
+
+            clearTimeout(timeout);
+
+            if (res.ok) {
+                const data = (await res.json()) as {
+                    title?: string;
+                    thumbnail_url?: string;
+                    author_name?: string;
+                };
+
+                if (data.title && typeof data.title === "string") {
+                    title = data.title.trim();
                 }
-                if (!thumbnailUrl && og.image) {
-                    thumbnailUrl = og.image;
+                if (data.thumbnail_url && typeof data.thumbnail_url === "string") {
+                    thumbnailUrl = data.thumbnail_url.trim();
                 }
-            } catch {
-                // Silencioso
+                if (data.author_name && typeof data.author_name === "string") {
+                    authorName = data.author_name.trim();
+                }
             }
+        } catch (err) {
+            logger.warn("Falha ao consultar oEmbed do Vimeo", {
+                videoId: parsed.platformVideoId,
+                erro: err instanceof Error ? err.message : String(err),
+            });
         }
     }
 
-    // 3. Instagram Reels via Open Graph
-    if (parsed.platform === "reels") {
+    // Fallback universal via Open Graph (Instagram Reels, Bilibili, Pinterest, Twitch, etc.)
+    if (!title || !thumbnailUrl) {
         try {
             const og = await extractOpenGraphMetadata(parsed.originalUrl);
-            if (og.title) {
+            if (!title && og.title) {
                 title = og.title;
             }
-            if (og.image) {
+            if (!thumbnailUrl && og.image) {
                 thumbnailUrl = og.image;
             }
+            if (!authorName && og.siteName) {
+                authorName = og.siteName;
+            }
         } catch (err) {
-            logger.warn("Falha ao extrair metadados do Instagram Reels", {
+            logger.warn("Falha no fallback Open Graph para vídeo", {
+                platform: parsed.platform,
                 videoId: parsed.platformVideoId,
                 erro: err instanceof Error ? err.message : String(err),
             });
@@ -178,4 +212,3 @@ export async function extractVideoMetadata(
         platformVideoId: parsed.platformVideoId,
     };
 }
-

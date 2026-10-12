@@ -177,7 +177,7 @@ describe("Motor de Embeds - Seguranca e Casos de Borda", () => {
     });
 
     it("deve rejeitar dominios nao suportados", () => {
-        assert.equal(parseVideoUrl("https://vimeo.com/12345678"), null);
+        assert.equal(parseVideoUrl("https://dailymotion.com/video/x123456"), null);
         assert.equal(
             parseVideoUrl("https://twitter.com/user/status/12345678"),
             null,
