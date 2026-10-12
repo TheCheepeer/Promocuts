@@ -199,14 +199,16 @@ export function cleanProductTitle(rawTitle: string | null): string | null {
  */
 export function parsePriceNumber(raw: string): number | null {
     if (!raw) return null;
-    let clean = raw.replace(/R\$\s*/gi, "").replace(/BRL\s*/gi, "").trim();
+    let clean = raw
+        .replace(/(?:R\$|BRL|USD|EUR|GBP|\$|€|£|¥)\s*/gi, "")
+        .trim();
 
     if (clean.includes(".") && clean.includes(",")) {
         if (clean.lastIndexOf(",") > clean.lastIndexOf(".")) {
-            // Formato brasileiro: 1.499,90
+            // Formato decimal com vírgula (ex: 1.499,90)
             clean = clean.replace(/\./g, "").replace(",", ".");
         } else {
-            // Formato americano: 1,499.90
+            // Formato decimal com ponto (ex: 1,499.90)
             clean = clean.replace(/,/g, "");
         }
     } else if (clean.includes(",")) {
@@ -302,22 +304,9 @@ export function extractLdJsonProduct(html: string): {
 }
 
 /**
- * Tenta extrair o preço promocional ou valor corrente a partir de microdados HTML e marcações de e-commerce.
+ * Tenta extrair o preço promocional principal ou valor corrente de destaque a partir de microdados HTML e marcações de e-commerce.
  */
 export function extractPriceFromHtml(html: string): number | null {
-    // 0. Preço à vista / Pix no e-commerce brasileiro (prioritário por refletir o menor valor corrente padrão)
-    const pixPatterns = [
-        /(?:no\s+pix|via\s+pix|à\s+vista\s+no\s+pix|pague\s+com\s+pix)[^<]{0,35}R\$\s*([\d.,]+)/i,
-        /R\$\s*([\d.,]+)[^<]{0,35}(?:no\s+pix|via\s+pix|à\s+vista\s+no\s+pix|pague\s+com\s+pix)/i,
-    ];
-    for (const pat of pixPatterns) {
-        const match = html.match(pat);
-        if (match && match[1]) {
-            const parsed = parsePriceNumber(match[1]);
-            if (parsed) return parsed;
-        }
-    }
-
     // 1. Meta tags semânticas de preço de venda / oferta corrente
     const priceMetaRegex =
         /<meta[^>]+(?:property|name|itemprop)=["'](?:product:sale_price:amount|og:price:amount|product:price:amount|price)["'][^>]+content=["']([^"']+)["']/i;
@@ -344,7 +333,7 @@ export function extractPriceFromHtml(html: string): number | null {
         if (parsed) return parsed;
     }
 
-    // 3. Amazon price buybox: ignora classe a-text-price (preço riscado)
+    // 3. Amazon price buybox: ignora classe a-text-price (preço riscado) e captura o preço de destaque
     const amazonPriceMatches = html.matchAll(
         /<(?:div|span)[^>]*class=["']([^"']*a-price[^"']*)["'][^>]*>[\s\S]*?<span[^>]*class=["']a-offscreen["'][^>]*>([^<]+)<\/span>/gi,
     );
@@ -356,14 +345,25 @@ export function extractPriceFromHtml(html: string): number | null {
         }
     }
 
-    // 4. Amazon a-offscreen fallback geral com moeda
-    const amazonOffscreen = html.match(/class=["']a-offscreen["'][^>]*>(R\$\s*[\d.,]+)<\/span>/i);
+    // 4. Classes universais de preço principal/destaque em e-commerces (Shopify, WooCommerce, Shopee, etc.)
+    const prominentClassRegex =
+        /class=["'][^"']*(?:price--highlight|price__current|current-price|product__price|product-price|sale-price|sales-price|price-tag-fraction)[^"']*["'][^>]*>[\s\S]{0,100}?((?:R\$|BRL|USD|EUR|GBP|\$|€|£)?\s*[\d.,]+)/i;
+    const matchProminent = html.match(prominentClassRegex);
+    if (matchProminent && matchProminent[1]) {
+        const parsed = parsePriceNumber(matchProminent[1]);
+        if (parsed) return parsed;
+    }
+
+    // 5. Amazon a-offscreen fallback geral com moeda
+    const amazonOffscreen = html.match(
+        /class=["']a-offscreen["'][^>]*>((?:R\$|BRL|USD|EUR|GBP|\$|€|£)?\s*[\d.,]+)<\/span>/i,
+    );
     if (amazonOffscreen && amazonOffscreen[1]) {
         const parsed = parsePriceNumber(amazonOffscreen[1]);
         if (parsed) return parsed;
     }
 
-    // 5. Mercado Livre: andes-money-amount__fraction
+    // 6. Mercado Livre: andes-money-amount__fraction
     const mlFractionRegex =
         /class=["'][^"']*andes-money-amount__fraction[^"']*["'][^>]*>([\d.,]+)<\/span>/i;
     const matchMl = html.match(mlFractionRegex);
@@ -372,7 +372,7 @@ export function extractPriceFromHtml(html: string): number | null {
         if (parsed) return parsed;
     }
 
-    // 6. Atributos de dados (data-price ou data-product-price)
+    // 7. Atributos de dados (data-price ou data-product-price)
     const dataPriceRegex = /data-(?:product-)?price=["']([\d.,]+)["']/i;
     const matchData = html.match(dataPriceRegex);
     if (matchData && matchData[1]) {
