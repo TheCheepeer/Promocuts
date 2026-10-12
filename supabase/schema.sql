@@ -172,6 +172,15 @@ CREATE TABLE IF NOT EXISTS public.brand_social_links (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- 13. Tabela de Visualizações de Páginas da Vitrine Pública (Fase 10)
+CREATE TABLE IF NOT EXISTS public.page_views (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    path VARCHAR(255) NOT NULL CHECK (path NOT LIKE '/admin%'),
+    referrer VARCHAR(1024) CHECK (referrer IS NULL OR length(referrer) <= 1024),
+    user_agent VARCHAR(512) CHECK (user_agent IS NULL OR length(user_agent) <= 512),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- 12. Funcao e Triggers de Atualizacao de updated_at
 CREATE OR REPLACE FUNCTION public.handle_updated_at()
 RETURNS TRIGGER 
@@ -266,6 +275,8 @@ CREATE INDEX IF NOT EXISTS idx_bio_link_clicks_bio_link_id ON public.bio_link_cl
 CREATE INDEX IF NOT EXISTS idx_bio_link_clicks_created_at ON public.bio_link_clicks(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_brand_social_links_order ON public.brand_social_links(display_order ASC);
 CREATE INDEX IF NOT EXISTS idx_brand_social_links_active ON public.brand_social_links(is_active, show_in_storefront, show_in_bio);
+CREATE INDEX IF NOT EXISTS idx_page_views_created_at ON public.page_views(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_page_views_path ON public.page_views(path);
 
 -- 15. Habilitacao Estrita de Row Level Security (RLS)
 ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
@@ -278,6 +289,7 @@ ALTER TABLE public.site_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.bio_links ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.bio_link_clicks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.brand_social_links ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.page_views ENABLE ROW LEVEL SECURITY;
 
 -- 16. Politicas de Acesso Publico
 DROP POLICY IF EXISTS "Public read access for site_settings" ON public.site_settings;
@@ -371,6 +383,22 @@ CREATE POLICY "Allow public read on active brand_social_links"
     ON public.brand_social_links FOR SELECT
     TO anon, authenticated
     USING (is_active = true);
+
+DROP POLICY IF EXISTS "Public insert access for page views tracking" ON public.page_views;
+CREATE POLICY "Public insert access for page views tracking"
+    ON public.page_views FOR INSERT
+    TO anon, authenticated
+    WITH CHECK (
+        path NOT LIKE '/admin%'
+        AND (user_agent IS NULL OR length(user_agent) <= 512)
+        AND (referrer IS NULL OR length(referrer) <= 1024)
+    );
+
+DROP POLICY IF EXISTS "Deny public select access on page_views" ON public.page_views;
+CREATE POLICY "Deny public select access on page_views"
+    ON public.page_views FOR SELECT
+    TO anon, authenticated
+    USING (false);
 
 -- 17. Carga Inicial Singleton de Configuracoes de Marca
 INSERT INTO public.site_settings (id)

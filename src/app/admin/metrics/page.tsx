@@ -6,13 +6,14 @@ import {
     MetricsDashboard,
     type SerializedAffiliateClick,
     type SerializedBioClick,
+    type SerializedPageView,
     type MetricProductInfo,
     type MetricVideoInfo,
     type MetricBioLinkInfo,
 } from "./metrics-dashboard";
 
 export const metadata = {
-    title: "Métricas e Conversão",
+    title: "Métricas",
 };
 
 export default async function AdminMetricsPage() {
@@ -22,6 +23,7 @@ export default async function AdminMetricsPage() {
     const [
         affiliateClicksResult,
         bioClicksResult,
+        pageViewsResult,
         productsResult,
         videosResult,
         bioLinksResult,
@@ -37,6 +39,11 @@ export default async function AdminMetricsPage() {
             .order("created_at", { ascending: false })
             .limit(1000),
         adminDb
+            .from("page_views")
+            .select("id, path, created_at, referrer")
+            .order("created_at", { ascending: false })
+            .limit(5000),
+        adminDb
             .from("products")
             .select("id, name, store_name, image_url"),
         adminDb
@@ -49,6 +56,7 @@ export default async function AdminMetricsPage() {
 
     const affiliateClicks = (affiliateClicksResult.data as SerializedAffiliateClick[]) || [];
     const bioClicks = (bioClicksResult.data as SerializedBioClick[]) || [];
+    const pageViews = (pageViewsResult.data as SerializedPageView[]) || [];
     const products = (productsResult.data as MetricProductInfo[]) || [];
     const videos = (videosResult.data as MetricVideoInfo[]) || [];
     const bioLinks = (bioLinksResult.data as MetricBioLinkInfo[]) || [];
@@ -59,10 +67,10 @@ export default async function AdminMetricsPage() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-zinc-200 pb-5 dark:border-zinc-800">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-                        Métricas e Conversão
+                        Métricas
                     </h1>
                     <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-                        Acompanhe o desempenho de cliques em produtos afiliados, canais de streamers, redes sociais e origens de tráfego.
+                        Acompanhe o desempenho de visitas da vitrine, cliques em produtos afiliados, canais de streamers, redes sociais e origens de tráfego.
                     </p>
                 </div>
 
@@ -81,6 +89,7 @@ export default async function AdminMetricsPage() {
             <MetricsDashboard
                 affiliateClicks={affiliateClicks}
                 bioClicks={bioClicks}
+                pageViews={pageViews}
                 products={products}
                 videos={videos}
                 bioLinks={bioLinks}

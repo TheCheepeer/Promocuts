@@ -127,17 +127,19 @@ export interface DailyDataPoint {
     affiliateClicks: number;
     bioLinkClicks: number;
     totalClicks: number;
+    pageViews?: number;
 }
 
 /**
- * Agrupa cliques diários nos últimos N dias (gerando pontos zerados para dias vazios).
+ * Agrupa cliques diários e visualizações nos últimos N dias (gerando pontos zerados para dias vazios).
  */
 export function groupDailyTimeline(
     affiliateDates: string[],
     bioLinkDates: string[],
     daysCount: number,
+    pageViewDates?: string[],
 ): DailyDataPoint[] {
-    const pointsMap = new Map<string, { affiliate: number; bio: number; label: string }>();
+    const pointsMap = new Map<string, { affiliate: number; bio: number; views: number; label: string }>();
 
     // Inicializa o mapa com todos os dias do período
     const today = new Date();
@@ -149,7 +151,7 @@ export function groupDailyTimeline(
         const dd = String(d.getDate()).padStart(2, "0");
         const dateKey = `${yyyy}-${mm}-${dd}`;
         const label = `${dd}/${mm}`;
-        pointsMap.set(dateKey, { affiliate: 0, bio: 0, label });
+        pointsMap.set(dateKey, { affiliate: 0, bio: 0, views: 0, label });
     }
 
     // Contabiliza cliques de afiliados
@@ -182,6 +184,23 @@ export function groupDailyTimeline(
         }
     }
 
+    // Contabiliza visualizações de página se fornecidas
+    if (pageViewDates && Array.isArray(pageViewDates)) {
+        for (const rawDate of pageViewDates) {
+            if (!rawDate) continue;
+            const d = new Date(rawDate);
+            if (Number.isNaN(d.getTime())) continue;
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, "0");
+            const dd = String(d.getDate()).padStart(2, "0");
+            const dateKey = `${yyyy}-${mm}-${dd}`;
+            const item = pointsMap.get(dateKey);
+            if (item) {
+                item.views += 1;
+            }
+        }
+    }
+
     // Converte para array ordenado cronologicamente
     const result: DailyDataPoint[] = [];
     pointsMap.forEach((val, key) => {
@@ -191,6 +210,7 @@ export function groupDailyTimeline(
             affiliateClicks: val.affiliate,
             bioLinkClicks: val.bio,
             totalClicks: val.affiliate + val.bio,
+            pageViews: val.views,
         });
     });
 

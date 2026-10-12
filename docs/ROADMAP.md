@@ -196,9 +196,11 @@ Objetivo: Transformar o PromoCuts no hub central soberano e descentralizado do c
     - [x] Layout vertical centralizado no desktop inspirado no Linktree, com rodapé direcionando ao repositório GitHub open-source.
     - [x] Migração versionada `supabase/migrations/006_bio_links_customization.sql` e atualização de `site_settings`.
 - [x] Dashboard Visual de Métricas no Painel Administrativo (`/admin/metrics`):
-    - [x] Cartões de indicadores-chave de desempenho (KPIs): total de cliques em produtos, total de cliques em bio links e taxa de engajamento diária/semanal.
+    - [x] Cartões de indicadores-chave de desempenho (KPIs): total de visitas à vitrine pública, total de cliques em produtos, total de cliques em bio links, volume consolidado de conversões e taxa de conversão sobre acessos.
     - [x] Gráficos visuais responsivos e leves (sem introduzir custos ou bibliotecas pesadas de terceiros):
-        - [x] Evolução temporal de cliques nos últimos 7 e 30 dias.
+        - [x] Evolução temporal de cliques nos últimos 7 e 30 dias com escala numérica no eixo Y (valor máximo, mediano e base zero), linhas de grade e tooltips nativos em SVG puro.
+        - [x] Contagem de visitas da vitrine pública (`page_views`) com exclusão estrita de rotas administrativas (`/admin*`).
+        - [x] Ranking de páginas mais acessadas da vitrine pública com proporção visual.
         - [x] Distribuição percentual de cliques por loja parceira (Amazon, Shopee, Mercado Livre, etc.).
         - [x] Ranking dos cortes de vídeo e produtos com maior volume de conversão.
         - [x] Ranking de cliques por rede social de origem (Instagram, TikTok, YouTube, tráfego direto).

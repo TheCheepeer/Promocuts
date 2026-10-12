@@ -373,6 +373,20 @@ Armazena as redes sociais e canais oficiais da marca utilizando o Padrão Strate
 
 ---
 
+### 2.11 Tabela `public.page_views` (Fase 10)
+
+Registros históricos individuais de visualizações de páginas (page views) da vitrine pública para contagem de acessos e cálculo da taxa de conversão no painel de Métricas. Exclui estritamente rotas administrativas (`/admin*`) e internas por restrição de banco de dados (`CHECK (path NOT LIKE '/admin%')`).
+
+| Coluna       | Tipo            | Nulo | Padrão               | Descrição                                                                      |
+| :----------- | :-------------- | :--: | :------------------- | :----------------------------------------------------------------------------- |
+| `id`         | `UUID`          | Não  | `uuid_generate_v4()` | Identificador único do evento de visualização                                  |
+| `path`       | `VARCHAR(255)`  | Não  | —                    | Caminho de navegação público (`/`, `/c/...`, `/v/...`), com `CHECK (path NOT LIKE '/admin%')` |
+| `referrer`   | `VARCHAR(1024)` | Sim  | `NULL`               | URL de origem do visitante ou rede social (limitado a 1024 caracteres)         |
+| `user_agent` | `VARCHAR(512)`  | Sim  | `NULL`               | Informação de navegador/dispositivo do visitante (limitado a 512 caracteres)   |
+| `created_at` | `TIMESTAMPTZ`   | Não  | `NOW()`              | Data e hora exata do acesso                                                    |
+
+---
+
 ## 3. Políticas de Segurança (Row Level Security - RLS)
 
 Todas as tabelas possuem a opção `ROW LEVEL SECURITY` estritamente ativada:
@@ -393,10 +407,12 @@ Todas as tabelas possuem a opção `ROW LEVEL SECURITY` estritamente ativada:
     - Operações de `INSERT`, `UPDATE` e `DELETE` nas tabelas principais (`site_settings`, `categories`, `videos`, `products`, `product_links`, `video_products`, `bio_links`, `brand_social_links`) são bloqueadas para o papel anônimo (`anon`).
     - Elas são realizadas pelas Server Actions autenticadas do Next.js via chave de serviço (`service_role`), após validação estrita da sessão de e-mail do administrador.
 8. **Registro de Métricas Anônimas Endurecido contra DoS:**
-    - As tabelas `affiliate_clicks` e `bio_link_clicks` permitem a operação de `INSERT` pelo público (`anon` e `authenticated`) com validação defensiva estrita no `WITH CHECK`: o alvo deve existir ativamente na base e os comprimentos de `user_agent` (<= 512) e `referrer` (<= 1024) são rigorosamente limitados, eliminando riscos de esgotamento de disco (Storage DoS).
-8. **Sincronização Atômica de Contadores:**
+    - As tabelas `affiliate_clicks`, `bio_link_clicks` e `page_views` permitem a operação de `INSERT` pelo público (`anon` e `authenticated`) com validação defensiva estrita no `WITH CHECK`: o alvo deve existir ativamente na base (no caso de cliques), o caminho de navegação não pode pertencer ao `/admin` (`path NOT LIKE '/admin%'`), e os comprimentos de `user_agent` (<= 512) e `referrer` (<= 1024) são rigorosamente limitados, eliminando riscos de esgotamento de disco (Storage DoS).
+9. **Leitura Protegida de Telemetria:**
+    - As tabelas de telemetria histórica (`affiliate_clicks`, `bio_link_clicks`, `page_views`) possuem leitura pública negada (`SELECT USING (false)`), sendo consultadas exclusivamente pelo painel administrativo autenticado via chave de serviço (`service_role`).
+10. **Sincronização Atômica de Contadores:**
     - O gatilho `trg_increment_bio_link_clicks` incrementa o contador `clicks_count` em `bio_links` sob o modelo `SECURITY DEFINER` de forma atômica no banco de dados.
-9. **Mitigação de Search Path Hijacking:**
+11. **Mitigação de Search Path Hijacking:**
     - A função trigger `handle_updated_at` opera sob o modelo `SECURITY DEFINER` com `SET search_path = public`, impedindo interceptação de esquemas por usuários não confiáveis.
 
 ---

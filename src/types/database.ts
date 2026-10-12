@@ -305,6 +305,21 @@ export type BrandSocialLinkUpdate = Partial<
     Omit<BrandSocialLink, "id" | "created_at" | "updated_at">
 >;
 
+export type PageView = {
+    id: string;
+    path: string;
+    referrer: string | null;
+    user_agent: string | null;
+    created_at: string;
+};
+
+export type PageViewInsert = Omit<PageView, "id" | "created_at"> & {
+    id?: string;
+    created_at?: string;
+};
+
+export type PageViewUpdate = Partial<Omit<PageView, "id" | "created_at">>;
+
 export type Database = {
     public: {
         Tables: {
@@ -366,6 +381,12 @@ export type Database = {
                 Row: BrandSocialLink;
                 Insert: BrandSocialLinkInsert;
                 Update: BrandSocialLinkUpdate;
+                Relationships: [];
+            };
+            page_views: {
+                Row: PageView;
+                Insert: PageViewInsert;
+                Update: PageViewUpdate;
                 Relationships: [];
             };
         };

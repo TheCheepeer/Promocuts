@@ -98,3 +98,48 @@ export function trackBioLinkClick(bioLinkId: string): void {
     }
 }
 
+/**
+ * Registra a visualização de uma página da vitrine pública.
+ * Ignora estritamente rotas administrativas (/admin*) e caminhos internos.
+ */
+export function trackPageView(path: string): void {
+    if (!path || typeof path !== "string" || typeof window === "undefined") {
+        return;
+    }
+
+    // Exclusão estrita de rotas administrativas e internas no lado do cliente
+    const normalized = path.split("?")[0].toLowerCase();
+    if (normalized === "/admin" || normalized.startsWith("/admin/") || normalized.startsWith("/api/")) {
+        return;
+    }
+
+    const payload = JSON.stringify({
+        path: path.slice(0, 255),
+    });
+
+    try {
+        if (
+            typeof navigator !== "undefined" &&
+            typeof navigator.sendBeacon === "function"
+        ) {
+            const blob = new Blob([payload], { type: "application/json" });
+            const sent = navigator.sendBeacon("/api/track-view", blob);
+            if (sent) return;
+        }
+
+        fetch("/api/track-view", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: payload,
+            keepalive: true,
+        }).catch(() => {
+            // Falha silenciosa defensiva
+        });
+    } catch {
+        // Falha silenciosa defensiva
+    }
+}
+
+

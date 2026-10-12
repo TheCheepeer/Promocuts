@@ -488,16 +488,19 @@ Na Fase 9, o PromoCuts expandiu sua arquitetura para consolidar a vitrine públi
 - **Destaque Pulsante nos Cards de Links:** A sinalização de urgência e transmissões ao vivo (`is_highlighted`) é aplicada diretamente no card do respectivo link na lista (com borda colorida, animação de pulso e crachá "AO VIVO" / "Destaque"), preservando a foto de perfil do criador limpa e sem elementos intrusivos sobrepostos.
 - **Aceleração via Cache Serverless:** Os bio links ativos são preservados em cache no Upstash Redis (`promocuts:bio_links:all`), garantindo carregamento instantâneo com fallback resiliente para o Supabase.
 
-### 10.3 Dashboard Nativo de Métricas e Conversão (`/admin/metrics`)
+### 10.3 Dashboard Nativo de Métricas (`/admin/metrics`)
 
 - **Zero Dependências Externas (Custo Operacional Zero):** Gráficos e visualizações construídos exclusivamente com vetores SVG nativos e classes utilitárias do Tailwind CSS v4, dispensando bibliotecas pesadas de visualização como Chart.js ou Recharts.
-- **Agrupamento Temporal e Filtros:** Seletor de período dinâmico (Hoje, 7 dias e 30 dias) com limites temporais estritos calculados pelo utilitário `src/lib/analytics.ts` (`getDateRangeBounds`).
-- **Indicadores Chave de Desempenho (KPIs):** Total de saídas para lojas parceiras, cliques consolidados em bio links, volume total de intenções de conversão e média diária.
+- **Gráfico Temporal com Escala no Eixo Y:** Visualização da evolução diária de cliques com escala numérica no eixo Y (valor máximo calculado dinamicamente, valor mediano e linha de base zero), linhas de grade horizontais tracejadas, linha guia vertical e tooltips nativos em SVG puro ao passar o cursor sobre os pontos.
+- **Contagem de Visitas e Telemetria da Vitrine Pública:** Rastreamento de visualizações de página (*page views*) via Beacon/Fetch assíncrono em `src/components/public/page-view-tracker.tsx` e endpoint defensivo `/api/track-view`. Exclui estritamente qualquer acesso ao painel administrativo (`/admin*`), arquivos estáticos e rotas internas.
+- **Agrupamento Temporal e Filtros:** Seletor de período dinâmico (Hoje, 7 dias, 30 dias e Período Completo) com limites temporais estritos calculados pelo utilitário `src/lib/analytics.ts` (`getDateRangeBounds`).
+- **Indicadores Chave de Desempenho (KPIs):** Visitas da vitrine pública, saídas para lojas parceiras em produtos afiliados, cliques em bio links, volume total de conversões e taxa de conversão sobre visitas (Cliques ÷ Visitas).
 - **Classificação Inteligente de Fontes de Tráfego:** O utilitário `parseTrafficSource` categoriza automaticamente origens de referência, incluindo esquemas de aplicativos nativos móveis (`android-app://com.instagram.android`, `tiktok`, `youtube`, etc.), domínios web e tráfego direto.
 - **Rankings Analíticos de Desempenho:**
+  - Páginas mais acessadas da vitrine pública com proporção visual.
   - Distribuição percentual de saída por loja parceira.
   - Origens de tráfego com gráficos de barra de preenchimento proporcional.
-  - Tabela dos produtos mais clicados com identificação de loja e preço.
+  - Tabela dos produtos mais clicados com identificação de loja e cliques.
   - Tabela dos vídeos com maior taxa de conversão vinculada.
   - Tabela de bio links com contadores consolidados no período selecionado.
 

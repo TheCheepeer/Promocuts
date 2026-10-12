@@ -5,6 +5,7 @@ import {
     sanitizeHeader,
     trackAffiliateClick,
     trackBioLinkClick,
+    trackPageView,
 } from "../src/lib/telemetry.js";
 
 describe("Telemetria de Afiliados - Validacao de Identificadores (UUID)", () => {
@@ -265,3 +266,97 @@ describe("Telemetria de Bio Links - Utilitário Client-Side (trackBioLinkClick)"
         }
     });
 });
+
+describe("Telemetria de Visitas - Utilitário Client-Side (trackPageView)", () => {
+    it("não deve disparar requisição se path for vazio, nulo ou indefinido", () => {
+        let called = false;
+        const originalFetch = globalThis.fetch;
+        globalThis.fetch = (() => {
+            called = true;
+            return Promise.resolve(new Response());
+        }) as unknown as typeof fetch;
+
+        try {
+            trackPageView("");
+            // @ts-expect-error teste defensivo
+            trackPageView(null);
+            // @ts-expect-error teste defensivo
+            trackPageView(undefined);
+            assert.equal(called, false);
+        } finally {
+            globalThis.fetch = originalFetch;
+        }
+    });
+
+    it("não deve disparar requisição para rotas administrativas (/admin, /admin/*)", () => {
+        let called = false;
+        Object.defineProperty(globalThis, "window", {
+            value: globalThis,
+            configurable: true,
+            writable: true,
+        });
+
+        Object.defineProperty(globalThis.navigator, "sendBeacon", {
+            value: () => {
+                called = true;
+                return true;
+            },
+            configurable: true,
+            writable: true,
+        });
+
+        try {
+            trackPageView("/admin");
+            trackPageView("/admin/metrics");
+            trackPageView("/admin/videos");
+            trackPageView("/admin/products?tab=1");
+            trackPageView("/ADMIN/settings");
+            trackPageView("/api/track-click");
+
+            assert.equal(called, false, "Rotas /admin e /api jamais devem disparar telemetria de visualização");
+        } finally {
+            // @ts-expect-error limpeza de mock
+            delete globalThis.window;
+            // @ts-expect-error limpeza de mock
+            delete globalThis.navigator.sendBeacon;
+        }
+    });
+
+    it("deve disparar sendBeacon ou fetch para /api/track-view com páginas públicas", () => {
+        let beaconUrl: string | null = null;
+
+        Object.defineProperty(globalThis, "window", {
+            value: globalThis,
+            configurable: true,
+            writable: true,
+        });
+
+        Object.defineProperty(globalThis.navigator, "sendBeacon", {
+            value: (url: string) => {
+                beaconUrl = url;
+                return true;
+            },
+            configurable: true,
+            writable: true,
+        });
+
+        try {
+            trackPageView("/");
+            assert.equal(beaconUrl, "/api/track-view");
+
+            beaconUrl = null;
+            trackPageView("/c/eletronicos");
+            assert.equal(beaconUrl, "/api/track-view");
+
+            beaconUrl = null;
+            trackPageView("/v/video-promocional");
+            assert.equal(beaconUrl, "/api/track-view");
+        } finally {
+            // @ts-expect-error limpeza de mock
+            delete globalThis.window;
+            // @ts-expect-error limpeza de mock
+            delete globalThis.navigator.sendBeacon;
+        }
+    });
+});
+

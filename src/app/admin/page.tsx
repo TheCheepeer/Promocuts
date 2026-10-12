@@ -29,6 +29,7 @@ export default async function AdminDashboardPage() {
         clicksResult,
         bioLinksResult,
         bioClicksResult,
+        pageViewsResult,
         recentVideosResult,
     ] = await Promise.all([
         adminDb.from("videos").select("id, is_published", { count: "exact" }),
@@ -41,6 +42,9 @@ export default async function AdminDashboardPage() {
             .select("id, is_active", { count: "exact" }),
         adminDb
             .from("bio_link_clicks")
+            .select("id", { count: "exact", head: true }),
+        adminDb
+            .from("page_views")
             .select("id", { count: "exact", head: true }),
         adminDb
             .from("videos")
@@ -62,6 +66,7 @@ export default async function AdminDashboardPage() {
         bioLinksResult.data?.filter((l) => l.is_active).length || 0;
     const totalBioClicks = bioClicksResult.count || 0;
     const totalConversions = totalAffiliateClicks + totalBioClicks;
+    const totalPageViews = pageViewsResult.count || 0;
     const recentVideos = recentVideosResult.data || [];
 
     const stats = [
@@ -87,9 +92,9 @@ export default async function AdminDashboardPage() {
             href: "/admin/bio-links",
         },
         {
-            title: "Métricas de Conversão",
+            title: "Métricas",
             value: totalConversions,
-            subtitle: `${totalAffiliateClicks} em produtos, ${totalBioClicks} em bio links`,
+            subtitle: `${totalPageViews.toLocaleString("pt-BR")} visitas • ${totalAffiliateClicks} em produtos, ${totalBioClicks} em bio links`,
             icon: TrendingUp,
             href: "/admin/metrics",
         },

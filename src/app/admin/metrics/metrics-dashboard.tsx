@@ -8,6 +8,7 @@ import {
     MousePointerClick,
     Video,
     Calendar,
+    Eye,
 } from "lucide-react";
 import { BioLinkIcon } from "../bio-links/bio-link-icons";
 import {
@@ -29,6 +30,13 @@ export interface SerializedAffiliateClick {
 export interface SerializedBioClick {
     id: string;
     bio_link_id: string;
+    created_at: string;
+    referrer: string | null;
+}
+
+export interface SerializedPageView {
+    id: string;
+    path: string;
     created_at: string;
     referrer: string | null;
 }
@@ -59,6 +67,7 @@ export interface MetricBioLinkInfo {
 interface MetricsDashboardProps {
     affiliateClicks: SerializedAffiliateClick[];
     bioClicks: SerializedBioClick[];
+    pageViews?: SerializedPageView[];
     products: MetricProductInfo[];
     videos: MetricVideoInfo[];
     bioLinks: MetricBioLinkInfo[];
@@ -67,6 +76,7 @@ interface MetricsDashboardProps {
 export function MetricsDashboard({
     affiliateClicks,
     bioClicks,
+    pageViews = [],
     products,
     videos,
     bioLinks,
@@ -85,16 +95,26 @@ export function MetricsDashboard({
             ? bioClicks.filter((c) => new Date(c.created_at) >= startDate)
             : bioClicks;
 
+        const filteredViews = startDate
+            ? pageViews.filter((v) => new Date(v.created_at) >= startDate)
+            : pageViews;
+
         return {
             affiliate: filteredAffiliate,
             bio: filteredBio,
+            views: filteredViews,
         };
-    }, [affiliateClicks, bioClicks, period]);
+    }, [affiliateClicks, bioClicks, pageViews, period]);
 
     // KPIs calculados
     const totalAffiliateClicks = filteredData.affiliate.length;
     const totalBioClicks = filteredData.bio.length;
     const totalCombined = totalAffiliateClicks + totalBioClicks;
+    const totalViews = filteredData.views.length;
+    const conversionRate =
+        totalViews > 0
+            ? ((totalCombined / totalViews) * 100).toFixed(1)
+            : "0.0";
 
     const daysInPeriod = period === "today" ? 1 : period === "7d" ? 7 : period === "30d" ? 30 : 60;
     const dailyAverage = (totalCombined / daysInPeriod).toFixed(1);
@@ -104,7 +124,8 @@ export function MetricsDashboard({
         const days = period === "30d" ? 30 : 7;
         const affiliateDates = filteredData.affiliate.map((c) => c.created_at);
         const bioDates = filteredData.bio.map((c) => c.created_at);
-        return groupDailyTimeline(affiliateDates, bioDates, days);
+        const viewDates = filteredData.views.map((v) => v.created_at);
+        return groupDailyTimeline(affiliateDates, bioDates, days, viewDates);
     }, [filteredData, period]);
 
     // Distribuição por loja parceira
@@ -224,24 +245,47 @@ export function MetricsDashboard({
             .sort((a, b) => b.count - a.count);
     }, [filteredData.bio, bioLinks]);
 
-    // Helpers para desenho do gráfico SVG
+    // Ranking de páginas mais acessadas da vitrine pública
+    const pagesRanking = useMemo(() => {
+        const map = new Map<string, number>();
+        for (const view of filteredData.views) {
+            map.set(view.path, (map.get(view.path) || 0) + 1);
+        }
+
+        const sorted = Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
+        return sorted
+            .map(([path, count]) => ({
+                path: path === "/" ? "Vitrine Principal (/)" : path,
+                count,
+                percentage: totalViews > 0 ? (count / totalViews) * 100 : 0,
+            }))
+            .slice(0, 5);
+    }, [filteredData.views, totalViews]);
+
+    // Helpers para desenho do gráfico SVG com escala no eixo Y
     const maxVal = Math.max(
         ...timelineData.map((d) => d.totalClicks),
         5, // escala mínima de 5 para não achatar
     );
 
     const svgWidth = 600;
-    const svgHeight = 160;
-    const paddingX = 30;
-    const paddingY = 20;
-    const innerW = svgWidth - paddingX * 2;
-    const innerH = svgHeight - paddingY * 2;
+    const svgHeight = 175;
+    const paddingLeft = 45;
+    const paddingRight = 20;
+    const paddingTop = 22;
+    const paddingBottom = 26;
+    const innerW = svgWidth - paddingLeft - paddingRight;
+    const innerH = svgHeight - paddingTop - paddingBottom;
 
     const points = timelineData.map((d, index) => {
-        const x = paddingX + (index / (timelineData.length - 1)) * innerW;
-        const yAffiliate = svgHeight - paddingY - (d.affiliateClicks / maxVal) * innerH;
-        const yBio = svgHeight - paddingY - (d.bioLinkClicks / maxVal) * innerH;
-        const yTotal = svgHeight - paddingY - (d.totalClicks / maxVal) * innerH;
+        const x =
+            paddingLeft +
+            (timelineData.length > 1
+                ? (index / (timelineData.length - 1)) * innerW
+                : innerW / 2);
+        const yAffiliate = paddingTop + innerH - (d.affiliateClicks / maxVal) * innerH;
+        const yBio = paddingTop + innerH - (d.bioLinkClicks / maxVal) * innerH;
+        const yTotal = paddingTop + innerH - (d.totalClicks / maxVal) * innerH;
         return { x, yAffiliate, yBio, yTotal, ...d };
     });
 
@@ -282,8 +326,25 @@ export function MetricsDashboard({
                 </div>
             </div>
 
-            {/* Cartões de Indicadores-Chave (KPIs) */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Cartões de Indicadores-Chave (KPIs) Enriquecidos */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
+                    <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                            Visitas da Vitrine
+                        </span>
+                        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-sky-50 text-sky-600 dark:bg-sky-950/50 dark:text-sky-400">
+                            <Eye className="h-4 w-4" />
+                        </div>
+                    </div>
+                    <div className="mt-3 text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+                        {totalViews.toLocaleString("pt-BR")}
+                    </div>
+                    <p className="mt-1 text-[11px] text-zinc-400 dark:text-zinc-500">
+                        Acessos públicos
+                    </p>
+                </div>
+
                 <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
                     <div className="flex items-center justify-between">
                         <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
@@ -297,7 +358,7 @@ export function MetricsDashboard({
                         {totalAffiliateClicks.toLocaleString("pt-BR")}
                     </div>
                     <p className="mt-1 text-[11px] text-zinc-400 dark:text-zinc-500">
-                        Cliques em ofertas parceiras
+                        Cliques em ofertas
                     </p>
                 </div>
 
@@ -314,7 +375,7 @@ export function MetricsDashboard({
                         {totalBioClicks.toLocaleString("pt-BR")}
                     </div>
                     <p className="mt-1 text-[11px] text-zinc-400 dark:text-zinc-500">
-                        Cliques em comunidades e canais
+                        Canais e comunidades
                     </p>
                 </div>
 
@@ -331,29 +392,29 @@ export function MetricsDashboard({
                         {totalCombined.toLocaleString("pt-BR")}
                     </div>
                     <p className="mt-1 text-[11px] text-zinc-400 dark:text-zinc-500">
-                        Engajamento acumulado
+                        {dailyAverage} cliques/dia de média
                     </p>
                 </div>
 
                 <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
                     <div className="flex items-center justify-between">
                         <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                            Média Diária
+                            Taxa de Conversão
                         </span>
                         <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400">
                             <TrendingUp className="h-4 w-4" />
                         </div>
                     </div>
                     <div className="mt-3 text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-                        {dailyAverage}
+                        {conversionRate}%
                     </div>
                     <p className="mt-1 text-[11px] text-zinc-400 dark:text-zinc-500">
-                        Cliques/dia no período
+                        Cliques sobre visitas
                     </p>
                 </div>
             </div>
 
-            {/* Gráfico 1: Evolução Temporal de Cliques (SVG Puro) */}
+            {/* Gráfico 1: Evolução Temporal de Cliques (SVG Puro com Escala no Eixo Y) */}
             <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-zinc-100 pb-3 dark:border-zinc-800">
                     <div>
@@ -381,24 +442,55 @@ export function MetricsDashboard({
                 <div className="mt-4 w-full overflow-x-auto">
                     <svg
                         viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-                        className="w-full h-44 min-w-[500px]"
+                        className="w-full h-48 min-w-[500px]"
                         preserveAspectRatio="none"
                     >
-                        {/* Linhas de Grade Horizontais */}
+                        {/* Indicador de Unidade no Topo do Eixo Y */}
+                        <text
+                            x={paddingLeft - 8}
+                            y={paddingTop - 7}
+                            textAnchor="end"
+                            className="text-[9px] font-semibold uppercase tracking-wider fill-zinc-400 dark:fill-zinc-500 select-none"
+                        >
+                            Cliques
+                        </text>
+
+                        {/* Linha Vertical Guia do Eixo Y */}
+                        <line
+                            x1={paddingLeft}
+                            y1={paddingTop}
+                            x2={paddingLeft}
+                            y2={paddingTop + innerH}
+                            stroke="currentColor"
+                            className="text-zinc-200 dark:text-zinc-800"
+                            strokeWidth="1"
+                        />
+
+                        {/* Linhas de Grade Horizontais e Rótulos do Eixo Y */}
                         {[0, 0.5, 1].map((ratio) => {
-                            const y = paddingY + ratio * innerH;
+                            const y = paddingTop + ratio * innerH;
+                            const val = Math.round(maxVal * (1 - ratio));
                             return (
-                                <line
-                                    key={ratio}
-                                    x1={paddingX}
-                                    y1={y}
-                                    x2={svgWidth - paddingX}
-                                    y2={y}
-                                    stroke="currentColor"
-                                    className="text-zinc-100 dark:text-zinc-800"
-                                    strokeDasharray="4 4"
-                                    strokeWidth="1"
-                                />
+                                <g key={ratio}>
+                                    <text
+                                        x={paddingLeft - 8}
+                                        y={y + 3.5}
+                                        textAnchor="end"
+                                        className="text-[10px] fill-zinc-400 dark:fill-zinc-500 font-mono font-medium select-none"
+                                    >
+                                        {val}
+                                    </text>
+                                    <line
+                                        x1={paddingLeft}
+                                        y1={y}
+                                        x2={svgWidth - paddingRight}
+                                        y2={y}
+                                        stroke="currentColor"
+                                        className="text-zinc-100 dark:text-zinc-800"
+                                        strokeDasharray="4 4"
+                                        strokeWidth="1"
+                                    />
+                                </g>
                             );
                         })}
 
@@ -426,9 +518,10 @@ export function MetricsDashboard({
                             />
                         )}
 
-                        {/* Pontos Interativos */}
+                        {/* Pontos Interativos com Tooltip Nativo SVG */}
                         {points.map((p, idx) => (
                             <g key={idx}>
+                                <title>{`${p.label}: ${p.totalClicks} cliques (${p.affiliateClicks} em produtos, ${p.bioLinkClicks} em bio links)`}</title>
                                 {p.affiliateClicks > 0 && (
                                     <circle
                                         cx={p.x}
@@ -449,9 +542,9 @@ export function MetricsDashboard({
                                 )}
                                 <text
                                     x={p.x}
-                                    y={svgHeight - 4}
+                                    y={svgHeight - 6}
                                     textAnchor="middle"
-                                    className="text-[10px] fill-zinc-400 font-sans"
+                                    className="text-[10px] fill-zinc-400 font-sans select-none"
                                 >
                                     {p.label}
                                 </text>
@@ -461,8 +554,50 @@ export function MetricsDashboard({
                 </div>
             </div>
 
-            {/* Linha com Gráfico 2 (Lojas) e Gráfico 3 (Origens de Tráfego) */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Linha com Páginas Mais Acessadas, Lojas e Origens de Tráfego */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Ranking de Páginas Mais Acessadas */}
+                <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
+                    <div className="flex items-center justify-between border-b border-zinc-100 pb-3 dark:border-zinc-800">
+                        <div>
+                            <h3 className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+                                Páginas Mais Acessadas
+                            </h3>
+                            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                                Rotas mais visualizadas da vitrine pública.
+                            </p>
+                        </div>
+                        <Eye className="h-4 w-4 text-zinc-400 shrink-0" />
+                    </div>
+
+                    <div className="mt-4 space-y-3">
+                        {pagesRanking.length === 0 ? (
+                            <p className="py-6 text-center text-xs text-zinc-400">
+                                Nenhuma visita registrada no período selecionado.
+                            </p>
+                        ) : (
+                            pagesRanking.map((page) => (
+                                <div key={page.path} className="space-y-1">
+                                    <div className="flex items-center justify-between text-xs">
+                                        <span className="font-semibold text-zinc-800 dark:text-zinc-200 truncate pr-2">
+                                            {page.path}
+                                        </span>
+                                        <span className="text-zinc-500 dark:text-zinc-400 font-mono shrink-0">
+                                            {page.count} ({page.percentage.toFixed(0)}%)
+                                        </span>
+                                    </div>
+                                    <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+                                        <div
+                                            className="h-full rounded-full bg-sky-500 transition-all duration-500"
+                                            style={{ width: `${Math.max(page.percentage, 2)}%` }}
+                                        />
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+
                 {/* Distribuição por Loja Parceira */}
                 <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900">
                     <h3 className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-100">

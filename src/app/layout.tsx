@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ThemeScript } from "@/components/theme-script";
 import { ThemeProvider } from "@/components/theme-provider";
+import { PageViewTracker } from "@/components/public/page-view-tracker";
 import { getSiteSettings } from "@/lib/settings";
 import "./globals.css";
 
@@ -87,7 +88,10 @@ export default async function RootLayout({
                 />
             </head>
             <body className="antialiased min-h-dvh bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 transition-colors">
-                <ThemeProvider>{children}</ThemeProvider>
+                <ThemeProvider>
+                    <PageViewTracker />
+                    {children}
+                </ThemeProvider>
             </body>
         </html>
     );
