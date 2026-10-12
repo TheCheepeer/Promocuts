@@ -166,9 +166,7 @@ export function ProductDialog({
 
             const data = json.data;
 
-            if (data.title && !name) {
-                setName(data.title);
-            } else if (data.title && name) {
+            if (data.title) {
                 setName(data.title);
             }
 
@@ -193,7 +191,13 @@ export function ProductDialog({
                 return next;
             });
 
-            setSuccessFeedback("Dados do produto e da oferta preenchidos com sucesso!");
+            if (data.title || data.image) {
+                setSuccessFeedback("Dados do produto e da oferta preenchidos com sucesso!");
+            } else {
+                setErrorMessage(
+                    "Loja identificada, mas o título e a imagem não puderam ser extraídos da página. Preencha os campos restantes manualmente.",
+                );
+            }
         } catch {
             setErrorMessage("Erro ao consultar serviço de extração de dados.");
         } finally {

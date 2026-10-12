@@ -4,6 +4,7 @@ import {
     isSafeExternalUrl,
     detectStoreFromUrl,
     parseHtmlMetadata,
+    cleanProductTitle,
 } from "../src/lib/extractor/og-parser.js";
 
 describe("Extrator Open Graph - Proteção contra SSRF (isSafeExternalUrl)", () => {
@@ -191,6 +192,79 @@ describe("Extrator Open Graph - Análise Sintática de HTML (parseHtmlMetadata)"
             metadata.title,
             "Mouse Gamer RGB 12000 DPI | Loja Oficial",
         );
+    });
+
+    it("deve limpar sufixos comuns de lojas parceiras através de cleanProductTitle", () => {
+        assert.equal(
+            cleanProductTitle("Playstation 4 Slim 1TB | Shopee Brasil"),
+            "Playstation 4 Slim 1TB",
+        );
+        assert.equal(
+            cleanProductTitle("Apple iPad Air 5th Gen - Amazon.com.br"),
+            "Apple iPad Air 5th Gen",
+        );
+        assert.equal(
+            cleanProductTitle("Smartphone Samsung Galaxy A15 - Magazine Luiza"),
+            "Smartphone Samsung Galaxy A15",
+        );
+        assert.equal(
+            cleanProductTitle("Cadeira Gamer Ergonômica | Kabum!"),
+            "Cadeira Gamer Ergonômica",
+        );
+    });
+
+    it("deve extrair dados de produto e BreadcrumbList a partir de JSON-LD", () => {
+        const mockJsonLd = `
+            <html>
+            <head>
+                <script type="application/ld+json">
+                {
+                    "@context": "https://schema.org",
+                    "@type": "Product",
+                    "name": "Controle DualSense PS5",
+                    "image": "https://cdn.exemplo.com/dualsense.jpg",
+                    "offers": {
+                        "@type": "Offer",
+                        "price": "429.90",
+                        "priceCurrency": "BRL"
+                    }
+                }
+                </script>
+            </head>
+            </html>
+        `;
+
+        const metadata = parseHtmlMetadata(mockJsonLd, "https://exemplo.com/produto");
+
+        assert.equal(metadata.title, "Controle DualSense PS5");
+        assert.equal(metadata.image, "https://cdn.exemplo.com/dualsense.jpg");
+        assert.equal(metadata.price, 429.9);
+    });
+
+    it("deve extrair metadados da Shopee com content antecedendo property e data-rh", () => {
+        const shopeeMock = `
+            <!doctype html>
+            <html>
+            <head>
+                <meta data-rh="true" content="Playstation 4 Slim - Console Original | Shopee Brasil" property="og:title"/>
+                <meta data-rh="true" content="https://down-br.img.susercontent.com/file/sg-123" property="og:image"/>
+                <meta data-rh="true" content="website" property="og:type"/>
+            </head>
+            <body></body>
+            </html>
+        `;
+
+        const metadata = parseHtmlMetadata(
+            shopeeMock,
+            "https://shopee.com.br/product-i.544.190",
+        );
+
+        assert.equal(metadata.title, "Playstation 4 Slim - Console Original");
+        assert.equal(
+            metadata.image,
+            "https://down-br.img.susercontent.com/file/sg-123",
+        );
+        assert.equal(metadata.store, "Shopee");
     });
 });
 
