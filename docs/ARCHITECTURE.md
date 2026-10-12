@@ -476,11 +476,12 @@ Na Fase 9, o PromoCuts expandiu sua arquitetura para consolidar a vitrine públi
 - **Crachás de Destaque e Efeito Pulsante:** Suporte a etiquetas chamativas ("AO VIVO", "NOVO", "VIP", "DESCONTO", "OFICIAL") com opção de animação de pulso para direcionar o tráfego a transmissões ou promoções urgentes.
 - **Contadores de Cliques em Tempo Real:** Cada link possui contagem acumulada atualizada automaticamente no banco relacional via gatilho atômico.
 
-### 10.2 Perfil Retrátil do Criador na Vitrine Pública (`CreatorProfile`)
+### 10.2 Hub Dedicado de Bio Links e Isolamento da Vitrine Principal
 
-- **Componente Mobile-First:** Integrado ao topo do feed principal (`/`) e das páginas de categoria (`/c/[slug]`), o componente `src/components/public/creator-profile.tsx` exibe o avatar e nome do criador em formato compacto, expandindo suavemente em uma gaveta de links em estilo cartão com um toque.
-- **Sinalização Dinâmica de Transmissão:** Caso exista algum link configurado com o crachá "AO VIVO", o avatar do perfil exibe um anel pulsante de destaque imediato, avisando os visitantes da transmissão em andamento.
-- **Aceleração via Cache Serverless:** Os bio links ativos são carregados conjuntamente com o feed e preservados em cache no Upstash Redis (`promocuts:bio_links:all`), garantindo renderização instantânea sem sobrecarga ao banco.
+- **Foco e Limpeza na Vitrine de Vídeos:** Para garantir taxa máxima de conversão nos vídeos e produtos sem poluição visual no topo da tela, a vitrine principal (`/`) e as páginas de categoria (`/c/[slug]`) mantêm seu foco estritamente nos cortes verticais e ofertas. O acesso aos links e redes do criador é feito de forma elegante pelo botão *"Bio Links"* presente no cabeçalho superior (`PublicHeader`).
+- **Página Dedicada (`/links` e `/bio`):** Toda a experiência de bio links e redes sociais é concentrada na página pública dedicada (`BioLinksView`), oferecendo aos visitantes uma interface completa, fluida e mobile-first.
+- **Destaque Pulsante nos Cards de Links:** A sinalização de urgência e transmissões ao vivo (`is_highlighted`) é aplicada diretamente no card do respectivo link na lista (com borda colorida, animação de pulso e crachá "AO VIVO" / "Destaque"), preservando a foto de perfil do criador limpa e sem elementos intrusivos sobrepostos.
+- **Aceleração via Cache Serverless:** Os bio links ativos são preservados em cache no Upstash Redis (`promocuts:bio_links:all`), garantindo carregamento instantâneo com fallback resiliente para o Supabase.
 
 ### 10.3 Dashboard Nativo de Métricas e Conversão (`/admin/metrics`)
 

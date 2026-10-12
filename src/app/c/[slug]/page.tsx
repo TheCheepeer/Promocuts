@@ -4,11 +4,10 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getSiteSettings } from "@/lib/settings";
 import { PublicHeader } from "@/components/public/header";
-import { CreatorProfile } from "@/components/public/creator-profile";
 import { Storefront } from "@/components/public/storefront";
 import { getCachedData, setCachedData } from "@/lib/cache/redis";
 import { rankVideosByFreshness } from "@/lib/feed/ranking";
-import type { Category, BioLink } from "@/types/database";
+import type { Category } from "@/types/database";
 import type { VideoWithRelations } from "@/components/public/feed-mobile";
 
 interface CategoryPageProps {
@@ -59,21 +58,19 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     const settings = await getSiteSettings();
 
     // 1. Consulta paralela ultrarrapida ao cache em memoria do Upstash Redis
-    const [cachedCategories, cachedVideos, cachedBioLinks] = await Promise.all([
+    const [cachedCategories, cachedVideos] = await Promise.all([
         getCachedData<Category[]>("promocuts:categories:all"),
         getCachedData<VideoWithRelations[]>("promocuts:feed:all"),
-        getCachedData<BioLink[]>("promocuts:bio_links:all"),
     ]);
 
     let categories = cachedCategories;
     let allVideos = cachedVideos;
-    let bioLinks = cachedBioLinks;
 
     // 2. Fallback resiliente ao Supabase caso o cache nao esteja disponivel
-    if (!categories || !allVideos || !bioLinks) {
+    if (!categories || !allVideos) {
         const supabase = await createClient();
 
-        const [categoriesResult, videosResult, bioLinksResult] = await Promise.all([
+        const [categoriesResult, videosResult] = await Promise.all([
             categories
                 ? Promise.resolve({ data: categories })
                 : supabase
@@ -102,14 +99,6 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
                       )
                       .eq("is_published", true)
                       .order("created_at", { ascending: false }),
-            bioLinks
-                ? Promise.resolve({ data: bioLinks })
-                : supabase
-                      .from("bio_links")
-                      .select("*")
-                      .eq("is_active", true)
-                      .order("display_order", { ascending: true })
-                      .order("created_at", { ascending: true }),
         ]);
 
         if (!categories && categoriesResult.data) {
@@ -121,16 +110,10 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
             allVideos = videosResult.data as unknown as VideoWithRelations[];
             await setCachedData("promocuts:feed:all", allVideos, 300);
         }
-
-        if (!bioLinks && bioLinksResult.data) {
-            bioLinks = bioLinksResult.data as BioLink[];
-            await setCachedData("promocuts:bio_links:all", bioLinks, 300);
-        }
     }
 
     categories = categories || [];
     allVideos = allVideos || [];
-    bioLinks = bioLinks || [];
 
     // Ranqueamento dinâmico: recência temporal combinada com dispersão controlada
     const rankedVideos = rankVideosByFreshness(allVideos);
@@ -144,7 +127,6 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     return (
         <div className="flex min-h-dvh flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50">
             <PublicHeader settings={settings} />
-            <CreatorProfile settings={settings} bioLinks={bioLinks} />
             <Storefront
                 categories={categories}
                 allVideos={rankedVideos}

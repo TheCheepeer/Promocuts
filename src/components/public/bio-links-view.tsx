@@ -48,15 +48,6 @@ export function BioLinksView({ settings, bioLinks }: BioLinksViewProps) {
             setShareUrl(detectedUrl);
         }
     }, [canonicalBaseUrl]);
-
-    const hasLiveOrHighlight = bioLinks.some(
-        (l) => l.is_active && l.is_highlighted,
-    );
-
-    const liveBadge = bioLinks.find(
-        (l) => l.is_active && l.is_highlighted && l.badge_text,
-    );
-
     const firstLetter = (settings.site_name || "P").charAt(0).toUpperCase();
 
     // Cascata de Fallback Inteligente para Foto de Perfil
@@ -211,29 +202,13 @@ export function BioLinksView({ settings, bioLinks }: BioLinksViewProps) {
                                     {firstLetter}
                                 </div>
                             )}
-
-                            {hasLiveOrHighlight && (
-                                <span className="absolute -top-1 -right-1 flex h-4 w-4">
-                                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
-                                    <span className="relative inline-flex h-4 w-4 rounded-full bg-red-500 ring-2 ring-white dark:ring-zinc-900" />
-                                </span>
-                            )}
                         </div>
 
-                        {/* Nome e Badge de Destaque */}
+                        {/* Nome do Criador */}
                         <div className="space-y-1">
                             <h1 className="text-xl sm:text-2xl font-black tracking-tight text-zinc-950 dark:text-zinc-50">
                                 {bioTitle}
                             </h1>
-
-                            {liveBadge?.badge_text && (
-                                <div className="flex justify-center pt-0.5">
-                                    <span className="inline-flex items-center gap-1 rounded-full bg-red-600 px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wider text-white shadow-xs animate-pulse">
-                                        <Radio className="h-3 w-3" />
-                                        {liveBadge.badge_text}
-                                    </span>
-                                </div>
-                            )}
                         </div>
 
                         {/* Biografia / Tagline */}
@@ -380,10 +355,20 @@ export function BioLinksView({ settings, bioLinks }: BioLinksViewProps) {
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     onClick={() => handleLinkClick(link.id)}
-                                    className="group relative flex items-center justify-between gap-3.5 rounded-2xl border border-zinc-200/90 bg-zinc-50/50 p-3.5 sm:p-4 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-primary hover:bg-white dark:border-zinc-800/90 dark:bg-zinc-950/60 dark:hover:border-brand-primary dark:hover:bg-zinc-950 hover:shadow-md"
+                                    className={`group relative flex items-center justify-between gap-3.5 rounded-2xl border p-3.5 sm:p-4 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
+                                        link.is_highlighted
+                                            ? "border-red-500/70 bg-red-50/30 dark:border-red-500/50 dark:bg-red-950/20 ring-2 ring-red-500/25 animate-pulse hover:border-red-500 hover:bg-red-50/60 dark:hover:bg-red-950/30"
+                                            : "border-zinc-200/90 bg-zinc-50/50 hover:border-brand-primary hover:bg-white dark:border-zinc-800/90 dark:bg-zinc-950/60 dark:hover:border-brand-primary dark:hover:bg-zinc-950"
+                                    }`}
                                 >
                                     <div className="flex items-center gap-3.5 min-w-0">
-                                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-zinc-800 shadow-2xs transition-colors group-hover:bg-brand-primary/10 group-hover:text-brand-primary dark:bg-zinc-800 dark:text-zinc-200 dark:group-hover:bg-brand-primary/20 dark:group-hover:text-brand-primary">
+                                        <div
+                                            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl shadow-2xs transition-colors ${
+                                                link.is_highlighted
+                                                    ? "bg-red-500 text-white"
+                                                    : "bg-white text-zinc-800 group-hover:bg-brand-primary/10 group-hover:text-brand-primary dark:bg-zinc-800 dark:text-zinc-200 dark:group-hover:bg-brand-primary/20 dark:group-hover:text-brand-primary"
+                                            }`}
+                                        >
                                             <BioLinkIcon
                                                 name={link.icon}
                                                 className="h-5 w-5"
@@ -401,19 +386,33 @@ export function BioLinksView({ settings, bioLinks }: BioLinksViewProps) {
                                     </div>
 
                                     <div className="flex items-center gap-2 shrink-0">
-                                        {link.badge_text && (
+                                        {link.badge_text ? (
                                             <span
-                                                className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide ${
+                                                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide shadow-xs ${
                                                     link.is_highlighted
                                                         ? "bg-red-600 text-white animate-pulse"
                                                         : "bg-brand-primary/10 text-brand-primary dark:bg-brand-primary/20"
                                                 }`}
                                             >
+                                                {link.is_highlighted && (
+                                                    <Radio className="h-2.5 w-2.5" />
+                                                )}
                                                 {link.badge_text}
                                             </span>
-                                        )}
+                                        ) : link.is_highlighted ? (
+                                            <span className="inline-flex items-center gap-1 rounded-full bg-red-600 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-white shadow-xs animate-pulse">
+                                                <Radio className="h-2.5 w-2.5" />
+                                                Destaque
+                                            </span>
+                                        ) : null}
 
-                                        <ExternalLink className="h-4 w-4 text-zinc-400 group-hover:text-brand-primary transition-colors" />
+                                        <ExternalLink
+                                            className={`h-4 w-4 transition-colors ${
+                                                link.is_highlighted
+                                                    ? "text-red-500 group-hover:text-red-600"
+                                                    : "text-zinc-400 group-hover:text-brand-primary"
+                                            }`}
+                                        />
                                     </div>
                                 </a>
                             ))
