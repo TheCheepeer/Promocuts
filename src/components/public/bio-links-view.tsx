@@ -26,13 +26,27 @@ interface BioLinksViewProps {
 
 export function BioLinksView({ settings, bioLinks }: BioLinksViewProps) {
     const [copied, setCopied] = useState(false);
-    const [shareUrl, setShareUrl] = useState("");
+    const canonicalBaseUrl = (
+        process.env.NEXT_PUBLIC_APP_URL ||
+        process.env.NEXT_PUBLIC_SITE_URL ||
+        ""
+    ).replace(/\/+$/, "");
 
     useEffect(() => {
         if (typeof window !== "undefined") {
-            setShareUrl(window.location.href);
+            const isLocal =
+                !canonicalBaseUrl ||
+                canonicalBaseUrl.includes("localhost") ||
+                canonicalBaseUrl.includes("127.0.0.1");
+
+            const detectedUrl =
+                !isLocal && canonicalBaseUrl
+                    ? `${canonicalBaseUrl}/links`
+                    : `${window.location.origin}/links`;
+
+            setShareUrl(detectedUrl);
         }
-    }, []);
+    }, [canonicalBaseUrl]);
 
     const hasLiveOrHighlight = bioLinks.some(
         (l) => l.is_active && l.is_highlighted,
