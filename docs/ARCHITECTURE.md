@@ -539,14 +539,11 @@ Para resolver a rigidez arquitetural dos campos estáticos prévios em `site_set
 - **Autodetecção Inteligente de URLs e Combobox com Autocompletar:**
     - Ao colar ou digitar qualquer link no formulário, a função `detectPlatformFromUrl` inspeciona a URL por expressões regulares e identifica automaticamente a plataforma correspondente (ex: `https://music.youtube.com/...` seleciona imediatamente o YouTube Music; `https://livepix.gg/...` seleciona o PIX), sugerindo o nome e configurando o ícone sem necessidade de seleção manual.
     - O diálogo de cadastro e edição (`SocialLinkDialog`) incorpora um combobox pesquisável com autocompletar instantâneo, permitindo encontrar qualquer serviço via digitação rápida sem exigir rolagem exaustiva.
-- **Logotipos Canônicos Oficiais da Indústria (Padrão Simple Icons 24x24 px):**
-    - Para assegurar conformidade visual rigorosa com as marcas sem recorrer a pacotes externos pesados (preservando o tamanho mínimo do pacote de JavaScript), o componente `SocialIcon` incorpora diretamente os vetores canônicos oficiais em SVG puro:
-        - **PIX:** Geometria oficial do Banco Central do Brasil com quatro elos entrelaçados em losango;
-        - **YouTube Music:** Círculos concêntricos oficiais com triângulo interno de reprodução;
-        - **WhatsApp e Telegram:** Logotipos canônicos oficiais das marcas, substituindo ícones genéricos de mensageria;
-        - **Patreon, Ko-fi e Buy Me a Coffee:** Vetores canônicos das plataformas de financiamento e apoio;
-        - **Snapchat, Apple Music, Deezer e SoundCloud:** Vetores oficiais refinados;
-        - **Favicons Dinâmicos em Links Externos:** Consulta automática de *favicons* do domínio de destino via Google Favicon Service, com fallback visual vetorial nativo em caso de indisponibilidade.
+- **Padrão Strategy de Renderização Visual de Ícones (`social-icon-strategies.tsx` e `SocialIcon`):**
+    - A renderização visual dos ícones adota o **Padrão Strategy**, eliminando blocos monolíticos de `switch case`. Cada serviço implementa uma estratégia com contrato estrito (`SocialIconStrategy`), contendo seu identificador principal, apelidos (*aliases*) e método de renderização `render(className)`.
+    - Resolução imediata em tempo constante \(O(1)\) por mapa indexado (`STRATEGY_MAP`), com suporte automático a apelidos (como `shorts` resolvendo para YouTube e `reels` resolvendo para Instagram).
+    - Preserva vetores canônicos oficiais em SVG puro (PIX do Banco Central, YouTube Music, WhatsApp, Telegram, Patreon, Ko-fi, Buy Me a Coffee, Snapchat, Apple Music, Deezer, SoundCloud, Bilibili, Vimeo, etc.), sem bibliotecas de ícones pesadas no bundle final.
+    - Favicons dinâmicos para links e domínios externos via Google Favicon Service, com fallback gracioso para a estratégia `DefaultLinkIconStrategy`.
 - **Seletor Memoizado de Ícones de Alta Performance (`BioLinkIconSelector`):**
     - Componente isolado envolto em `React.memo` que elimina completamente as re-renderizações desnecessárias do DOM durante a digitação de títulos e URLs no modal, mantendo estabilidade a 60 FPS mesmo com catálogo amplo de botões e SVGs.
     - Inclui campo de busca instantânea e abas de filtros por categoria temática.
