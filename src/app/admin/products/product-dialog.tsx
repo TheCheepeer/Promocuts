@@ -83,6 +83,7 @@ export function ProductDialog({
     // Autopreenchimento Open Graph
     const [autoFillUrl, setAutoFillUrl] = useState("");
     const [isAutoFilling, setIsAutoFilling] = useState(false);
+    const [fetchingPriceIdx, setFetchingPriceIdx] = useState<number | null>(null);
 
     // Ofertas Multi-Loja
     const [stores, setStores] = useState<StoreOfferItem[]>([
@@ -200,41 +201,24 @@ export function ProductDialog({
                 setImageUrl(data.image);
             }
 
-            // Atualiza a primeira loja com a URL, loja e preços detectados
+            // Atualiza a primeira loja com a URL e o nome da loja detectados (sem alterar preços)
             setStores((prevStores) => {
                 const next = [...prevStores];
                 if (next.length > 0) {
                     const currentStore = next[0];
-                    const updatedDiscountPrice =
-                        data.price != null && !currentStore.discount_price
-                            ? formatPriceInput(data.price)
-                            : currentStore.discount_price;
-                    const updatedRegularPrice =
-                        data.regularPrice != null && !currentStore.regular_price
-                            ? formatPriceInput(data.regularPrice)
-                            : currentStore.regular_price;
-
                     next[0] = {
                         ...currentStore,
                         affiliate_url: autoFillUrl.trim(),
                         store_name: data.store || currentStore.store_name,
-                        discount_price: updatedDiscountPrice,
-                        regular_price: updatedRegularPrice,
                     };
                 }
                 return next;
             });
 
             if (data.title || data.image) {
-                if (data.price != null) {
-                    setSuccessFeedback(
-                        "Título, imagem, loja e preço preenchidos com sucesso!",
-                    );
-                } else {
-                    setSuccessFeedback(
-                        "Título, imagem e loja preenchidos! Para anúncios com múltiplas variações de preço, informe o valor da opção desejada.",
-                    );
-                }
+                setSuccessFeedback(
+                    "Dados e fotos do produto preenchidos com sucesso! Você pode puxar o preço no card da loja correspondente.",
+                );
             } else {
                 setErrorMessage(
                     "Loja identificada, mas o título e a imagem não puderam ser extraídos da página. Preencha os campos restantes manualmente.",
@@ -244,6 +228,75 @@ export function ProductDialog({
             setErrorMessage("Erro ao consultar serviço de extração de dados.");
         } finally {
             setIsAutoFilling(false);
+        }
+    };
+
+    // Puxa o preço específico para a loja/link indicado
+    const handleFetchStorePrice = async (idx: number) => {
+        const store = stores[idx];
+        if (!store || !store.affiliate_url || !store.affiliate_url.trim()) {
+            setErrorMessage(
+                "Informe o link de afiliado da loja para puxar o preço.",
+            );
+            return;
+        }
+
+        setFetchingPriceIdx(idx);
+        setErrorMessage(null);
+        setSuccessFeedback(null);
+
+        try {
+            const res = await fetch("/api/admin/extract-og", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ url: store.affiliate_url.trim() }),
+            });
+
+            const json = await res.json();
+            if (!res.ok || !json.success) {
+                setErrorMessage(
+                    json.error ||
+                        "Não foi possível obter o preço a partir do link desta loja.",
+                );
+                return;
+            }
+
+            const data = json.data;
+
+            if (data.price != null) {
+                setStores((prev) => {
+                    const next = [...prev];
+                    if (next[idx]) {
+                        next[idx] = {
+                            ...next[idx],
+                            discount_price: formatPriceInput(data.price),
+                            regular_price:
+                                data.regularPrice != null
+                                    ? formatPriceInput(data.regularPrice)
+                                    : next[idx].regular_price,
+                            store_name:
+                                !next[idx].store_name ||
+                                next[idx].store_name === "Amazon"
+                                    ? data.store || next[idx].store_name
+                                    : next[idx].store_name,
+                        };
+                    }
+                    return next;
+                });
+                setSuccessFeedback(
+                    `Preço atualizado com sucesso para a loja "${data.store || store.store_name}"!`,
+                );
+            } else {
+                setErrorMessage(
+                    "O preço não pôde ser identificado automaticamente neste link. Informe os valores manualmente.",
+                );
+            }
+        } catch {
+            setErrorMessage(
+                "Erro ao consultar serviço de extração de dados da oferta.",
+            );
+        } finally {
+            setFetchingPriceIdx(null);
         }
     };
 
@@ -564,25 +617,51 @@ export function ProductDialog({
                                         key={idx}
                                         className="p-3.5 rounded-xl border border-zinc-200 bg-zinc-50/70 dark:border-zinc-800 dark:bg-zinc-800/40 relative space-y-3"
                                     >
-                                        <div className="flex items-center justify-between">
+                                        <div className="flex items-center justify-between gap-2">
                                             <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
                                                 {idx === 0
                                                     ? "Loja Principal"
                                                     : `Loja Adicional ${idx + 1}`}
                                             </span>
 
-                                            {stores.length > 1 && (
+                                            <div className="flex items-center gap-1.5">
                                                 <button
                                                     type="button"
-                                                    onClick={() =>
-                                                        handleRemoveStore(idx)
+                                                    disabled={
+                                                        fetchingPriceIdx === idx ||
+                                                        !store.affiliate_url.trim()
                                                     }
-                                                    className="text-zinc-400 hover:text-red-500 p-1 rounded-md transition-colors"
-                                                    title="Remover esta loja parceira"
+                                                    onClick={() =>
+                                                        handleFetchStorePrice(idx)
+                                                    }
+                                                    className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-md bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs"
+                                                    title={
+                                                        store.affiliate_url.trim()
+                                                            ? "Puxar preço desta loja parceira"
+                                                            : "Cole o link de afiliado para puxar o preço"
+                                                    }
                                                 >
-                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                    {fetchingPriceIdx === idx ? (
+                                                        <Loader2 className="h-3 w-3 animate-spin text-zinc-500" />
+                                                    ) : (
+                                                        <Sparkles className="h-3 w-3 text-amber-500" />
+                                                    )}
+                                                    <span>Puxar Preço</span>
                                                 </button>
-                                            )}
+
+                                                {stores.length > 1 && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            handleRemoveStore(idx)
+                                                        }
+                                                        className="text-zinc-400 hover:text-red-500 p-1 rounded-md transition-colors"
+                                                        title="Remover esta loja parceira"
+                                                    >
+                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
 
                                         {/* Nome da Loja e Link de Afiliado */}
