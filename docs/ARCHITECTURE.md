@@ -558,3 +558,22 @@ Para resolver a rigidez arquitetural dos campos estáticos prévios em `site_set
 - **Nova Rota Administrativa `/admin/social`:**
     - Interface dedicada com listagem reordenável, botões diretos de alternância de visibilidade (*toggles* com atualização otimista em um clique), modal completo de edição e remoção segura.
     - O formulário geral de configurações (`/admin/settings`) foi desacoplado, substituindo os três campos legados por um cartão de integração que direciona ao novo gerenciador.
+
+### 10.7 Padrão Strategy para Lojas Parceiras e Extração de Metadados Open Graph (`store-strategies.ts`)
+
+Para garantir alta manutenibilidade, extensibilidade e modularidade ao adicionar novas lojas, marketplaces e plataformas de e-commerce ao ecossistema do PromoCuts sem inflar o extrator central de Open Graph, a lógica de detecção e parsing específico foi refatorada sob o **Padrão Strategy** (`src/lib/extractor/store-strategies.ts`):
+
+- **Contrato de Estratégia (`StoreStrategy`):**
+  - Cada loja parceira implementa o contrato `StoreStrategy`:
+    - `id`: identificador único do marketplace (ex: `amazon`, `shopee`, `mercadolivre`, `aliexpress`, `magalu`, `kabum`, `casasbahia`, `americanas`, `default`);
+    - `name`: nome canônico exibido na interface;
+    - `domains`: lista de sufixos e domínios associados (incluindo encurtadores oficiais como `amzn.to`, `shp.ee`, `meli.la`);
+    - `matchesUrl(url, siteName)`: predicado para resolução determinística da loja a partir do host da URL ou de palavras-chave do `og:site_name`;
+    - `cleanTitle(rawTitle)`: sanitizador de títulos com remoção de sufixos de marca ou canal específicos;
+    - `extractPrice(html)`: extrator especializado de preço em vigor / com desconto (ex: BuyBox da Amazon desconsiderando classes de preço riscado, frações do Mercado Livre desconsiderando classes `andes-money-amount--previous`);
+    - `extractRegularPrice(html)`: extrator especializado de preço original riscado (ex: classes `a-text-price` na Amazon e `andes-money-amount--previous` no Mercado Livre).
+- **Conversor Numérico de Moedas Universal (`parsePriceNumber`):**
+  - Converte representações de moedas em ponto flutuante com suporte a formatos em Real brasileiro (BRL) e notações internacionais (USD, EUR, GBP, JPY), resolvendo adequadamente pontos e vírgulas decimais e de milhar.
+- **Catálogo Unificado e Resolução Dinâmica (`STORE_STRATEGIES`, `getStoreStrategy`, `detectStoreFromUrl`):**
+  - Resolução por iteração sobre `STORE_STRATEGIES` com fallback gracioso para `DefaultStoreStrategy`, garantindo funcionamento universal mesmo para lojas ou e-commerces independentes não previamente catalogados.
+

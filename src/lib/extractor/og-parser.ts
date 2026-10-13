@@ -1,4 +1,19 @@
 import { logger } from "@/lib/logger";
+import {
+    getStoreStrategy,
+    STORE_STRATEGIES,
+    detectStoreFromUrl,
+    parsePriceNumber,
+    type StoreStrategy,
+} from "./store-strategies";
+
+export {
+    getStoreStrategy,
+    STORE_STRATEGIES,
+    detectStoreFromUrl,
+    parsePriceNumber,
+    type StoreStrategy,
+};
 
 export interface ExtractedMetadata {
     title: string | null;
@@ -67,49 +82,6 @@ export function isSafeExternalUrl(rawUrl: string): boolean {
     }
 }
 
-/**
- * Detecta o nome amigável da loja parceira com base no domínio ou metadados da página.
- */
-export function detectStoreFromUrl(url: string, siteName?: string | null): string {
-    try {
-        const parsed = new URL(url);
-        const host = parsed.hostname.toLowerCase();
-
-        if (host.includes("amazon.") || host.includes("amzn.to")) {
-            return "Amazon";
-        }
-        if (host.includes("shopee.") || host.includes("shp.ee")) {
-            return "Shopee";
-        }
-        if (host.includes("mercadolivre.") || host.includes("mercadolibre.") || host.includes("meli.la")) {
-            return "Mercado Livre";
-        }
-        if (host.includes("aliexpress.")) {
-            return "AliExpress";
-        }
-        if (host.includes("magazineluiza.com.br") || host.includes("magalu.")) {
-            return "Magalu";
-        }
-        if (host.includes("kabum.com.br")) {
-            return "Kabum";
-        }
-        if (host.includes("americanas.com.br")) {
-            return "Americanas";
-        }
-        if (host.includes("casasbahia.com.br")) {
-            return "Casas Bahia";
-        }
-    } catch {
-        // Fallback para avaliação de siteName
-    }
-
-    if (siteName && siteName.trim()) {
-        const cleaned = siteName.trim();
-        if (cleaned.length <= 50) return cleaned;
-    }
-
-    return "Loja Parceira";
-}
 
 /**
  * Decodifica entidades HTML comuns sem introduzir dependências externas pesadas.
@@ -181,42 +153,22 @@ function resolveAbsoluteUrl(relativeOrAbsolute: string | null, baseUrl: string):
 }
 
 /**
- * Remove sufixos comuns de marketplaces e plataformas de e-commerce do título do produto.
+ * Remove sufixos comuns de marketplaces e plataformas de e-commerce do título do produto,
+ * utilizando a estratégia da loja quando informada.
  */
-export function cleanProductTitle(rawTitle: string | null): string | null {
+export function cleanProductTitle(rawTitle: string | null, url?: string): string | null {
     if (!rawTitle) return null;
-    let title = rawTitle.trim();
-
-    const storeSuffixRegex =
-        /\s*(?:\||-|–|—|:)\s*(?:Shopee(?:\s+Brasil)?|Amazon(?:\.com(?:\.br)?)?|Mercado\s+Livre|Magalu|Magazine\s+Luiza|Kabum!?|AliExpress|Casas\s+Bahia)\s*$/i;
-    title = title.replace(storeSuffixRegex, "").trim();
-
-    return title || null;
-}
-
-/**
- * Converte strings numéricas de moeda em ponto flutuante válido (suporta formatos BRL e USD).
- */
-export function parsePriceNumber(raw: string): number | null {
-    if (!raw) return null;
-    let clean = raw
-        .replace(/(?:R\$|BRL|USD|EUR|GBP|\$|€|£|¥)\s*/gi, "")
-        .trim();
-
-    if (clean.includes(".") && clean.includes(",")) {
-        if (clean.lastIndexOf(",") > clean.lastIndexOf(".")) {
-            // Formato decimal com vírgula (ex: 1.499,90)
-            clean = clean.replace(/\./g, "").replace(",", ".");
-        } else {
-            // Formato decimal com ponto (ex: 1,499.90)
-            clean = clean.replace(/,/g, "");
+    const trimmed = rawTitle.trim();
+    if (url) {
+        const strategy = getStoreStrategy(url);
+        if (strategy.cleanTitle) {
+            return strategy.cleanTitle(trimmed) || null;
         }
-    } else if (clean.includes(",")) {
-        clean = clean.replace(",", ".");
     }
 
-    const val = parseFloat(clean);
-    return !isNaN(val) && val > 0 ? Math.round(val * 100) / 100 : null;
+    const storeSuffixRegex =
+        /\s*(?:\||-|–|—|:)\s*(?:Shopee(?:\s+Brasil)?|Amazon(?:\.com(?:\.br)?)?|Mercado\s+(?:Livre|Libre)|Magalu|Magazine\s+Luiza|Kabum!?|AliExpress|Casas\s+Bahia|Americanas)\s*$/i;
+    return trimmed.replace(storeSuffixRegex, "").trim() || null;
 }
 
 /**
@@ -303,11 +255,21 @@ export function extractLdJsonProduct(html: string): {
     return { title, image, price, regularPrice, store };
 }
 
+
 /**
  * Tenta extrair o preço promocional principal ou valor corrente de destaque a partir de microdados HTML e marcações de e-commerce.
  */
-export function extractPriceFromHtml(html: string): number | null {
-    // 1. Meta tags semânticas de preço de venda / oferta corrente
+export function extractPriceFromHtml(html: string, url?: string): number | null {
+    // 1. Se a URL for fornecida, consulta prioritariamente a estratégia especializada da loja
+    if (url) {
+        const strategy = getStoreStrategy(url);
+        if (strategy.extractPrice) {
+            const price = strategy.extractPrice(html);
+            if (price) return price;
+        }
+    }
+
+    // 2. Meta tags semânticas universais de preço de venda / oferta corrente
     const priceMetaRegex =
         /<meta[^>]+(?:property|name|itemprop)=["'](?:product:sale_price:amount|og:price:amount|product:price:amount|price)["'][^>]+content=["']([^"']+)["']/i;
     const matchMeta = html.match(priceMetaRegex);
@@ -316,7 +278,7 @@ export function extractPriceFromHtml(html: string): number | null {
         if (parsed) return parsed;
     }
 
-    // 1b. Content antecedendo property/itemprop
+    // 2b. Content antecedendo property/itemprop
     const metaFirstRegex =
         /<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name|itemprop)=["'](?:product:sale_price:amount|og:price:amount|product:price:amount|price)["']/i;
     const matchMetaFirst = html.match(metaFirstRegex);
@@ -325,7 +287,7 @@ export function extractPriceFromHtml(html: string): number | null {
         if (parsed) return parsed;
     }
 
-    // 2. Elementos microdata com itemprop="price"
+    // 3. Elementos microdata com itemprop="price"
     const itempropRegex = /<[^>]+itemprop=["']price["'][^>]+content=["']([^"']+)["']/i;
     const matchItemprop = html.match(itempropRegex);
     if (matchItemprop && matchItemprop[1]) {
@@ -333,19 +295,15 @@ export function extractPriceFromHtml(html: string): number | null {
         if (parsed) return parsed;
     }
 
-    // 3. Amazon price buybox: ignora classe a-text-price (preço riscado) e captura o preço de destaque
-    const amazonPriceMatches = html.matchAll(
-        /<(?:div|span)[^>]*class=["']([^"']*a-price[^"']*)["'][^>]*>[\s\S]*?<span[^>]*class=["']a-offscreen["'][^>]*>([^<]+)<\/span>/gi,
-    );
-    for (const match of amazonPriceMatches) {
-        const classNames = match[1];
-        if (!classNames.includes("a-text-price")) {
-            const parsed = parsePriceNumber(match[2]);
-            if (parsed) return parsed;
+    // 4. Executa estratégias de lojas registradas (fallback quando URL não for fornecida)
+    for (const strategy of STORE_STRATEGIES) {
+        if (strategy.extractPrice) {
+            const price = strategy.extractPrice(html);
+            if (price) return price;
         }
     }
 
-    // 4. Classes universais de preço principal/destaque em e-commerces (Shopify, WooCommerce, Shopee, etc.)
+    // 5. Classes universais de preço principal/destaque em e-commerces (Shopify, WooCommerce, etc.)
     const prominentClassRegex =
         /class=["'][^"']*(?:price--highlight|price__current|current-price|product__price|product-price|sale-price|sales-price|price-tag-fraction)[^"']*["'][^>]*>[\s\S]{0,100}?((?:R\$|BRL|USD|EUR|GBP|\$|€|£)?\s*[\d.,]+)/i;
     const matchProminent = html.match(prominentClassRegex);
@@ -354,25 +312,7 @@ export function extractPriceFromHtml(html: string): number | null {
         if (parsed) return parsed;
     }
 
-    // 5. Amazon a-offscreen fallback geral com moeda
-    const amazonOffscreen = html.match(
-        /class=["']a-offscreen["'][^>]*>((?:R\$|BRL|USD|EUR|GBP|\$|€|£)?\s*[\d.,]+)<\/span>/i,
-    );
-    if (amazonOffscreen && amazonOffscreen[1]) {
-        const parsed = parsePriceNumber(amazonOffscreen[1]);
-        if (parsed) return parsed;
-    }
-
-    // 6. Mercado Livre: andes-money-amount__fraction
-    const mlFractionRegex =
-        /class=["'][^"']*andes-money-amount__fraction[^"']*["'][^>]*>([\d.,]+)<\/span>/i;
-    const matchMl = html.match(mlFractionRegex);
-    if (matchMl && matchMl[1]) {
-        const parsed = parsePriceNumber(matchMl[1]);
-        if (parsed) return parsed;
-    }
-
-    // 7. Atributos de dados (data-price ou data-product-price)
+    // 6. Atributos de dados (data-price ou data-product-price)
     const dataPriceRegex = /data-(?:product-)?price=["']([\d.,]+)["']/i;
     const matchData = html.match(dataPriceRegex);
     if (matchData && matchData[1]) {
@@ -386,8 +326,17 @@ export function extractPriceFromHtml(html: string): number | null {
 /**
  * Tenta extrair o preço original / preço riscado ("de:") a partir de tags semânticas e seletores de e-commerce.
  */
-export function extractRegularPriceFromHtml(html: string): number | null {
-    // 1. Meta tag semântica de preço original
+export function extractRegularPriceFromHtml(html: string, url?: string): number | null {
+    // 1. Se a URL for fornecida, consulta prioritariamente a estratégia especializada da loja
+    if (url) {
+        const strategy = getStoreStrategy(url);
+        if (strategy.extractRegularPrice) {
+            const regPrice = strategy.extractRegularPrice(html);
+            if (regPrice) return regPrice;
+        }
+    }
+
+    // 2. Meta tag semântica de preço original
     const originalMetaRegex =
         /<meta[^>]+(?:property|name|itemprop)=["'](?:product:original_price:amount|original_price)["'][^>]+content=["']([^"']+)["']/i;
     const matchMeta = html.match(originalMetaRegex);
@@ -396,7 +345,7 @@ export function extractRegularPriceFromHtml(html: string): number | null {
         if (parsed) return parsed;
     }
 
-    // 1b. Content antecedendo property/itemprop
+    // 2b. Content antecedendo property/itemprop
     const originalContentFirstRegex =
         /<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name|itemprop)=["'](?:product:original_price:amount|original_price)["']/i;
     const matchContentFirst = html.match(originalContentFirstRegex);
@@ -405,29 +354,19 @@ export function extractRegularPriceFromHtml(html: string): number | null {
         if (parsed) return parsed;
     }
 
-    // 2. Preço riscado da Amazon: a-text-price com a-offscreen
-    const amazonStrikeRegex =
-        /class=["'][^"']*a-text-price[^"']*["'][^>]*>[\s\S]*?<span[^>]*class=["']a-offscreen["'][^>]*>([^<]+)<\/span>/i;
-    const matchStrike = html.match(amazonStrikeRegex);
-    if (matchStrike && matchStrike[1]) {
-        const parsed = parsePriceNumber(matchStrike[1]);
-        if (parsed) return parsed;
-    }
-
-    // 3. Mercado Livre: andes-money-amount--previous
-    const mlPrevRegex =
-        /andes-money-amount--previous[^>]*>[\s\S]*?class=["'][^"']*andes-money-amount__fraction[^"']*["'][^>]*>([\d.,]+)<\/span>/i;
-    const matchMlPrev = html.match(mlPrevRegex);
-    if (matchMlPrev && matchMlPrev[1]) {
-        const parsed = parsePriceNumber(matchMlPrev[1]);
-        if (parsed) return parsed;
+    // 3. Executa estratégias de lojas registradas (fallback quando URL não for fornecida)
+    for (const strategy of STORE_STRATEGIES) {
+        if (strategy.extractRegularPrice) {
+            const regPrice = strategy.extractRegularPrice(html);
+            if (regPrice) return regPrice;
+        }
     }
 
     return null;
 }
 
 /**
- * Analisa o HTML fornecido e extrai os metadados Open Graph.
+ * Analisa o HTML fornecido e extrai os metadados Open Graph utilizando o padrão Strategy.
  */
 export function parseHtmlMetadata(html: string, baseUrl: string): ExtractedMetadata {
     const ldData = extractLdJsonProduct(html);
@@ -435,7 +374,7 @@ export function parseHtmlMetadata(html: string, baseUrl: string): ExtractedMetad
     const ogTitle = extractMetaContent(html, "og:title") || extractMetaContent(html, "twitter:title");
     const tagTitle = extractTitleTag(html);
     const rawTitle = ldData.title || ogTitle || tagTitle || null;
-    const title = cleanProductTitle(rawTitle);
+    const title = cleanProductTitle(rawTitle, baseUrl);
 
     const rawImage =
         extractMetaContent(html, "og:image") ||
@@ -451,18 +390,19 @@ export function parseHtmlMetadata(html: string, baseUrl: string): ExtractedMetad
         ldData.store ||
         null;
 
-    const store = detectStoreFromUrl(baseUrl, siteName);
+    const strategy = getStoreStrategy(baseUrl, siteName);
+    const store = strategy.name;
 
     // Tentativa de extração de preço em metadados de e-commerce, JSON-LD e microdados
     let price: number | null = ldData.price;
-    const htmlPrice = extractPriceFromHtml(html);
+    const htmlPrice = extractPriceFromHtml(html, baseUrl);
     if (htmlPrice != null && (price == null || price <= 0 || htmlPrice < price)) {
         price = htmlPrice;
     }
 
     let regularPrice: number | null = ldData.regularPrice;
     if (regularPrice == null || regularPrice <= 0) {
-        regularPrice = extractRegularPriceFromHtml(html);
+        regularPrice = extractRegularPriceFromHtml(html, baseUrl);
     }
 
     // Se o preço regular for menor ou igual ao promocional, descarta para evitar inconsistência

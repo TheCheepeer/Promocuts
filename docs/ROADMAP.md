@@ -161,6 +161,8 @@ Objetivo: Maximizar a conversao de vendas permitindo multiplas lojas parceiras p
 - [x] Implementar extrator leve de metadados Open Graph:
     - [x] Endpoint utilitario para inspecionar URLs de produtos e extrair titulo (`og:title`), imagem (`og:image`) e preco sugerido (`og:price:amount`).
     - [x] Botao de autopreenchimento no formulario de produtos ao colar o link de afiliado.
+    - [x] Refatorar extrator de lojas parceiras para o Padrão Strategy (`src/lib/extractor/store-strategies.ts`), desacoplando detecção de domínio, sanitização de títulos e extração especializada de preços e preços originais riscados.
+    - [x] Botão de extração individual de preço por loja no formulário de produtos com retorno visual e suporte a fallback.
 - [x] Criar rotina de verificacao de links em segundo plano (Vercel Cron Job):
     - [x] Verificacao periodica de integridade (HTTP status, deteccao de pagina 404 ou produto esgotado).
     - [x] Indicadores visuais de alerta no painel administrativo para ofertas que necessitam de revisao.
