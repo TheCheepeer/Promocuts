@@ -410,7 +410,7 @@ export function ProductDialog({
                     </label>
                     <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mb-2">
                         Cole o link da página do produto para preencher título,
-                        imagem, loja e preço automaticamente.
+                        imagem e loja automaticamente.
                     </p>
                     <div className="flex gap-2">
                         <input
